@@ -3,7 +3,7 @@
 
 
 /**
-	*	@brief		À¶ÑÀÍâÉèÅäÖÃ
+	*	@brief		è“ç‰™å¤–è®¾é…ç½®
 	*	@param		none
 	*	@retval		none
 	*/
@@ -13,47 +13,47 @@ void	Bluetooth_Init(void)
 	USART_InitTypeDef	USART_InitStructure;
 	NVIC_InitTypeDef	NVIC_InitStructure;
 	
-	/*¿ªÆôGPIOB¡¢GPIOC¡¢GPIODÍâÉèÊ±ÖÓ*/
+	/*å¼€å¯GPIOBã€GPIOCã€GPIODå¤–è®¾æ—¶é’Ÿ*/
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD, ENABLE);
 	
-	/*³õÊ¼»¯PB.00¶Ë¿ÚÎªOut_PPÄ£Ê½*/
+	/*åˆå§‹åŒ–PB.00ç«¯å£ä¸ºOut_PPæ¨¡å¼*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 	
-	/*³õÊ¼»¯PC.05¶Ë¿ÚÎªOut_PPÄ£Ê½*/
+	/*åˆå§‹åŒ–PC.05ç«¯å£ä¸ºOut_PPæ¨¡å¼*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 	
-	/*¹Ø±ÕÀ¶ÑÀÄ£¿éµçÔ´*/
+	/*å…³é—­è“ç‰™æ¨¡å—ç”µæº*/
 	BLUETOOTH_POWER_OFF;
 	
-	/*¿ªÆôUART5ÍâÉèÊ±ÖÓ*/
+	/*å¼€å¯UART5å¤–è®¾æ—¶é’Ÿ*/
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
 	
-	/*UART5µÄGPIOÅäÖÃ*/
-	/*ÅäÖÃUSART5 Tx(PC.12)ÎªAF_PP*/
+	/*UART5çš„GPIOé…ç½®*/
+	/*é…ç½®USART5 Tx(PC.12)ä¸ºAF_PP*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 	
-	/*ÅäÖÃUART5 Rx(PD.02)ÎªIN_FLOATING*/
+	/*é…ç½®UART5 Rx(PD.02)ä¸ºIN_FLOATING*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(GPIOD, &GPIO_InitStructure);
 	
-	/*UART5 NVICÅäÖÃ*/
+	/*UART5 NVICé…ç½®*/
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);													//2 bits for pre-emption priority 2 bits for subpriority
 	
 	NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;								//Ö¸¶¨ÇÀÕ¼Ê½ÓÅÏÈ¼¶±ğ,¿ÉÈ¡0~3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;											//Ö¸¶¨ÏìÓ¦Ê½ÓÅÏÈ¼¶±ğ,¿ÉÈ¡0~3
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;								//æŒ‡å®šæŠ¢å å¼ä¼˜å…ˆçº§åˆ«,å¯å–0~3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;											//æŒ‡å®šå“åº”å¼ä¼˜å…ˆçº§åˆ«,å¯å–0~3
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	
-	/*UART5Ä£Ê½ÅäÖÃ*/
+	/*UART5æ¨¡å¼é…ç½®*/
 	USART_InitStructure.USART_BaudRate = 9600;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;
@@ -63,9 +63,9 @@ void	Bluetooth_Init(void)
 	USART_Init(UART5, &USART_InitStructure);
 	USART_Cmd(UART5, ENABLE);
 	
-	/*½ÓÊÕÖĞ¶ÏÊ¹ÄÜ*/
+	/*æ¥æ”¶ä¸­æ–­ä½¿èƒ½*/
 	USART_ITConfig(UART5, USART_IT_RXNE, ENABLE);
 	
-	/*¿ªÆôÀ¶ÑÀÄ£¿éµçÔ´*/
+	/*å¼€å¯è“ç‰™æ¨¡å—ç”µæº*/
 	BLUETOOTH_POWER_ON;
 }

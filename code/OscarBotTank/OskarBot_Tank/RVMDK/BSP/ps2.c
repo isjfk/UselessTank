@@ -318,12 +318,12 @@ void parse_cmd(u8 *cmd)
 
 void handle_button(void)
 {
-	// ±£´æ±¾´ÎÊÖ±ú°´¼ü×´Ì¬
+	// ä¿å­˜æœ¬æ¬¡æ‰‹æŸ„æŒ‰é”®çŠ¶æ€
 	static unsigned char psx_button_bak[2] = {0};
 	
 	//uart1_send_str(psx_buf);
 	
-	// Èç¹û°´¼ü×´Ì¬Ã»ÓĞ±ä»¯
+	// å¦‚æœæŒ‰é”®çŠ¶æ€æ²¡æœ‰å˜åŒ–
 	if((psx_button_bak[0] == psx_buf[3]) && (psx_button_bak[1] == psx_buf[4])) 
 	{				
 	}
@@ -508,12 +508,12 @@ void psx_io_config(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure, GPIO_InitStructure2;
 	
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE); 		//Ê¹ÄÜ PA ¶Ë¿ÚÊ±ÖÓ
-	GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable, ENABLE);  //Ê¹ÄÜ½ûÖ¹JTAG
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE); 		//ä½¿èƒ½ PA ç«¯å£æ—¶é’Ÿ
+	GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable, ENABLE);  //ä½¿èƒ½ç¦æ­¢JTAG
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13; 					//ÅäÖÃ pin0-3
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 			//ÍÆÍìÊä³ö
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 			//IO ·­×ª 50MHz
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13; 					//é…ç½® pin0-3
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 			//æ¨æŒ½è¾“å‡º
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 			//IO ç¿»è½¬ 50MHz
 	GPIO_Init(GPIOA, &GPIO_InitStructure);  					//
 	
 	GPIO_InitStructure2.GPIO_Pin =GPIO_Pin_14;

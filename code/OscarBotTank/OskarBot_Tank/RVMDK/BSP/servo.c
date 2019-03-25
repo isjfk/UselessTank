@@ -317,7 +317,7 @@ void servo_init(void)
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 	
 
-	//¶æ»ú¿ØÖÆ³õÊ¼»¯
+	//èˆµæœºæ§åˆ¶åˆå§‹åŒ–
 	for(i=0;i<DJ_NUM;i++) 
 	{
 		duoji_doing[i].cur = 1500;

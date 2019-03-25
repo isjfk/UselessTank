@@ -7,10 +7,10 @@
 
 
 //////////////////////////////////////////////////////////////////
-//¼ÓÈëÒÔÏÂ´úÂë,Ö§³Öprintfº¯Êı,¶ø²»ĞèÒªÑ¡Ôñuse MicroLIB	  
+//åŠ å…¥ä»¥ä¸‹ä»£ç ,æ”¯æŒprintfå‡½æ•°,è€Œä¸éœ€è¦é€‰æ‹©use MicroLIB	  
 #if 1
 #pragma import(__use_no_semihosting)             
-//±ê×¼¿âĞèÒªµÄÖ§³Öº¯Êı                 
+//æ ‡å‡†åº“éœ€è¦çš„æ”¯æŒå‡½æ•°                 
 struct __FILE 
 { 
 	int handle; 
@@ -18,16 +18,16 @@ struct __FILE
 }; 
 
 FILE __stdout;       
-//¶¨Òå_sys_exit()ÒÔ±ÜÃâÊ¹ÓÃ°ëÖ÷»úÄ£Ê½    
+//å®šä¹‰_sys_exit()ä»¥é¿å…ä½¿ç”¨åŠä¸»æœºæ¨¡å¼    
 void _sys_exit(int x) 
 { 
 	x = x; 
 } 
-//ÖØ¶¨Òåfputcº¯Êı 
+//é‡å®šä¹‰fputcå‡½æ•° 
 int fputc(int ch, FILE *f)
 {      
 	while((USART1->SR&0X40)==0)
-		;//Ñ­»··¢ËÍ,Ö±µ½·¢ËÍÍê±Ï   
+		;//å¾ªç¯å‘é€,ç›´åˆ°å‘é€å®Œæ¯•   
     USART1->DR = (u8) ch;      
 	return ch;
 }
@@ -200,7 +200,7 @@ void tb_usart3_init(u32 rate)
 	USART_Cmd(USART3, ENABLE); 
 } 
 
-//´Ó´®¿Ú1·¢ËÍÒ»¸ö×Ö½Ú
+//ä»ä¸²å£1å‘é€ä¸€ä¸ªå­—èŠ‚
 void tb_usart1_send_byte(u8 Data)
 {
 	USART_SendData(USART1, Data);
@@ -228,7 +228,7 @@ void tb_usart1_send_str(u8 *Data)
 	return;
 }
 
-//´Ó´®¿Ú2·¢ËÍÒ»¸ö×Ö½Ú
+//ä»ä¸²å£2å‘é€ä¸€ä¸ªå­—èŠ‚
 void tb_usart2_send_byte(u8 Data) 
 {
 	USART_SendData(USART2, Data);
@@ -256,7 +256,7 @@ void tb_usart2_send_str(u8 *Data)
 	return;
 }
 
-//´Ó´®¿Ú3·¢ËÍÒ»¸ö×Ö½Ú
+//ä»ä¸²å£3å‘é€ä¸€ä¸ªå­—èŠ‚
 void tb_usart3_send_byte(u8 Data)
 {
 	USART_SendData(USART3, Data);
@@ -285,8 +285,8 @@ void tb_usart3_send_str(u8 *Data)
 }
 
 
-/**========================ÖĞ¶Ï´¦Àíº¯Êı=============================**/
-//´®¿ÚÊÕ·¢ÖĞ¶Ï´¦Àíº¯Êı
+/**========================ä¸­æ–­å¤„ç†å‡½æ•°=============================**/
+//ä¸²å£æ”¶å‘ä¸­æ–­å¤„ç†å‡½æ•°
 int USART1_IRQHandler(void) 
 {
 	u8 sbuf_bak;
@@ -357,7 +357,7 @@ int USART1_IRQHandler(void)
 		
 	}
 
-	//·¢ËÍÖĞ¶Ï ÓÃÇ°ÔÚ³õÊ¼»¯µÄÊ±ºòÇë´ò¿ª
+	//å‘é€ä¸­æ–­ ç”¨å‰åœ¨åˆå§‹åŒ–çš„æ—¶å€™è¯·æ‰“å¼€
 	//if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET) {   
 	//USART_SendData(USARTy, TxBuffer1[TxCounter1++]);
 	//}   
@@ -455,7 +455,7 @@ int USART2_IRQHandler(void)
 
 	
 	
-	//·¢ËÍÖĞ¶Ï ÓÃÇ°ÔÚ³õÊ¼»¯µÄÊ±ºòÇë´ò¿ª
+	//å‘é€ä¸­æ–­ ç”¨å‰åœ¨åˆå§‹åŒ–çš„æ—¶å€™è¯·æ‰“å¼€
 	//if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET) {   
 	//	USART_SendData(USARTy, TxBuffer1[TxCounter1++]);
 	//}  
@@ -527,7 +527,7 @@ int USART3_IRQHandler(void)
 		if(buf_index >= UART_BUF_SIZE)buf_index = 0;
 	}
 
-	//·¢ËÍÖĞ¶Ï ÓÃÇ°ÔÚ³õÊ¼»¯µÄÊ±ºòÇë´ò¿ª
+	//å‘é€ä¸­æ–­ ç”¨å‰åœ¨åˆå§‹åŒ–çš„æ—¶å€™è¯·æ‰“å¼€
 	//if(USART_GetITStatus(USART3, USART_IT_TXE) != RESET) {   
 	//	USART_SendData(USARTy, TxBuffer1[TxCounter1++]);
 	//}  
@@ -602,25 +602,25 @@ void handle_uart(void)
 	{
 		//uart1_send_str(uart_receive_buf);
 		if(uart1_mode == 1) 
-		{					//ÃüÁîÄ£Ê½
+		{					//å‘½ä»¤æ¨¡å¼
 			//uart1_send_str("cmd:");
 			//uart1_send_str(uart_receive_buf);
 			parse_cmd(uart_receive_buf);			
 		}
 		else if(uart1_mode == 2) 
-		{			//µ¥¸ö¶æ»úµ÷ÊÔ
+		{			//å•ä¸ªèˆµæœºè°ƒè¯•
 			//uart1_send_str("sig:");
 			//uart1_send_str(uart_receive_buf);
 			do_action(uart_receive_buf);
 		}
 		else if(uart1_mode == 3)
-		{		//¶àÂ·¶æ»úµ÷ÊÔ
+		{		//å¤šè·¯èˆµæœºè°ƒè¯•
 			//uart1_send_str("group:");
 			//uart1_send_str(uart_receive_buf);
 			do_action(uart_receive_buf);
 		} 
 		else if(uart1_mode == 4) 
-		{		//´æ´¢Ä£Ê½
+		{		//å­˜å‚¨æ¨¡å¼
 			//uart1_send_str("save:");
 			//uart1_send_str(uart_receive_buf);
 			action_save(uart_receive_buf);

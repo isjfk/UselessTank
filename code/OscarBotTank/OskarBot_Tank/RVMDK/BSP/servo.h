@@ -8,11 +8,11 @@
 
 typedef struct
 {
-	uint8_t 	valid;//ÓĞĞ§ TODO	
-	uint16_t 	aim;	//Ö´ĞĞÄ¿±ê
-	uint16_t 	time;	//Ö´ĞĞÊ±¼ä		
-	float 		cur;	//µ±Ç°Öµ
-	float 		inc;	//ÔöÁ¿	
+	uint8_t 	valid;//æœ‰æ•ˆ TODO	
+	uint16_t 	aim;	//æ‰§è¡Œç›®æ ‡
+	uint16_t 	time;	//æ‰§è¡Œæ—¶é—´		
+	float 		cur;	//å½“å‰å€¼
+	float 		inc;	//å¢é‡	
 }servo;
 
 extern u32 systick_ms;

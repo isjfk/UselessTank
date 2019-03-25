@@ -56,53 +56,53 @@ extern float bat_volt;
 
 int main(void)
 {
-	// ÏµÍ³Ê±ÖÓ³õÊ¼»¯ System clock initialization
+	// ç³»ç»Ÿæ—¶é’Ÿåˆå§‹åŒ– System clock initialization
 	SystemInit();
 	
-	// µç³ØµçÑ¹¼ì²â³õÊ¼»¯
+	// ç”µæ± ç”µå‹æ£€æµ‹åˆå§‹åŒ–
 	Adc_Init();
 	
-	// PS2ÊÖ±ú³õÊ¼»¯ Handle initialization
+	// PS2æ‰‹æŸ„åˆå§‹åŒ– Handle initialization
 	PSX_init();	
 	
-	// ËÅ·şÀàÍâÉè£¨Êı×Ö¶æ»ú£©³õÊ¼»¯ Servo peripherals initialization
+	// ä¼ºæœç±»å¤–è®¾ï¼ˆæ•°å­—èˆµæœºï¼‰åˆå§‹åŒ– Servo peripherals initialization
 	servo_init();
 	
-	// ´®¿Ú³õÊ¼»¯£¬²¨ÌØÂÊ115200 Serial port initialization, baud rate of 115200
+	// ä¸²å£åˆå§‹åŒ–ï¼Œæ³¢ç‰¹ç‡115200 Serial port initialization, baud rate of 115200
 	tb_usart1_init(9600);
 	tb_usart2_init(115200);
 	tb_usart3_init(115200);
 	
 	
-	// ÖĞ¶ÏÊ¹ÄÜ Enable interruption
+	// ä¸­æ–­ä½¿èƒ½ Enable interruption
 	tb_interrupt_open();
 	
-	// ×ÜÏß¶æ»úÊä³ö Bus servo output
+	// æ€»çº¿èˆµæœºè¾“å‡º Bus servo output
 	zx_uart_send_str((u8 *)"#255P1500T2000!");
 	
-	// ºÁÃëÖĞ¶Ï³õÊ¼»¯ Millisecond interrupt initialization
+	// æ¯«ç§’ä¸­æ–­åˆå§‹åŒ– Millisecond interrupt initialization
 	SysTick_Int_Init();
 	
-	// SPI Flash´æ´¢Æ÷³õÊ¼»¯ Flash memory Initialization
+	// SPI Flashå­˜å‚¨å™¨åˆå§‹åŒ– Flash memory Initialization
 //	W25Q_Init();	
 //	if(W25Q_TYPE != W25Q64)
 //	{
 //		while(1)BEEP_ON;
 //	}
 
-	// ×ó²à±àÂëÆ÷³õÊ¼»¯ Left encoder initialization
+	// å·¦ä¾§ç¼–ç å™¨åˆå§‹åŒ– Left encoder initialization
 	Left_Encoder_Init();
 	
-	// ÓÒ²à±àÂëÆ÷³õÊ¼»¯ Right encoder initialization
+	// å³ä¾§ç¼–ç å™¨åˆå§‹åŒ– Right encoder initialization
 	Right_Encoder_Init();
 	
-	// ¼õËÙµç»úPWM³õÊ¼»¯ Motor PWM Initialization
+	// å‡é€Ÿç”µæœºPWMåˆå§‹åŒ– Motor PWM Initialization
 	Motor_Init(7199, 0);
 	
-	// ·äÃùÆ÷ºÍLED³õÊ¼»¯ Buzzer and LED initialization
+	// èœ‚é¸£å™¨å’ŒLEDåˆå§‹åŒ– Buzzer and LED initialization
 	Beep_Led_Init();
 	
-	// MPU9250 DMP ³õÊ¼»¯ MPU9250 DMP initialization
+	// MPU9250 DMP åˆå§‹åŒ– MPU9250 DMP initialization
 //	while(mpu_dmp_init())
 //	{   
 // 		delay_ms(200);
@@ -114,31 +114,31 @@ int main(void)
 	joy_left_pwm = 0;
 	joy_right_pwm = 0;
 	
-	// ³õÊ¼»¯µç³ØµçÑ¹
+	// åˆå§‹åŒ–ç”µæ± ç”µå‹
 	Init_Volt();
 	
-  /* Ö÷Ñ­»· Infinite loop */
+  /* ä¸»å¾ªç¯ Infinite loop */
   while (1)
   {
-		// µç³ØµçÑ¹¼ì²â
+		// ç”µæ± ç”µå‹æ£€æµ‹
 		Detect_Volt();
 		
-		// º½×Ë²Î¿¼ÏµÍ³Ëã·¨ (AHRS)Attitude and heading reference system
+		// èˆªå§¿å‚è€ƒç³»ç»Ÿç®—æ³• (AHRS)Attitude and heading reference system
 		AHRS();
 		
-		// ps2ÊÖ±úÃüÁî´¦Àí PS2 handle command processing
+		// ps2æ‰‹æŸ„å‘½ä»¤å¤„ç† PS2 handle command processing
 		handle_ps2();
 		
-		// ps2°´¼üÏìÓ¦ Key response
+		// ps2æŒ‰é”®å“åº” Key response
 		handle_button();
 		
-		// ´®¿ÚÏûÏ¢´¦Àí Serial message processing
+		// ä¸²å£æ¶ˆæ¯å¤„ç† Serial message processing
 		handle_uart();
 		
-		// ¶æ»úÖ´ĞĞ¶¯×÷ Servos perform action
+		// èˆµæœºæ‰§è¡ŒåŠ¨ä½œ Servos perform action
 		handle_action();
 		
-		// ´®¿Ú1Êä³öµç³ØµçÑ¹
+		// ä¸²å£1è¾“å‡ºç”µæ± ç”µå‹
 		//printf("Vottage:%4.1f\r\n", bat_volt);
 		//printf("[0]:%d, [1]:%d, [2]:%d, [3]:%d, [4]:%d, [5]:%d, [6]:%d, [7]:%d, [8]:%d, M1:%d ~\r\n", psx_buf[0], psx_buf[1], psx_buf[2], psx_buf[3], psx_buf[4], psx_buf[5], psx_buf[6], psx_buf[7], psx_buf[8], myabs(Moto1));
   }

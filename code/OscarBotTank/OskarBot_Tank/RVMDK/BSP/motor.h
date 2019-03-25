@@ -3,14 +3,14 @@
 
 #include "stm32f10x.h"
 
-void MotorDriver_L_Turn_Forward(void);			//×óÂÖµç»úÕı×ª
-void MotorDriver_L_Turn_Reverse(void);			//×óÂÖµç»ú·´×ª
-void MotorDriver_L_Turn_Stop(void);         //×óÂÖµç»úÍ£×ª
+void MotorDriver_L_Turn_Forward(void);			//å·¦è½®ç”µæœºæ­£è½¬
+void MotorDriver_L_Turn_Reverse(void);			//å·¦è½®ç”µæœºåè½¬
+void MotorDriver_L_Turn_Stop(void);         //å·¦è½®ç”µæœºåœè½¬
 
-void MotorDriver_R_Turn_Forward(void);			//ÓÒÂÖµç»úÕı×ª
-void MotorDriver_R_Turn_Reverse(void);			//ÓÒÂÖµç»ú·´×ª
-void MotorDriver_R_Turn_Stop(void);         //×óÂÖµç»úÍ£×ª
+void MotorDriver_R_Turn_Forward(void);			//å³è½®ç”µæœºæ­£è½¬
+void MotorDriver_R_Turn_Reverse(void);			//å³è½®ç”µæœºåè½¬
+void MotorDriver_R_Turn_Stop(void);         //å·¦è½®ç”µæœºåœè½¬
 
-void Motor_Init(u16 arr,u16 psc);           //µç»úÇı¶¯ÍâÉè³õÊ¼»¯
+void Motor_Init(u16 arr,u16 psc);           //ç”µæœºé©±åŠ¨å¤–è®¾åˆå§‹åŒ–
 
 #endif

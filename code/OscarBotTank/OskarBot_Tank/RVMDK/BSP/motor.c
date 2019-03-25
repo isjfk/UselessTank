@@ -16,9 +16,9 @@
 
 
 
-//PWMÊä³ö³õÊ¼»¯
-//arr£º×Ô¶¯ÖØ×°Öµ
-//psc£ºÊ±ÖÓÔ¤·ÖÆµÊı
+//PWMè¾“å‡ºåˆå§‹åŒ–
+//arrï¼šè‡ªåŠ¨é‡è£…å€¼
+//pscï¼šæ—¶é’Ÿé¢„åˆ†é¢‘æ•°
 void Motor_Init(u16 arr, u16 psc)
 {  
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -26,23 +26,23 @@ void Motor_Init(u16 arr, u16 psc)
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);// 
- 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC, ENABLE);  //Ê¹ÄÜGPIOÍâÉèÊ±ÖÓÊ¹ÄÜ
+ 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC, ENABLE);  //ä½¿èƒ½GPIOå¤–è®¾æ—¶é’Ÿä½¿èƒ½
 	                                                                     	
                                                                      	
-   //ÉèÖÃ¸ÃÒı½ÅÎª¸´ÓÃÊä³ö¹¦ÄÜ,Êä³öTIM1 CH1µÄPWMÂö³å²¨ĞÎ
+   //è®¾ç½®è¯¥å¼•è„šä¸ºå¤ç”¨è¾“å‡ºåŠŸèƒ½,è¾“å‡ºTIM1 CH1çš„PWMè„‰å†²æ³¢å½¢
   
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8|GPIO_Pin_9 ; //TIM4_CH3 TIM4_CH4
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //¸´ÓÃÍÆÍìÊä³ö
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //å¤ç”¨æ¨æŒ½è¾“å‡º
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
  
-	TIM_TimeBaseStructure.TIM_Period = arr; //ÉèÖÃÔÚÏÂÒ»¸ö¸üĞÂÊÂ¼ş×°Èë»î¶¯µÄ×Ô¶¯ÖØ×°ÔØ¼Ä´æÆ÷ÖÜÆÚµÄÖµ	 80K
-	TIM_TimeBaseStructure.TIM_Prescaler =psc; //ÉèÖÃÓÃÀ´×÷ÎªTIMxÊ±ÖÓÆµÂÊ³ıÊıµÄÔ¤·ÖÆµÖµ  ²»·ÖÆµ
-	TIM_TimeBaseStructure.TIM_ClockDivision =0; //ÉèÖÃÊ±ÖÓ·Ö¸î:TDTS = Tck_tim
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIMÏòÉÏ¼ÆÊıÄ£Ê½
-	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure); //¸ù¾İTIM_TimeBaseInitStructÖĞÖ¸¶¨µÄ²ÎÊı³õÊ¼»¯TIMxµÄÊ±¼ä»ùÊıµ¥Î»
+	TIM_TimeBaseStructure.TIM_Period = arr; //è®¾ç½®åœ¨ä¸‹ä¸€ä¸ªæ›´æ–°äº‹ä»¶è£…å…¥æ´»åŠ¨çš„è‡ªåŠ¨é‡è£…è½½å¯„å­˜å™¨å‘¨æœŸçš„å€¼	 80K
+	TIM_TimeBaseStructure.TIM_Prescaler =psc; //è®¾ç½®ç”¨æ¥ä½œä¸ºTIMxæ—¶é’Ÿé¢‘ç‡é™¤æ•°çš„é¢„åˆ†é¢‘å€¼  ä¸åˆ†é¢‘
+	TIM_TimeBaseStructure.TIM_ClockDivision =0; //è®¾ç½®æ—¶é’Ÿåˆ†å‰²:TDTS = Tck_tim
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIMå‘ä¸Šè®¡æ•°æ¨¡å¼
+	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure); //æ ¹æ®TIM_TimeBaseInitStructä¸­æŒ‡å®šçš„å‚æ•°åˆå§‹åŒ–TIMxçš„æ—¶é—´åŸºæ•°å•ä½
  
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2; //Ñ¡Ôñ¶¨Ê±Æ÷Ä£Ê½:TIMÂö³å¿í¶Èµ÷ÖÆÄ£Ê½2
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2; //é€‰æ‹©å®šæ—¶å™¨æ¨¡å¼:TIMè„‰å†²å®½åº¦è°ƒåˆ¶æ¨¡å¼2
 	
 	
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; 
@@ -50,18 +50,18 @@ void Motor_Init(u16 arr, u16 psc)
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; 
 	TIM_OC3Init(TIM4, &TIM_OCInitStructure); 
 
-  TIM_OCInitStructure.TIM_OutputState =TIM_OutputState_Enable; //±È½ÏÊä³öÊ¹ÄÜ
-  TIM_OCInitStructure.TIM_Pulse = 0;                         //ÉèÖÃ´ı×°Èë²¶»ñ±È½Ï¼Ä´æÆ÷µÄÂö³åÖµ
-  TIM_OC4Init(TIM4, &TIM_OCInitStructure);                     //Êä³ö¼«ĞÔ:TIMÊä³ö±È½Ï¼«ĞÔ¸ß
-  TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Enable);            //¸ù¾İTIM_OCInitStructÖĞÖ¸¶¨µÄ²ÎÊı³õÊ¼»¯ÍâÉèTIMx
+  TIM_OCInitStructure.TIM_OutputState =TIM_OutputState_Enable; //æ¯”è¾ƒè¾“å‡ºä½¿èƒ½
+  TIM_OCInitStructure.TIM_Pulse = 0;                         //è®¾ç½®å¾…è£…å…¥æ•è·æ¯”è¾ƒå¯„å­˜å™¨çš„è„‰å†²å€¼
+  TIM_OC4Init(TIM4, &TIM_OCInitStructure);                     //è¾“å‡ºææ€§:TIMè¾“å‡ºæ¯”è¾ƒææ€§é«˜
+  TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Enable);            //æ ¹æ®TIM_OCInitStructä¸­æŒ‡å®šçš„å‚æ•°åˆå§‹åŒ–å¤–è®¾TIMx
 
 
-  TIM_CtrlPWMOutputs(TIM4,ENABLE);	      //MOE Ö÷Êä³öÊ¹ÄÜ	
-  TIM_ARRPreloadConfig(TIM4, ENABLE);     //Ê¹ÄÜTIMxÔÚARRÉÏµÄÔ¤×°ÔØ¼Ä´æÆ÷
-	TIM_Cmd(TIM4, ENABLE);                  //Ê¹ÄÜTIM4
+  TIM_CtrlPWMOutputs(TIM4,ENABLE);	      //MOE ä¸»è¾“å‡ºä½¿èƒ½	
+  TIM_ARRPreloadConfig(TIM4, ENABLE);     //ä½¿èƒ½TIMxåœ¨ARRä¸Šçš„é¢„è£…è½½å¯„å­˜å™¨
+	TIM_Cmd(TIM4, ENABLE);                  //ä½¿èƒ½TIM4
 	
 	
-	/*³õÊ¼»¯PA.07¶Ë¿ÚÎªOut_PPÄ£Ê½*/
+	/*åˆå§‹åŒ–PA.07ç«¯å£ä¸ºOut_PPæ¨¡å¼*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -71,7 +71,7 @@ void Motor_Init(u16 arr, u16 psc)
 
 
 /**
-	*	@brief		×óÂÖµç»úÕı×ª
+	*	@brief		å·¦è½®ç”µæœºæ­£è½¬
 	*	@param		none
 	*	@retval		none
 	*/
@@ -82,7 +82,7 @@ void	MotorDriver_L_Turn_Forward(void)
 }
 
 /**
-	*	@brief		×óÂÖµç»ú·´×ª
+	*	@brief		å·¦è½®ç”µæœºåè½¬
 	*	@param		none
 	*	@retval		none
 	*/
@@ -93,7 +93,7 @@ void	MotorDriver_L_Turn_Reverse(void)
 }
 
 /**
-	*	@brief		×óÂÖµç»úÍ£×ª
+	*	@brief		å·¦è½®ç”µæœºåœè½¬
 	*	@param		none
 	*	@retval		none
 	*/
@@ -104,7 +104,7 @@ void	MotorDriver_L_Turn_Stop(void)
 }
 
 /**
-	*	@brief		ÓÒÂÖµç»úÕı×ª
+	*	@brief		å³è½®ç”µæœºæ­£è½¬
 	*	@param		none
 	*	@retval		none
 	*/
@@ -115,7 +115,7 @@ void	MotorDriver_R_Turn_Forward(void)
 }
 
 /**
-	*	@brief		ÓÒÂÖµç»ú·´×ª
+	*	@brief		å³è½®ç”µæœºåè½¬
 	*	@param		none
 	*	@retval		none
 	*/
@@ -127,7 +127,7 @@ void	MotorDriver_R_Turn_Reverse(void)
 
 
 /**
-	*	@brief		ÓÒÂÖµç»úÍ£×ª
+	*	@brief		å³è½®ç”µæœºåœè½¬
 	*	@param		none
 	*	@retval		none
 	*/

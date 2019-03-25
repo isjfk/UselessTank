@@ -3,16 +3,16 @@
 #ifndef	_BLUETOOTH_H_
 #define	_BLUETOOTH_H_
 
-/*¿ªÆôÀ¶ÑÀÄ£¿éµçÔ´*/
+/*å¼€å¯è“ç‰™æ¨¡å—ç”µæº*/
 #define		BLUETOOTH_POWER_ON					(GPIO_SetBits(GPIOB, GPIO_Pin_0))
-/*¹Ø±ÕÀ¶ÑÀÄ£¿éµçÔ´*/
+/*å…³é—­è“ç‰™æ¨¡å—ç”µæº*/
 #define		BLUETOOTH_POWER_OFF				(GPIO_ResetBits(GPIOB, GPIO_Pin_0))
 
-/*ÖÃ¸ßBLT_CONF*/
+/*ç½®é«˜BLT_CONF*/
 #define		BLTCONTROL_BLT_CONF_HIGH		(GPIO_SetBits(GPIOC, GPIO_Pin_5))
-/*ÖÃµÍBLT_CONF*/
+/*ç½®ä½ŽBLT_CONF*/
 #define		BLTCONTROL_BLT_CONF_LOW			(GPIO_ResetBits(GPIOC, GPIO_Pin_5))
 
-void	Bluetooth_Init(void);										//À¶ÑÀÍâÉè³õÊ¼»¯
+void	Bluetooth_Init(void);										//è“ç‰™å¤–è®¾åˆå§‹åŒ–
 
 #endif   // _BLUETOOTH_H_

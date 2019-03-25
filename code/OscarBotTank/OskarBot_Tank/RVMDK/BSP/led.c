@@ -6,7 +6,7 @@
 
 
 /**
-	*	@brief		LEDºÍ·äÃùÆ÷³õÊ¼»¯
+	*	@brief		LEDå’Œèœ‚é¸£å™¨åˆå§‹åŒ–
 	*	@param		none
 	*	@retval		none
 	*/
@@ -14,10 +14,10 @@ void Beep_Led_Init(void)
 {
 	GPIO_InitTypeDef					GPIO_InitStructure ;
 
-	/*Ê¹ÄÜGPIOBÍâÉèÊ±ÖÓ*/
+	/*ä½¿èƒ½GPIOBå¤–è®¾æ—¶é’Ÿ*/
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
-	/*³õÊ¼»¯PB13ºÍPB14¶Ë¿ÚÎªOut_PPÄ£Ê½*/
+	/*åˆå§‹åŒ–PB13å’ŒPB14ç«¯å£ä¸ºOut_PPæ¨¡å¼*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -35,7 +35,7 @@ void Beep_Led_Init(void)
 
 
 /**
-	*	@brief		ÏµÍ³³õÊ¼»¯³É¹¦ºóµÄÉù¹âÌáÊ¾
+	*	@brief		ç³»ç»Ÿåˆå§‹åŒ–æˆåŠŸåçš„å£°å…‰æç¤º
 	*	@param		none
 	*	@retval		none
 	*/
@@ -78,7 +78,7 @@ void Sys_OK_Sound(void)
 
 
 /**
-	*	@brief		µÍµçÁ¿Éù¹âÌáÊ¾
+	*	@brief		ä½ç”µé‡å£°å…‰æç¤º
 	*	@param		none
 	*	@retval		none
 	*/

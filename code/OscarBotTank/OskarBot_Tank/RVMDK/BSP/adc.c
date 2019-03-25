@@ -4,8 +4,8 @@ float bat_volt = 0;
 
 
 /**
-  * @brief  ³õÊ¼»¯ÓÃÓÚ²âÁ¿µç³ØµçÑ¹µÄADCÍ¨µÀ
-  *         ±¾ÏîÄ¿ÖĞÊ¹ÓÃADC1µÄµÚ14¸öÍ¨µÀ½øĞĞµç³ØµçÑ¹¼ì²â£¬¶ÔÓ¦µ¥Æ¬»úµÄµÄPC4Õâ¸ö¹Ü½Å
+  * @brief  åˆå§‹åŒ–ç”¨äºæµ‹é‡ç”µæ± ç”µå‹çš„ADCé€šé“
+  *         æœ¬é¡¹ç›®ä¸­ä½¿ç”¨ADC1çš„ç¬¬14ä¸ªé€šé“è¿›è¡Œç”µæ± ç”µå‹æ£€æµ‹ï¼Œå¯¹åº”å•ç‰‡æœºçš„çš„PC4è¿™ä¸ªç®¡è„š
   * @note   None
   * @param  None
   * @retval None
@@ -15,43 +15,43 @@ void Adc_Init(void)
  	ADC_InitTypeDef ADC_InitStructure; 
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
-	// Ê¹ÄÜGPIOCºÍADC1Ê±ÖÓ
+	// ä½¿èƒ½GPIOCå’ŒADC1æ—¶é’Ÿ
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC	| RCC_APB2Periph_ADC1, ENABLE );
 	
-	// ÉèÖÃADC·ÖÆµÏµÊı
+	// è®¾ç½®ADCåˆ†é¢‘ç³»æ•°
 	RCC_ADCCLKConfig(RCC_PCLK2_Div6);
 	
-	// ÅäÖÃµçÑ¹²âÁ¿Òı½Å
+	// é…ç½®ç”µå‹æµ‹é‡å¼•è„š
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 	
-	// ÅäÖÃADC²ÎÊı
-	ADC_DeInit(ADC1);                                   // Çå³ıADC1ÉèÖÃ
-	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;	// ÉèÖÃADCÎª¶ÀÁ¢Ä£Ê½
-	ADC_InitStructure.ADC_ScanConvMode = DISABLE;	      // ÉèÖÃADCÎªµ¥Í¨µÀÄ£Ê½
-	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;	// ÉèÖÃADCÎªµ¥´Î×ª»»Ä£Ê½
+	// é…ç½®ADCå‚æ•°
+	ADC_DeInit(ADC1);                                   // æ¸…é™¤ADC1è®¾ç½®
+	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;	// è®¾ç½®ADCä¸ºç‹¬ç«‹æ¨¡å¼
+	ADC_InitStructure.ADC_ScanConvMode = DISABLE;	      // è®¾ç½®ADCä¸ºå•é€šé“æ¨¡å¼
+	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;	// è®¾ç½®ADCä¸ºå•æ¬¡è½¬æ¢æ¨¡å¼
 	
-	// ½ûÓÃADCÍâ²¿´¥·¢Ä£Ê½£¬±¾ÏîÄ¿ÖĞÓÉÈí¼ş¿ØÖÆ²âÁ¿
+	// ç¦ç”¨ADCå¤–éƒ¨è§¦å‘æ¨¡å¼ï¼Œæœ¬é¡¹ç›®ä¸­ç”±è½¯ä»¶æ§åˆ¶æµ‹é‡
 	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
 	
-	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;	  // ÉèÖÃADCÊı¾İ¶ÔÆë·½Ê½ÎªÓÒ¶ÔÆë
-	ADC_InitStructure.ADC_NbrOfChannel = 14;	                // ±¾ÏîÄ¿ÖĞÊ¹ÓÃµÄÊÇADC1µÄ14Í¨µÀ
-	ADC_Init(ADC1, &ADC_InitStructure);                       // ½«ÒÔÉÏ²ÎÊıÅäÖÃµ½ADC1µÄ¼Ä´æÆ÷
-	ADC_Cmd(ADC1, ENABLE);                                    // Ê¹ÄÜADC1
-	ADC_ResetCalibration(ADC1);                               // ¸´Î»Ğ£×¼
-	while(ADC_GetResetCalibrationStatus(ADC1));               // µÈ´ı¸´Î»Íê³É
-	ADC_StartCalibration(ADC1);                               // ¿ªÊ¼Ğ£×¼
-	while(ADC_GetCalibrationStatus(ADC1));                    // µÈ´ıĞ£×¼Íê³É
+	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;	  // è®¾ç½®ADCæ•°æ®å¯¹é½æ–¹å¼ä¸ºå³å¯¹é½
+	ADC_InitStructure.ADC_NbrOfChannel = 14;	                // æœ¬é¡¹ç›®ä¸­ä½¿ç”¨çš„æ˜¯ADC1çš„14é€šé“
+	ADC_Init(ADC1, &ADC_InitStructure);                       // å°†ä»¥ä¸Šå‚æ•°é…ç½®åˆ°ADC1çš„å¯„å­˜å™¨
+	ADC_Cmd(ADC1, ENABLE);                                    // ä½¿èƒ½ADC1
+	ADC_ResetCalibration(ADC1);                               // å¤ä½æ ¡å‡†
+	while(ADC_GetResetCalibrationStatus(ADC1));               // ç­‰å¾…å¤ä½å®Œæˆ
+	ADC_StartCalibration(ADC1);                               // å¼€å§‹æ ¡å‡†
+	while(ADC_GetCalibrationStatus(ADC1));                    // ç­‰å¾…æ ¡å‡†å®Œæˆ
 }
 
 void Detect_Volt(void)
 {
 	float temp_volt = 0;
-	ADC_RegularChannelConfig(ADC1, 14, 1, ADC_SampleTime_239Cycles5 );     // ÉèÖÃADC²ÉÑùÖÜÆÚ		     
-	ADC_SoftwareStartConvCmd(ADC1, ENABLE);		                             // Èí¼şÆô¶¯ADC×ª»»
-	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC ));                        // µÈ´ı×ª»»Íê³É
-	temp_volt = ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;              // ¸ù¾İÓ²¼şµç×è·ÖÑ¹±ÈÀıºÍ²Î¿¼µçÑ¹£¬¼ÆËã³öµçÑ¹
+	ADC_RegularChannelConfig(ADC1, 14, 1, ADC_SampleTime_239Cycles5 );     // è®¾ç½®ADCé‡‡æ ·å‘¨æœŸ		     
+	ADC_SoftwareStartConvCmd(ADC1, ENABLE);		                             // è½¯ä»¶å¯åŠ¨ADCè½¬æ¢
+	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC ));                        // ç­‰å¾…è½¬æ¢å®Œæˆ
+	temp_volt = ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;              // æ ¹æ®ç¡¬ä»¶ç”µé˜»åˆ†å‹æ¯”ä¾‹å’Œå‚è€ƒç”µå‹ï¼Œè®¡ç®—å‡ºç”µå‹
 	bat_volt = bat_volt * 0.9 + temp_volt * 0.1;
 }
 
@@ -60,17 +60,17 @@ void Init_Volt(void)
 	float temp_volt = 0;
 	int i = 0;
 	
-	ADC_RegularChannelConfig(ADC1, 14, 1, ADC_SampleTime_239Cycles5 );     // ÉèÖÃADC²ÉÑùÖÜÆÚ		     
-	ADC_SoftwareStartConvCmd(ADC1, ENABLE);		                             // Èí¼şÆô¶¯ADC×ª»»
-	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC ));                        // µÈ´ı×ª»»Íê³É
-	bat_volt = ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;              // ¸ù¾İÓ²¼şµç×è·ÖÑ¹±ÈÀıºÍ²Î¿¼µçÑ¹£¬¼ÆËã³öµçÑ¹
+	ADC_RegularChannelConfig(ADC1, 14, 1, ADC_SampleTime_239Cycles5 );     // è®¾ç½®ADCé‡‡æ ·å‘¨æœŸ		     
+	ADC_SoftwareStartConvCmd(ADC1, ENABLE);		                             // è½¯ä»¶å¯åŠ¨ADCè½¬æ¢
+	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC ));                        // ç­‰å¾…è½¬æ¢å®Œæˆ
+	bat_volt = ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;              // æ ¹æ®ç¡¬ä»¶ç”µé˜»åˆ†å‹æ¯”ä¾‹å’Œå‚è€ƒç”µå‹ï¼Œè®¡ç®—å‡ºç”µå‹
 
 	for(int i = 0; i < 10; i++)
 	{
-		ADC_RegularChannelConfig(ADC1, 14, 1, ADC_SampleTime_239Cycles5 );     // ÉèÖÃADC²ÉÑùÖÜÆÚ		     
-		ADC_SoftwareStartConvCmd(ADC1, ENABLE);		                             // Èí¼şÆô¶¯ADC×ª»»
-		while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC ));                        // µÈ´ı×ª»»Íê³É
-		temp_volt = ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;              // ¸ù¾İÓ²¼şµç×è·ÖÑ¹±ÈÀıºÍ²Î¿¼µçÑ¹£¬¼ÆËã³öµçÑ¹
+		ADC_RegularChannelConfig(ADC1, 14, 1, ADC_SampleTime_239Cycles5 );     // è®¾ç½®ADCé‡‡æ ·å‘¨æœŸ		     
+		ADC_SoftwareStartConvCmd(ADC1, ENABLE);		                             // è½¯ä»¶å¯åŠ¨ADCè½¬æ¢
+		while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC ));                        // ç­‰å¾…è½¬æ¢å®Œæˆ
+		temp_volt = ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;              // æ ¹æ®ç¡¬ä»¶ç”µé˜»åˆ†å‹æ¯”ä¾‹å’Œå‚è€ƒç”µå‹ï¼Œè®¡ç®—å‡ºç”µå‹
 		bat_volt = bat_volt * 0.9 + temp_volt * 0.1;
 	}
 	
@@ -79,8 +79,8 @@ void Init_Volt(void)
 
 
 ///**
-//  * @brief  ³õÊ¼»¯ÓÃÓÚ²âÁ¿CCD
-//  *         ±¾ÏîÄ¿ÖĞÊ¹ÓÃADC1µÄµÚ15¸öÍ¨µÀ½øĞĞ¼ì²â£¬¶ÔÓ¦µ¥Æ¬»úµÄµÄPC5Õâ¸ö¹Ü½Å
+//  * @brief  åˆå§‹åŒ–ç”¨äºæµ‹é‡CCD
+//  *         æœ¬é¡¹ç›®ä¸­ä½¿ç”¨ADC1çš„ç¬¬15ä¸ªé€šé“è¿›è¡Œæ£€æµ‹ï¼Œå¯¹åº”å•ç‰‡æœºçš„çš„PC5è¿™ä¸ªç®¡è„š
 //  * @note   None
 //  * @param  None
 //  * @retval None
@@ -90,42 +90,42 @@ void Init_Volt(void)
 // 	ADC_InitTypeDef ADC_InitStructure; 
 //	GPIO_InitTypeDef GPIO_InitStructure;
 //	
-//	// Ê¹ÄÜGPIOCºÍADC1Ê±ÖÓ
+//	// ä½¿èƒ½GPIOCå’ŒADC1æ—¶é’Ÿ
 //	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC	| RCC_APB2Periph_ADC1, ENABLE );
 //	
-//	// ÉèÖÃADC·ÖÆµÏµÊı
+//	// è®¾ç½®ADCåˆ†é¢‘ç³»æ•°
 //	RCC_ADCCLKConfig(RCC_PCLK2_Div6);
 //	
-//	// ÅäÖÃµçÑ¹²âÁ¿Òı½Å
+//	// é…ç½®ç”µå‹æµ‹é‡å¼•è„š
 //	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
 //	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
 //	GPIO_Init(GPIOC, &GPIO_InitStructure);
 //	
-//	// ÅäÖÃADC²ÎÊı
-//	ADC_DeInit(ADC1);                                   // Çå³ıADC1ÉèÖÃ
-//	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;	// ÉèÖÃADCÎª¶ÀÁ¢Ä£Ê½
-//	ADC_InitStructure.ADC_ScanConvMode = DISABLE;	      // ÉèÖÃADCÎªµ¥Í¨µÀÄ£Ê½
-//	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;	// ÉèÖÃADCÎªµ¥´Î×ª»»Ä£Ê½
+//	// é…ç½®ADCå‚æ•°
+//	ADC_DeInit(ADC1);                                   // æ¸…é™¤ADC1è®¾ç½®
+//	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;	// è®¾ç½®ADCä¸ºç‹¬ç«‹æ¨¡å¼
+//	ADC_InitStructure.ADC_ScanConvMode = DISABLE;	      // è®¾ç½®ADCä¸ºå•é€šé“æ¨¡å¼
+//	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;	// è®¾ç½®ADCä¸ºå•æ¬¡è½¬æ¢æ¨¡å¼
 //	
-//	// ½ûÓÃADCÍâ²¿´¥·¢Ä£Ê½£¬±¾ÏîÄ¿ÖĞÓÉÈí¼ş¿ØÖÆ²âÁ¿
+//	// ç¦ç”¨ADCå¤–éƒ¨è§¦å‘æ¨¡å¼ï¼Œæœ¬é¡¹ç›®ä¸­ç”±è½¯ä»¶æ§åˆ¶æµ‹é‡
 //	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
 //	
-//	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;	  // ÉèÖÃADCÊı¾İ¶ÔÆë·½Ê½ÎªÓÒ¶ÔÆë
-//	ADC_InitStructure.ADC_NbrOfChannel = 15;	                // ±¾ÏîÄ¿ÖĞÊ¹ÓÃµÄÊÇADC1µÄ14Í¨µÀ
-//	ADC_Init(ADC1, &ADC_InitStructure);                       // ½«ÒÔÉÏ²ÎÊıÅäÖÃµ½ADC1µÄ¼Ä´æÆ÷
-//	ADC_Cmd(ADC1, ENABLE);                                    // Ê¹ÄÜADC1
-//	ADC_ResetCalibration(ADC1);                               // ¸´Î»Ğ£×¼
-//	while(ADC_GetResetCalibrationStatus(ADC1));               // µÈ´ı¸´Î»Íê³É
-//	ADC_StartCalibration(ADC1);                               // ¿ªÊ¼Ğ£×¼
-//	while(ADC_GetCalibrationStatus(ADC1));                    // µÈ´ıĞ£×¼Íê³É
+//	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;	  // è®¾ç½®ADCæ•°æ®å¯¹é½æ–¹å¼ä¸ºå³å¯¹é½
+//	ADC_InitStructure.ADC_NbrOfChannel = 15;	                // æœ¬é¡¹ç›®ä¸­ä½¿ç”¨çš„æ˜¯ADC1çš„14é€šé“
+//	ADC_Init(ADC1, &ADC_InitStructure);                       // å°†ä»¥ä¸Šå‚æ•°é…ç½®åˆ°ADC1çš„å¯„å­˜å™¨
+//	ADC_Cmd(ADC1, ENABLE);                                    // ä½¿èƒ½ADC1
+//	ADC_ResetCalibration(ADC1);                               // å¤ä½æ ¡å‡†
+//	while(ADC_GetResetCalibrationStatus(ADC1));               // ç­‰å¾…å¤ä½å®Œæˆ
+//	ADC_StartCalibration(ADC1);                               // å¼€å§‹æ ¡å‡†
+//	while(ADC_GetCalibrationStatus(ADC1));                    // ç­‰å¾…æ ¡å‡†å®Œæˆ
 //}
 
 //void Detect_CCD(void)
 //{
-//	ADC_RegularChannelConfig(ADC1, 15, 1, ADC_SampleTime_239Cycles5 );     // ÉèÖÃADC²ÉÑùÖÜÆÚ		     
-//	ADC_SoftwareStartConvCmd(ADC1, ENABLE);		                             // Èí¼şÆô¶¯ADC×ª»»
-//	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC ));                        // µÈ´ı×ª»»Íê³É
-//	bat_volt = ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;              // ¸ù¾İÓ²¼şµç×è·ÖÑ¹±ÈÀıºÍ²Î¿¼µçÑ¹£¬¼ÆËã³öµçÑ¹
+//	ADC_RegularChannelConfig(ADC1, 15, 1, ADC_SampleTime_239Cycles5 );     // è®¾ç½®ADCé‡‡æ ·å‘¨æœŸ		     
+//	ADC_SoftwareStartConvCmd(ADC1, ENABLE);		                             // è½¯ä»¶å¯åŠ¨ADCè½¬æ¢
+//	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC ));                        // ç­‰å¾…è½¬æ¢å®Œæˆ
+//	bat_volt = ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;              // æ ¹æ®ç¡¬ä»¶ç”µé˜»åˆ†å‹æ¯”ä¾‹å’Œå‚è€ƒç”µå‹ï¼Œè®¡ç®—å‡ºç”µå‹
 //}
 
 

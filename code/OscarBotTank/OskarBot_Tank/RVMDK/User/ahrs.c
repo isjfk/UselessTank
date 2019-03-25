@@ -12,23 +12,23 @@
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h" 
 
-// µç³ØµçÑ¹
+// ç”µæ± ç”µå‹
 extern float bat_volt;
 
-// Ò¡¸ËÍÆ¶¯·ù¶È²úÉúµÄPWMÖµ
+// æ‘‡æ†æ¨åŠ¨å¹…åº¦äº§ç”Ÿçš„PWMå€¼
 extern int joy_left_pwm, joy_right_pwm;
 
 extern uint16_t cmd_status;
 
 
-int Encoder_Left,Encoder_Right;             //Á½¸öµç»ú±àÂëÆ÷Öµ
+int Encoder_Left,Encoder_Right;             //ä¸¤ä¸ªç”µæœºç¼–ç å™¨å€¼
 int Moto1,Moto2;                       
-int Voltage;                                //µçÔ´µçÑ¹
-float Angle_Balance,Gyro_Balance,Gyro_Turn; //Æ½ºâ½Ç¶È£¬Æ½ºâ½ÇËÙÂÊ£¬×ªÏò½ÇËÙÂÊ
+int Voltage;                                //ç”µæºç”µå‹
+float Angle_Balance,Gyro_Balance,Gyro_Turn; //å¹³è¡¡è§’åº¦ï¼Œå¹³è¡¡è§’é€Ÿç‡ï¼Œè½¬å‘è§’é€Ÿç‡
 
 float Pitch = 0, Roll = 0, Yaw = 0;
 short gyro[3], accel[3];
-float Acceleration_Z;                       //ZÖá¼ÓËÙ¶È
+float Acceleration_Z;                       //Zè½´åŠ é€Ÿåº¦
 
 int Balance_Pwm, Velocity_Pwm, Turn_Pwm;
 
@@ -44,31 +44,31 @@ void AHRS(void)
 	short aacx,aacy,aacz;	        
 	short gyrox,gyroy,gyroz;     
 	
-	// ¶ÁÈ¡±àÂëÆ÷£¬ÒòÎªÁ½¸öµç»úµÄĞı×ªÁË180¶ÈµÄ£¬ËùÒÔĞèÒª¶ÔÆäÖĞÒ»¸öÈ¡·´
+	// è¯»å–ç¼–ç å™¨ï¼Œå› ä¸ºä¸¤ä¸ªç”µæœºçš„æ—‹è½¬äº†180åº¦çš„ï¼Œæ‰€ä»¥éœ€è¦å¯¹å…¶ä¸­ä¸€ä¸ªå–å
 	Encoder_Left = Read_Encoder(2); 
 	Encoder_Right = -Read_Encoder(8);                           
 	
 //	if(mpu_mpl_get_data(&pitch,&roll,&yaw)==0)
 //	{
-//		MPU_Get_Accelerometer(&aacx,&aacy,&aacz);	//µÃµ½¼ÓËÙ¶È´«¸ĞÆ÷Êı¾İ
-//		MPU_Get_Gyroscope(&gyrox,&gyroy,&gyroz);	//µÃµ½ÍÓÂİÒÇÊı¾İ
+//		MPU_Get_Accelerometer(&aacx,&aacy,&aacz);	//å¾—åˆ°åŠ é€Ÿåº¦ä¼ æ„Ÿå™¨æ•°æ®
+//		MPU_Get_Gyroscope(&gyrox,&gyroy,&gyroz);	//å¾—åˆ°é™€èºä»ªæ•°æ®
 
-//		Angle_Balance = roll;            // ¶ÁÈ¡º½×ËÖĞµÄROLL
-//		Gyro_Balance = gyrox;            // ¶ÁÈ¡Æ½ºâ½ÇËÙ¶È£¨ÕâÀïÖ¸XÖá½ÇËÙÂÊ£©
-//		Gyro_Turn = gyroy;               // ¶ÁÈ¡×ªÏò½ÇËÙ¶È£¨ÕâÀïÖ¸YÖá½ÇËÙÂÊ£©
-//		Acceleration_Z = aacz;           // ¶ÁÈ¡ZÖá¼ÓËÙ¶È
+//		Angle_Balance = roll;            // è¯»å–èˆªå§¿ä¸­çš„ROLL
+//		Gyro_Balance = gyrox;            // è¯»å–å¹³è¡¡è§’é€Ÿåº¦ï¼ˆè¿™é‡ŒæŒ‡Xè½´è§’é€Ÿç‡ï¼‰
+//		Gyro_Turn = gyroy;               // è¯»å–è½¬å‘è§’é€Ÿåº¦ï¼ˆè¿™é‡ŒæŒ‡Yè½´è§’é€Ÿç‡ï¼‰
+//		Acceleration_Z = aacz;           // è¯»å–Zè½´åŠ é€Ÿåº¦
 
-//		//printf("\r\n¼ÓËÙ¶È£º %8.2f%8.2f%8.2f    ", roll, yaw, pitch);
+//		//printf("\r\nåŠ é€Ÿåº¦ï¼š %8.2f%8.2f%8.2f    ", roll, yaw, pitch);
 //	}
 //	
 //	Balance_Pwm = Balance(Angle_Balance,Gyro_Balance); 
 //	Velocity_Pwm = velocity(Encoder_Left,Encoder_Right); 
 //	Turn_Pwm = 0;  
 
-	//printf("\r\n¼ÓËÙ¶È£º %8.2d%8.2f%8.2d%8.2d%8.2d%8.2d    ", Balance_Pwm, Gyro_Balance, Velocity_Pwm, Turn_Pwm, Encoder_Left, Encoder_Right);
+	//printf("\r\nåŠ é€Ÿåº¦ï¼š %8.2d%8.2f%8.2d%8.2d%8.2d%8.2d    ", Balance_Pwm, Gyro_Balance, Velocity_Pwm, Turn_Pwm, Encoder_Left, Encoder_Right);
 	
-//	Moto1=Balance_Pwm+Velocity_Pwm+Turn_Pwm + joy_left_pwm * 10;       // µç»ú1PWM
-//	Moto2=Balance_Pwm+Velocity_Pwm-Turn_Pwm + joy_right_pwm * 10;      // µç»ú2PWM
+//	Moto1=Balance_Pwm+Velocity_Pwm+Turn_Pwm + joy_left_pwm * 10;       // ç”µæœº1PWM
+//	Moto2=Balance_Pwm+Velocity_Pwm-Turn_Pwm + joy_right_pwm * 10;      // ç”µæœº2PWM
 	
 	
 	
@@ -81,8 +81,8 @@ void AHRS(void)
 	}
 	else
 	{
-		Moto1 = joy_left_pwm * 10;       // µç»ú1PWM
-		Moto2 = joy_right_pwm * 10;      // µç»ú2PWM
+		Moto1 = joy_left_pwm * 10;       // ç”µæœº1PWM
+		Moto2 = joy_right_pwm * 10;      // ç”µæœº2PWM
 		Set_Pwm(-Moto1, -Moto2);    
 	}
 	
@@ -147,7 +147,7 @@ void Set_Pwm(int moto1, int moto2)
 uint8_t Turn_Off(float angle, int voltage)
 {
 	u8 temp;
-	if(angle < -40 || angle > 40 || Voltage < 1110)  //µçÑ¹µÍÓÚ11.1V ¹Ø±Õµç»ú
+	if(angle < -40 || angle > 40 || Voltage < 1110)  //ç”µå‹ä½äº11.1V å…³é—­ç”µæœº
 	{	                                                                
 		temp=1;                                                         
 	}
@@ -169,7 +169,7 @@ int Balance(float Angle, float Gyro)
 	int balance;
 	
 	
-	Bias = Angle - angle_adj;           // ×Ô¶¯ÕÒ³öĞ¡³µÖØĞÄÎ»ÖÃ
+	Bias = Angle - angle_adj;           // è‡ªåŠ¨æ‰¾å‡ºå°è½¦é‡å¿ƒä½ç½®
 	
 	
 	
@@ -210,7 +210,7 @@ int Balance(float Angle, float Gyro)
 	
 	
 	
-	balance = 500 * Bias + Gyro * 0.20;  // Æ½ºâ¿ØÖÆµç»úPWM  PD¿ØÖÆ£º500ÊÇPÏµÊı 0.20ÊÇDÏµÊı 
+	balance = 500 * Bias + Gyro * 0.20;  // å¹³è¡¡æ§åˆ¶ç”µæœºPWM  PDæ§åˆ¶ï¼š500æ˜¯Pç³»æ•° 0.20æ˜¯Dç³»æ•° 
 	return balance;
 }
 

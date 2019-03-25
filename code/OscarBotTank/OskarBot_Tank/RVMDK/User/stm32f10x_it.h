@@ -44,7 +44,7 @@ void SVC_Handler(void);
 void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
-void TIM4_IRQHandler(void);					//TIM4÷–∂œ¥¶¿Ì
+void TIM4_IRQHandler(void);					//TIM4‰∏≠Êñ≠Â§ÑÁêÜ
 
 #ifdef __cplusplus
 }
