@@ -161,5 +161,6 @@ fabric.properties
 
 # IntelliJ IDEA
 *.iml
+/target
 /.idea
 

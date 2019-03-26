@@ -1,6 +1,7 @@
 package com.sap.cicn.tank.service.impl;
 
 import com.fazecast.jSerialComm.SerialPort;
+import com.sap.cicn.tank.logger.LightLogger;
 import com.sap.cicn.tank.service.PortService;
 import org.springframework.stereotype.Service;
 
@@ -9,27 +10,26 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class PortServiceImpl implements PortService {
+    private final LightLogger LOGGER = LightLogger.getLogger(this);
+
     @Override
     public Boolean sendCommandToPort(String command) {
         Boolean result =false;
-        SerialPort comPort = SerialPort.getCommPorts()[4];
+       // SerialPort comPort = SerialPort.getCommPorts()[4];
+        SerialPort comPort = SerialPort.getCommPort("/dev/ttyS0");
         comPort.openPort();
         try {
             while (true)
             {
-//                while (comPort.bytesAvailable() == 0)
-//                    Thread.sleep(20);
-               // comPort.setComPortParameters(9600,8,1,0);
-                comPort.setComPortParameters(9600,8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
-
+                comPort.setComPortParameters(115200,8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
                 comPort.writeBytes(command.getBytes(), command.length());
                 byte[] readBuffer = new byte[comPort.bytesAvailable()];
                 int numRead = comPort.readBytes(readBuffer, readBuffer.length);
                 if(numRead != 0) result = true;
-                System.out.println("Read " + numRead + " bytes.");
+                LOGGER.info("Read " + numRead + " bytes.");
                 break;
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { LOGGER.error("failed to execute command", e);}
         comPort.closePort();
         return result;
     }

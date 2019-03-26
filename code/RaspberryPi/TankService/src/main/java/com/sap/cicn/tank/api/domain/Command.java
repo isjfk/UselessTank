@@ -3,8 +3,10 @@ package com.sap.cicn.tank.api.domain;
 /**
  * Created by i065037 on 2019/3/25.
  */
-public class CommandRequestParam {
+public class Command {
+
     private String command;
+    private Long executionTime;
 
     public String getCommand() {
         return command;
@@ -14,10 +16,19 @@ public class CommandRequestParam {
         this.command = command;
     }
 
+    public Long getExecutionTime() {
+        return executionTime;
+    }
+
+    public void setExecutionTime(Long executionTime) {
+        this.executionTime = executionTime;
+    }
+
     @Override
     public String toString() {
-        return "CommandRequestParam{" +
+        return "Command{" +
                 "command='" + command + '\'' +
+                ", executionTime=" + executionTime +
                 '}';
     }
 }
