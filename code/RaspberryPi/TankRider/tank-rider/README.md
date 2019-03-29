@@ -1,27 +1,34 @@
-# TankRider
+# UselessTank TankRider
+Remote control tank
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.3.6.
+## Setup Guide
+### Environment Setup
+1. Install node.js.
+    * Set proxy for npm after install node.js, run following command in bash:
+        ```bash
+        npm config set proxy http://proxy.pal.sap.corp:8080/
+        npm config set https-proxy http://proxy.pal.sap.corp:8080/
+        ```
 
-## Development server
-
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+2. Install Angular CLI
+    * To install the CLI using npm, run the following command:
+      ```bash
+        npm install -g @angular/cli
+        ```
+### Project Setup
+1. Clone the project & setup.
+    * Run following command in bash:
+        ```bash
+        git clone https://github.wdf.sap.corp/cicn/UselessTank.git 
+        cd ‎⁨UselessTank⁩/code⁩/RaspberryPi⁩/TankRider⁩/tank-rider⁩
+        npm install
+        ```
+        
+2. Start the service
+    * Run following command in bash:
+        ```bash
+        ng serve
+        ```
+    * Access page in your browser:
+        * URL: http://localhost:4200/
+       
