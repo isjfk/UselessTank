@@ -9,6 +9,7 @@ import { TankStateComponent } from './tank-state/tank-state.component';
 import { MapComponent } from './map/map.component';
 import { HomeComponent } from './home/home.component';
 import { HttpClientModule } from '@angular/common/http';
+import { HttpModule } from '@angular/http';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { HttpClientModule } from '@angular/common/http';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    HttpClientModule
+    HttpClientModule,
+    HttpModule
   ],
   providers: [HttpClientModule],
   bootstrap: [AppComponent]
