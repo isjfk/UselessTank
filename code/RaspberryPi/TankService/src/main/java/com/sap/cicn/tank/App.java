@@ -15,8 +15,8 @@ public class App {
 
     public static void main(String[] args) {
         SpringApplication.run(App.class,args);
-        Thread commandThread = new Thread(new CommandExecutor());
-        commandThread.start();
+       // Thread commandThread = new Thread(new CommandExecutor());
+        //commandThread.start();
     }
 
     @Bean

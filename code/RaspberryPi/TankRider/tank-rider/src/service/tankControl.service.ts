@@ -57,9 +57,7 @@ export class TankControlService extends AbstractService {
     var speed = 50;
     return this.http
     .post<string>(this.commandServieUrl, [{
-      "command":"$AP0:" + (127-speed) + "X127Y!","executionTime":50
-    },{
-      "command":"$AP0:127X127Y!","executionTime":null
+      "command":"$AP0:" + (127-speed) + "X127Y!","executionTime":null
     }],this.httpOptions)
     .pipe(
       tap(_ => this.log('send left command succesfuly ')),
@@ -71,9 +69,7 @@ export class TankControlService extends AbstractService {
     var speed = 50;
     return this.http
     .post<string>(this.commandServieUrl, [{
-      "command":"$AP0:" + (127+speed) + "X127Y!","executionTime":50
-    },{
-      "command":"$AP0:127X127Y!","executionTime":null
+      "command":"$AP0:" + (127+speed) + "X127Y!","executionTime":null
     }],this.httpOptions)
     .pipe(
       tap(_ => this.log('send right command succesfuly ')),

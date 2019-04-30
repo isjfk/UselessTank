@@ -26,7 +26,15 @@ public class PortController {
     @RequestMapping(value = "/sendCommand", method = { RequestMethod.POST })
     public ResponseEntity<Boolean> sendSerialCommand(@RequestBody List<Command> commands){
         commands.forEach(command -> {
-            CommandContainer.addCommand(command);
+            //CommandContainer.addCommand(command);
+            portService.sendCommandToPort(command.getCommand());
+            if (command.getExecutionTime() != null) {
+                try {
+                    Thread.sleep(command.getExecutionTime());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         });
         return new ResponseEntity<Boolean>(true, HttpStatus.OK);
     }

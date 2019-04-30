@@ -12,25 +12,36 @@ import org.springframework.stereotype.Service;
 public class PortServiceImpl implements PortService {
     private final LightLogger LOGGER = LightLogger.getLogger(this);
 
+    private SerialPort comPort = null;
+
+    public void init() {
+        if (comPort != null) {
+            return;
+        }
+        comPort = SerialPort.getCommPort("/dev/ttyS0");
+        comPort.openPort();
+        comPort.setComPortParameters(115200, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
+        comPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 200, 200);
+    }
+
     @Override
     public Boolean sendCommandToPort(String command) {
-        Boolean result =false;
-       // SerialPort comPort = SerialPort.getCommPorts()[4];
-        SerialPort comPort = SerialPort.getCommPort("/dev/ttyS0");
-        comPort.openPort();
+        this.init();
+        // SerialPort comPort = SerialPort.getCommPorts()[4];
+
         try {
-            while (true)
-            {
-                comPort.setComPortParameters(115200,8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
-                comPort.writeBytes(command.getBytes(), command.length());
-                byte[] readBuffer = new byte[comPort.bytesAvailable()];
-                int numRead = comPort.readBytes(readBuffer, readBuffer.length);
-                if(numRead != 0) result = true;
-                LOGGER.info("Read " + numRead + " bytes.");
-                break;
+            int length = comPort.writeBytes(command.getBytes(), command.length());
+            return length == command.length();
+        } catch (Exception e) {
+            LOGGER.error("failed to execute command", e);
+            try {
+                comPort.closePort();
+            } catch (Exception ex) {
+
             }
-        } catch (Exception e) { LOGGER.error("failed to execute command", e);}
-        comPort.closePort();
-        return result;
+            comPort = null;
+        }
+
+        return false;
     }
 }

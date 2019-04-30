@@ -8,7 +8,7 @@ import com.sap.cicn.tank.spring.ApplicationContextHolder;
 /**
  * Created by i065037 on 2019/3/26.
  */
-public class CommandExecutor implements Runnable{
+public class CommandExecutor implements Runnable {
 
     private final LightLogger LOGGER = LightLogger.getLogger(this);
     private PortService portService = ApplicationContextHolder.getBean(PortService.class);
@@ -16,21 +16,23 @@ public class CommandExecutor implements Runnable{
     @Override
     public void run() {
         LOGGER.info("Command executor start");
-        while(true){
-            Command command = CommandContainer.getCommandQueue().poll();
-            if(command==null){
-                //LOGGER.info("Current no command in the queue");
-                continue;
-            }
-            Boolean result = portService.sendCommandToPort(command.getCommand());
+        while (true) {
+            Command command = null;
             try {
-                if(command.getExecutionTime()!=null) {
+                command = CommandContainer.getCommandQueue().take();
+                if (command == null) {
+                    continue;
+                }
+                Boolean result = portService.sendCommandToPort(command.getCommand());
+                if (command.getExecutionTime() != null) {
                     Thread.sleep(command.getExecutionTime());
                 }
+
+                LOGGER.info("Command executed " + result + " with [ " + command + " ]");
             } catch (InterruptedException e) {
-               LOGGER.error("Failed to execute command", e);
+                LOGGER.error("Failed to execute command", e);
             }
-            LOGGER.info("Command executed " + result +" with [ "+ command+" ]");
+
         }
     }
 }
