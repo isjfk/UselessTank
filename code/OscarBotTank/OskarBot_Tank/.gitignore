@@ -1,0 +1,9 @@
+##################################################
+# Project Git Ignore
+##################################################
+DebugConfig/
+Listings/
+Objects/
+JLinkLog.txt
+JLinkSettings.txt
+*.uvguix.*
