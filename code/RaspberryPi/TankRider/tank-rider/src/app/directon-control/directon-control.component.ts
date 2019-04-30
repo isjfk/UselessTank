@@ -62,7 +62,7 @@ export class DirectonControlComponent implements OnInit {
         }
 
         else if(event.keyCode === 32){
-          let highlightright: HTMLElement = this.el.nativeElement.querySelector("#rightbtn");
+          let highlightright: HTMLElement = this.el.nativeElement.querySelector("#cyclebtn");
           //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
           this.tankcontrol.sendStopCommand("stop").subscribe(result=>{}); 
           highlightright.style.backgroundColor = 'yellow';
