@@ -17,7 +17,6 @@ import com.sap.cicn.tank.api.domain.CameraAngle;
 import com.sap.cicn.tank.api.domain.CameraAngleRange;
 import com.sap.cicn.tank.common.logger.LightLogger;
 import com.sap.cicn.tank.hardware.driver.PCA9635Driver;
-import com.sap.cicn.tank.hardware.i2c.I2CDeviceFactory;
 import com.sap.cicn.tank.service.CameraPanTiltService;
 
 /**
@@ -90,10 +89,10 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        driver = PCA9635Driver.getInstance();
-        driver.oscClock(25000000);      // 25MHz
-        driver.pwmFreq(50);             // 50Hz
-        driver.init();
+        driver = PCA9635Driver.getInstance()
+                .oscClock(25000000)     // 25MHz
+                .pwmFreq(50)            // 50Hz
+                .init();
 
         new Thread(cameraAngleUpdateTask, "CameraAngleUpdateThread").start();
     }
@@ -103,8 +102,7 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
      */
     @Override
     public void destroy() throws Exception {
-        // FIXME: Find a good way to close
-        I2CDeviceFactory.close();
+        driver.close();
     }
 
     private void cameraAngleUpdate() {

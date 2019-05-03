@@ -29,6 +29,11 @@ public class PCA9635Driver {
     public static final int MODE2_ADDRESS = 0x01;
     public static final int PRESCALE_ADDRESS = 0xFE;
     public static final int CHANNEL0_ADDRESS = 0x06;
+
+    public static final int MODE1_BIT_RESTART = 0x80;
+    public static final int MODE1_BIT_SLEEP = 0x10;
+    public static final int MODE2_BIT_TOTEM_POLE = 0x04;
+
     public static final int CHANNEL_LENGTH = 4;
     public static final int ON_L_OFFSET = 0;
     public static final int ON_H_OFFSET = 1;
@@ -82,33 +87,51 @@ public class PCA9635Driver {
 
     public synchronized PCA9635Driver init() {
         try {
+            int mode1 = device.read(MODE1_ADDRESS);
+
+            // Enter sleep mode before change parameters.
+            mode1 &= ~MODE1_BIT_RESTART;
+            mode1 |= MODE1_BIT_SLEEP;
+            device.write(MODE1_ADDRESS, (byte) mode1);
+
             BigDecimal preScale = BigDecimal.valueOf(oscClock);
             preScale = preScale.divide(BigDecimal.valueOf(4096), BigDecimal.ROUND_HALF_UP);
             preScale = preScale.divide(BigDecimal.valueOf(pwmFreq), BigDecimal.ROUND_HALF_UP);
             preScale = preScale.setScale(0, BigDecimal.ROUND_HALF_UP);
             preScale = preScale.subtract(BigDecimal.valueOf(1));
 
-            device.write(MODE1_ADDRESS, (byte) 0x00);
-
-            int orgMode1 = device.read(MODE1_ADDRESS);
-            int newMode1 = orgMode1 & 0x7F;     // Don't update restart status.
-            newMode1 |= 0x10;                   // Enter sleep mode.
-
-            device.write(MODE1_ADDRESS, (byte) newMode1);
+            // Change parameters.
             device.write(PRESCALE_ADDRESS, preScale.byteValue());
-            device.write(MODE1_ADDRESS, (byte) orgMode1);
-
-            SystemUtils.sleepAtLeast(200);
-            newMode1 = orgMode1 | 0x80;         // Restart enabled.
-
-            device.write(MODE1_ADDRESS, (byte) newMode1);
             device.write(MODE2_ADDRESS, (byte) 0x04);
+
+            // Exit sleep mode.
+            mode1 &= ~MODE1_BIT_RESTART;
+            mode1 &= ~MODE1_BIT_SLEEP;
+            device.write(MODE1_ADDRESS, (byte) mode1);
+            SystemUtils.sleepAtLeast(200);
+
+            // Restart PWM channel.
+            mode1 |= MODE1_BIT_RESTART;
+            device.write(MODE1_ADDRESS, (byte) mode1);
         } catch (Exception e) {
             log.error(e, "Error initialize PCA9635 on I2C bus[", address.getBusNumber(), "] address[", address.getAddress(), "].");
             throw new InternalException(e, "Error initialize PCA9635 on I2C bus[", address.getBusNumber(), "] address[", address.getAddress(), "].");
         }
 
         return this;
+    }
+
+    public synchronized void close() {
+        try {
+            int mode1 = device.read(MODE1_ADDRESS);
+            mode1 &= ~MODE1_BIT_RESTART;        // Don't update restart status.
+            mode1 |= MODE1_BIT_SLEEP;           // Enter sleep mode.
+
+            device.write(MODE1_ADDRESS, (byte) mode1);
+        } catch (Exception e) {
+            log.error(e, "Error close PCA9635 on I2C bus[", address.getBusNumber(), "] address[", address.getAddress(), "].");
+            throw new InternalException(e, "Error close PCA9635 on I2C bus[", address.getBusNumber(), "] address[", address.getAddress(), "].");
+        }
     }
 
     public synchronized void setPwm(byte channel, short onValue, short offValue) {
