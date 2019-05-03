@@ -9,7 +9,6 @@ import java.util.Map;
 import com.pi4j.io.i2c.I2CBus;
 import com.pi4j.io.i2c.I2CDevice;
 import com.pi4j.io.i2c.I2CFactory;
-import com.sap.cicn.tank.common.exception.InternalException;
 import com.sap.cicn.tank.common.logger.LightLogger;
 
 /**
@@ -32,7 +31,7 @@ public class I2CDeviceFactory {
             return bus.getDevice(address);
         } catch (Exception e) {
             log.error(e, "Error initialize I2C device on bus[", busNumber, "] address[", address, "].");
-            throw new InternalException(e, "Error initialize I2C device on bus[", busNumber, "] address[", address, "].");
+            return null;
         }
     }
 

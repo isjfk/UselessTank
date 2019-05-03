@@ -63,11 +63,15 @@ public class PCA9635Driver {
     }
 
     public static synchronized PCA9635Driver getInstance(int i2cBusNumber, int i2cAddress) {
-        I2cAddress address = new I2cAddress(i2cBusNumber, i2cAddress);
+        I2CDevice device = I2CDeviceFactory.getI2cDevice(i2cBusNumber, i2cAddress);
+        if (device == null) {
+            return null;
+        }
 
+        I2cAddress address = new I2cAddress(i2cBusNumber, i2cAddress);
         PCA9635Driver driver = driverMap.get(address);
         if (driver == null) {
-            driver = new PCA9635Driver(address, I2CDeviceFactory.getI2cDevice(i2cBusNumber, i2cAddress));
+            driver = new PCA9635Driver(address, device);
 
             driverMap.put(address, driver);
         }

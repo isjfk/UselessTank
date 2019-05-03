@@ -35,7 +35,7 @@ public interface CameraPanTiltService {
     /**
      * Set camera angle.
      * <ul>
-     * <li>angle.pan: Angle in horizontal direction. <0 to left, >0 to right.
+     * <li>angle.pan: Angle in horizontal direction. <0 to right, >0 to left.
      * <li>angle.tilt: Angle in vertical direction. <0 to down, >0 to up.
      * </ul>
      *

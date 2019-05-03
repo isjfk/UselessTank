@@ -73,7 +73,7 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
         cameraAngleRange.setTiltMin(BigDecimal.valueOf(-50));
         cameraAngleRange.setTiltCenter(BigDecimal.valueOf(0));
         cameraAngleRange.setTiltMax(BigDecimal.valueOf(50));
-        cameraAngleRange.setTiltOffset(BigDecimal.valueOf(7));
+        cameraAngleRange.setTiltOffset(BigDecimal.valueOf(-7));
 
         CameraAngle cameraAngle = new CameraAngle();
 
@@ -89,12 +89,19 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        driver = PCA9635Driver.getInstance()
+        driver = PCA9635Driver.getInstance();
+        if (driver == null) {
+            log.error("Error find PCA9635 device, probably it's local development environment. Camera Pan-Tilt will not start.");
+            return;
+        }
+
+        driver
                 .oscClock(25000000)     // 25MHz
                 .pwmFreq(50)            // 50Hz
                 .init();
 
         new Thread(cameraAngleUpdateTask, "CameraAngleUpdateThread").start();
+
     }
 
     /**
@@ -108,8 +115,11 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
     private void cameraAngleUpdate() {
         CameraAngle angle = cameraAngleRef.get();
         CameraAngleRange angleRange = angle.getRange();
-        driver.setServoAngle(SERVO_PAN_CHANNEL, SERVO_CENTER_ANGLE.add(angle.getPan()).add(angleRange.getPanOffset()));
-        driver.setServoAngle(SERVO_TILT_CHANNEL, SERVO_CENTER_ANGLE.add(angle.getTilt()).add(angleRange.getTiltOffset()));
+        BigDecimal panAngle = SERVO_CENTER_ANGLE.add(angle.getPan()).add(angleRange.getPanOffset());
+        BigDecimal tiltAngle = SERVO_CENTER_ANGLE.subtract(angle.getTilt()).subtract(angleRange.getTiltOffset());
+
+        driver.setServoAngle(SERVO_PAN_CHANNEL, panAngle);
+        driver.setServoAngle(SERVO_TILT_CHANNEL, tiltAngle);
     }
 
     @Scheduled(fixedRate = 3 * 1000)
