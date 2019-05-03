@@ -1,7 +1,7 @@
 package com.sap.cicn.tank.service.impl;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.sap.cicn.tank.logger.LightLogger;
+import com.sap.cicn.tank.common.logger.LightLogger;
 import com.sap.cicn.tank.service.PortService;
 import org.springframework.stereotype.Service;
 

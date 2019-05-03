@@ -1,7 +1,7 @@
 package com.sap.cicn.tank.task;
 
 import com.sap.cicn.tank.api.domain.Command;
-import com.sap.cicn.tank.logger.LightLogger;
+import com.sap.cicn.tank.common.logger.LightLogger;
 import com.sap.cicn.tank.service.PortService;
 import com.sap.cicn.tank.spring.ApplicationContextHolder;
 
