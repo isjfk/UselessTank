@@ -10,6 +10,7 @@ import { AbstractService } from './abstractService';
 export class TankControlService extends AbstractService {
 
   private commandServieUrl = this.baseUrl + '/api/Port/v1/sendCommand';
+  private panTiltServiceUrl = this.baseUrl + '/api/CameraPanTilt/v1';
 
   sendControl(command: String): Observable<string> {
     return this.http
@@ -88,6 +89,17 @@ export class TankControlService extends AbstractService {
       catchError(this.handleError('sendStopCommand', "failed to send stop command"))
     );
 
+  }
+
+  sendCameraAngle(pan:String, tilt:String): Observable<string> {
+    return this.http
+    .post<string>(this.panTiltServiceUrl, {
+      "pan":pan,"tilt":tilt
+    },this.httpOptions)
+    .pipe(
+      tap(_ => this.log('send camera angle succesfuly ')),
+      catchError(this.handleError('sendCameraAngle', "failed to send camera angle"))
+    );
   }
 
 
