@@ -9,111 +9,151 @@ import { TankControlService } from "./../../service/tankControl.service";
 })
 export class DirectonControlComponent implements OnInit {
 
-  constructor(private el: ElementRef,
-              private renderer: Renderer,
-              private tankcontrol: TankControlService) { }
+	constructor(private el: ElementRef,
+				private renderer: Renderer,
+				private tankcontrol: TankControlService) { }
 
-  ngOnInit() {
-  }
+	ngOnInit() {
+	}
 
-  //@HostBinding() public pressKey: boolean = false
+	private keyMap: Map<number, boolean> = new Map<number, boolean>();
 
+	@HostListener('window:keydown', ['$event'])
+	keydownEvent(event: any){
+        //console.log(event.keyCode + " " + event.type);
+		if ((event.type == "keydown") && this.keyMap.get(event.keyCode)) {
+			return;
+		}
 
-  @HostListener('window:keydown', ['$event']) 
-    pressEvent(event: any){
-        console.log(event.keyCode);
-        if(event.keyCode === 87)  {
-          let highlightup: HTMLElement = this.el.nativeElement.querySelector("#upbtn");
-          this.tankcontrol.sendUpCommand("forward").subscribe(result=>{});
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          highlightup.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightup.style.backgroundColor = 'white';
-          }, 1 * 1000);
+		this.keyMap.set(event.keyCode, event.type == "keydown");
+
+		// Space
+		if (event.keyCode === 32){
+          this.keyMap.clear();
         }
 
-        else if(event.keyCode === 83){
-          let highlightdown: HTMLElement = this.el.nativeElement.querySelector("#downbtn");
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          this.tankcontrol.sendBackCommand("back").subscribe(result=>{});
-          highlightdown.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightdown.style.backgroundColor = 'white';
-          }, 1 * 1000);
+		//console.log(this.keyMap);
+		this.sendControlCommand();
+		this.sendCameraAngle();
+	}
+
+	@HostListener('window:keyup',['$event'])
+	keyupEvent(event:any){
+		//console.log(event.keyCode + " " + event.type);
+		this.keyMap.set(event.keyCode, event.type == "keydown");
+
+		// Space
+		if (event.keyCode === 32){
+          this.keyMap.clear();
         }
 
-        else if(event.keyCode === 65){
-          let highlightleft: HTMLElement = this.el.nativeElement.querySelector("#leftbtn");
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          this.tankcontrol.sendLeftCommand("left").subscribe(result=>{});
-          highlightleft.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightleft.style.backgroundColor = 'white';
-          }, 1 * 1000);
-        }
-
-        else if(event.keyCode === 68){
-          let highlightright: HTMLElement = this.el.nativeElement.querySelector("#rightbtn");
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          this.tankcontrol.sendRightCommand("right").subscribe(result=>{});
-          highlightright.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightright.style.backgroundColor = 'white';
-          }, 1 * 1000);
-        }
-
-        else if(event.keyCode === 32){
-          let highlightright: HTMLElement = this.el.nativeElement.querySelector("#cyclebtn");
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          this.tankcontrol.sendStopCommand("stop").subscribe(result=>{}); 
-          highlightright.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightright.style.backgroundColor = 'white';
-          }, 1 * 1000);
-        }
-        else if(event.keyCode === 38)  {
-          let highlightup: HTMLElement = this.el.nativeElement.querySelector("#upbtnForTilt");
-          this.tankcontrol.sendCameraAngle("0","30").subscribe(result=>{});
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          highlightup.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightup.style.backgroundColor = 'white';
-          }, 1 * 1000);
-        }
-        else if(event.keyCode === 37)  {
-          let highlightup: HTMLElement = this.el.nativeElement.querySelector("#leftbtnForPan");
-          this.tankcontrol.sendCameraAngle("30","0").subscribe(result=>{});
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          highlightup.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightup.style.backgroundColor = 'white';
-          }, 1 * 1000);
-        }
-        else if(event.keyCode === 40)  {
-          let highlightup: HTMLElement = this.el.nativeElement.querySelector("#downbtnForTilt");
-          this.tankcontrol.sendCameraAngle("0","-30").subscribe(result=>{});
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          highlightup.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightup.style.backgroundColor = 'white';
-          }, 1 * 1000);
-        }
-        else if(event.keyCode === 39)  {
-          let highlightup: HTMLElement = this.el.nativeElement.querySelector("#rightbtnForPan");
-          this.tankcontrol.sendCameraAngle("-30","0").subscribe(result=>{});
-          //this.tankcontrol.sendControl("http://10.128.167.223:8080/api/Port/v1/sendCommand");
-          highlightup.style.backgroundColor = 'yellow';
-          window.setTimeout(function() {
-            highlightup.style.backgroundColor = 'white';
-          }, 1 * 1000);
-        }
-  }
-
-  @HostListener('window:keyup',['$event'])
-    pressUpEvent(event:any){
-      console.log(event.keyCode);
-      this.tankcontrol.sendStopCommand("stop").subscribe(result=>{}); 
-      this.tankcontrol.sendCameraAngle("0","0").subscribe(result=>{});
+		//console.log(this.keyMap);
+		this.sendControlCommand();
+		this.sendCameraAngle();
     }
+
+	@HostListener('window:blur',['$event'])
+	focusOutEvent(event:any){
+		//console.log(event);
+		this.keyMap.clear();
+
+		//console.log(this.keyMap);
+		this.sendControlCommand();
+		this.sendCameraAngle();
+    }
+
+	sendControlCommand() {
+		let speedValue = 127;
+		let turnValue = 60;
+		let forwardTurnOffset = 0;
+		let backwardTurnOffset = 3;
+
+		let x = 127;
+		let y = 127;
+
+		// W
+		if (this.keyMap.get(87)) {
+			y = y - speedValue;
+			x = x + forwardTurnOffset;
+			this.el.nativeElement.querySelector("#upbtn").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#upbtn").style.backgroundColor = 'white';
+		}
+
+		// S
+		if (this.keyMap.get(83)) {
+			y = y + speedValue;
+			x = x + backwardTurnOffset;
+			this.el.nativeElement.querySelector("#downbtn").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#downbtn").style.backgroundColor = 'white';
+		}
+
+		// A
+		if (this.keyMap.get(65)) {
+			x = x - turnValue;
+			this.el.nativeElement.querySelector("#leftbtn").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#leftbtn").style.backgroundColor = 'white';
+		}
+
+		// D
+		if (this.keyMap.get(68)) {
+			x = x + turnValue;
+			this.el.nativeElement.querySelector("#rightbtn").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#rightbtn").style.backgroundColor = 'white';
+		}
+
+		// Fix speed & direction range.
+		x = (x < 0) ? 0 : x;
+		x = (x > 255) ? 255 : x;
+		y = (y < 0) ? 0 : y;
+		y = (y > 255) ? 255 : y;
+
+		this.tankcontrol.sendControlCommand(x.toString(), y.toString()).subscribe(result=>{});
+	}
+
+	sendCameraAngle() {
+		let panValue = 70;
+		let tiltValue = 50;
+
+		let pan = 0;
+		let tilt = 0;
+
+		// UP
+		if (this.keyMap.get(38)) {
+			tilt = tilt + tiltValue;
+			this.el.nativeElement.querySelector("#upbtnForTilt").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#upbtnForTilt").style.backgroundColor = 'white';
+		}
+
+		// DOWN
+		if (this.keyMap.get(40)) {
+			tilt = tilt - tiltValue;
+			this.el.nativeElement.querySelector("#downbtnForTilt").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#downbtnForTilt").style.backgroundColor = 'white';
+		}
+
+		// LEFT
+		if (this.keyMap.get(37)) {
+			pan = pan + panValue;
+			this.el.nativeElement.querySelector("#leftbtnForPan").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#leftbtnForPan").style.backgroundColor = 'white';
+		}
+
+		// RIGHT
+		if (this.keyMap.get(39)) {
+			pan = pan - panValue;
+			this.el.nativeElement.querySelector("#rightbtnForPan").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#rightbtnForPan").style.backgroundColor = 'white';
+		}
+
+		this.tankcontrol.sendCameraAngle(pan.toString(), tilt.toString()).subscribe(result=>{});
+	}
 
 }

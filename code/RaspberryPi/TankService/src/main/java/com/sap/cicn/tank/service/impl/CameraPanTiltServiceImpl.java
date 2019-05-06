@@ -65,12 +65,12 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
 
         CameraAngleRange cameraAngleRange = new CameraAngleRange();
 
-        cameraAngleRange.setPanMin(BigDecimal.valueOf(-50));
+        cameraAngleRange.setPanMin(BigDecimal.valueOf(-90));
         cameraAngleRange.setPanCenter(BigDecimal.valueOf(0));
-        cameraAngleRange.setPanMax(BigDecimal.valueOf(50));
+        cameraAngleRange.setPanMax(BigDecimal.valueOf(90));
         cameraAngleRange.setPanOffset(BigDecimal.valueOf(7));
 
-        cameraAngleRange.setTiltMin(BigDecimal.valueOf(-50));
+        cameraAngleRange.setTiltMin(BigDecimal.valueOf(-40));
         cameraAngleRange.setTiltCenter(BigDecimal.valueOf(0));
         cameraAngleRange.setTiltMax(BigDecimal.valueOf(50));
         cameraAngleRange.setTiltOffset(BigDecimal.valueOf(-7));
