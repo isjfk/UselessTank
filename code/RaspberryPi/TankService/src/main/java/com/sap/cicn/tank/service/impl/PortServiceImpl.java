@@ -1,47 +1,56 @@
 package com.sap.cicn.tank.service.impl;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Service;
+
 import com.fazecast.jSerialComm.SerialPort;
+import com.sap.cicn.tank.common.exception.InternalException;
 import com.sap.cicn.tank.common.logger.LightLogger;
 import com.sap.cicn.tank.service.PortService;
-import org.springframework.stereotype.Service;
 
 /**
  * Created by i065037 on 2019/3/25.
  */
 @Service
-public class PortServiceImpl implements PortService {
-    private final LightLogger LOGGER = LightLogger.getLogger(this);
+public class PortServiceImpl implements PortService, InitializingBean {
+    private final LightLogger log = LightLogger.getLogger(this);
 
+    private String comPortDev = "/dev/ttyS0";
     private SerialPort comPort = null;
 
-    public void init() {
-        if (comPort != null) {
-            return;
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        try {
+            comPort = SerialPort.getCommPort(comPortDev);
+            comPort.openPort();
+            comPort.setComPortParameters(115200, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
+            comPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 500, 500);
+
+            log.info("Open serial port success for tank control board. comPort[", comPortDev, "]");
+        } catch (Exception e) {
+            log.error(e, "Error open serial port for tank control board. comPort[", comPortDev, "]");
+            throw new InternalException(e, "Error open serial port for tank control board. comPort[", comPortDev, "]");
         }
-        comPort = SerialPort.getCommPort("/dev/ttyS0");
-        comPort.openPort();
-        comPort.setComPortParameters(115200, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
-        comPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING | SerialPort.TIMEOUT_WRITE_BLOCKING, 200, 200);
     }
 
     @Override
     public Boolean sendCommandToPort(String command) {
-        this.init();
-        // SerialPort comPort = SerialPort.getCommPorts()[4];
-
         try {
             int length = comPort.writeBytes(command.getBytes(), command.length());
-            return length == command.length();
-        } catch (Exception e) {
-            LOGGER.error("failed to execute command", e);
-            try {
-                comPort.closePort();
-            } catch (Exception ex) {
-
+            if (length == command.length()) {
+                log.info("Send command to tank control board success. command[", command, "]");
+            } else {
+                log.error("Error send command to tank control board. command[", command, "] expectLength[", command.length(), "] writeLength[", length, "]");
             }
-            comPort = null;
+        } catch (Exception e) {
+            log.info(e, "Error send command to tank control board. command[", command, "]");
+            throw new InternalException(e, "Error send command to tank control board. command[", command, "]");
         }
 
         return false;
     }
+
 }
