@@ -5,19 +5,14 @@
 #include "usart.h"
 #include "ps2.h"
 
-
-u32 systick_ms;
 servo duoji_doing[DJ_NUM];
 u8 duoji_index1;
-
 
 u8 group_do_ok = 1;
 int do_start_index, do_time, group_num_start, group_num_end, group_num_times;
 
-
 u8 cmd_return[CMD_RETURN_SIZE];
 extern u8 uart_receive_buf[UART_BUF_SIZE], uart1_get_ok, uart1_mode;
-
 
 // Servo PWM timer
 void TIM3_Int_Init(u16 arr,u16 psc) 
@@ -336,10 +331,9 @@ void servo_init(void)
 //	duoji_doing[4].inc = 0;
 //	duoji_doing[5].cur = 1000;
 //	duoji_doing[5].inc = 0;
-	
+
 	duoji_index1 = 0;
-	systick_ms = 0;
-	
+
 	//servor tim init
 	TIM3_Int_Init(20000, 71);
 }
@@ -449,16 +443,3 @@ uint16_t str_contain_str(unsigned char *str, unsigned char *str2)
 	
 	return 0;
 }
-
-
-
-void SysTick_Int_Init(void) 
-{
-	SYSTICK_CURRENT = 0;
-	SYSTICK_RELOAD = 72000;
-	SYSTICK_CSR|=0x07;
-}
-
-
-
-

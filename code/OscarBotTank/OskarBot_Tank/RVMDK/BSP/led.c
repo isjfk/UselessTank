@@ -3,8 +3,6 @@
 #include "delay.h"
 
 
-
-
 /**
 	*	@brief		LED和蜂鸣器初始化
 	*	@param		none
@@ -22,17 +20,23 @@ void Beep_Led_Init(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
-	
+
 	LED_ON;
-	
 	delay_ms(90);
-	
-	
+
 	LED_OFF;
-	
 	delay_ms(90);
 }
 
+void beep(uint16_t onTime, uint16_t offTime) {
+    BEEP_ON;
+    LED_ON;
+    delay_ms(onTime);
+
+    BEEP_OFF;
+    LED_OFF;
+    delay_ms(offTime);
+}
 
 /**
 	*	@brief		系统初始化成功后的声光提示
@@ -41,41 +45,10 @@ void Beep_Led_Init(void)
 	*/
 void Sys_OK_Sound(void)
 {
-	BEEP_ON;
-	
-	LED_ON;
-	
-	delay_ms(90);
-	
-	BEEP_OFF;
-	
-	LED_OFF;
-	
-	delay_ms(90);
-	
-	BEEP_ON;
-	
-	LED_ON;
-	
-	delay_ms(90);
-	
-	BEEP_OFF;
-	
-	LED_OFF;
-	
-	delay_ms(90);
-	
-	BEEP_ON;
-	
-	LED_ON;
-	
-	delay_ms(90);
-	
-	BEEP_OFF;
-	
-	LED_OFF;
+    beep(90, 90);
+    beep(90, 90);
+    beep(90, 90);
 }
-
 
 /**
 	*	@brief		低电量声光提示
@@ -84,29 +57,26 @@ void Sys_OK_Sound(void)
 	*/
 void Battery_Low_Sound(void)
 {
-	BEEP_ON;
-	
-	LED_ON;
-	
-	delay_ms(500);
-	
-	BEEP_OFF;
-	
-	LED_OFF;
-	
-	delay_ms(500);
-	
-	BEEP_ON;
-	
-	LED_ON;
-	
-	delay_ms(500);
-	
-	BEEP_OFF;
-	
-	LED_OFF;
-	
-	delay_ms(500);
+	beep(500, 500);
 }
 
+void beepSystemError(void) {
+    beep(2000, 200);
+    beep(200, 200);
+    beep(200, 1000);
+}
 
+void beepGyroInitError(void) {
+    beep(2000, 200);
+    beep(200, 200);
+    beep(200, 200);
+    beep(200, 1000);
+}
+
+void beepGyroLoopError(void) {
+    beep(2000, 200);
+    beep(200, 200);
+    beep(200, 200);
+    beep(200, 200);
+    beep(200, 1000);
+}

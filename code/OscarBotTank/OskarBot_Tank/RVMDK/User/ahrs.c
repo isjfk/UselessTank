@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "ahrs.h"
 #include "math.h"
 #include "stdbool.h"
@@ -7,22 +9,18 @@
 #include "encoder.h"
 #include "led.h"
 
-
-#include "mpu9250.h"
-#include "inv_mpu.h"
-#include "inv_mpu_dmp_motion_driver.h" 
+#include "Tank.h"
+#include "system/SysTick.h"
+#include "device/DevMpu9250.h"
 
 // 电池电压
-extern float bat_volt;
-
-// 摇杆推动幅度产生的PWM值
-extern int joy_left_pwm, joy_right_pwm;
+extern float volatile bat_volt;
 
 extern uint16_t cmd_status;
 
 
 int Encoder_Left,Encoder_Right;             //两个电机编码器值
-int Moto1,Moto2;                       
+int motorL,motorR;
 int Voltage;                                //电源电压
 float Angle_Balance,Gyro_Balance,Gyro_Turn; //平衡角度，平衡角速率，转向角速率
 
@@ -35,62 +33,61 @@ int Balance_Pwm, Velocity_Pwm, Turn_Pwm;
 extern uint8_t rx_buffer[64];
 
 
+void print_mpu9250_data() {
+    static int prevTick = 0;
 
+    int currTick = sysTickCurrent();
+    if (currTick - prevTick > 500) {
+        prevTick = currTick;
 
+        int8_t accuracy;
+        inv_time_t timestamp;
+        float accel[3];
+        float gyro[3];
+        float compass[3];
+        float heading[1];
+
+        devMpu9250GetAccelFloat(accel, &accuracy, &timestamp);
+        devMpu9250GetGyroFloat(gyro, &accuracy, &timestamp);
+        devMpu9250GetCompassFloat(compass, &accuracy, &timestamp);
+        devMpu9250GetHeadingFloat(heading, &accuracy, &timestamp);
+
+        printf("\r\ngyro[%8.2f %8.2f %8.2f], accel[%8.2f %8.2f %8.2f], compass[%8.2f %8.2f %8.2f], heading[%8.2f]", gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], compass[0], compass[1], compass[2], heading[0]);
+    }
+}
+
+void print_tank_data() {
+    printf("\r\nthrottle[%8.2f], throttleFixed[%8.2f], yaw[%8.2f], yawFixed[%8.2f]", tankThrottle, tankThrottleFixed, tankYaw, tankYawFixed);
+}
 
 void AHRS(void)
 {
-	float pitch,roll,yaw; 
-	short aacx,aacy,aacz;	        
-	short gyrox,gyroy,gyroz;     
-	
 	// 读取编码器，因为两个电机的旋转了180度的，所以需要对其中一个取反
-	Encoder_Left = Read_Encoder(2); 
-	Encoder_Right = -Read_Encoder(8);                           
-	
-//	if(mpu_mpl_get_data(&pitch,&roll,&yaw)==0)
-//	{
-//		MPU_Get_Accelerometer(&aacx,&aacy,&aacz);	//得到加速度传感器数据
-//		MPU_Get_Gyroscope(&gyrox,&gyroy,&gyroz);	//得到陀螺仪数据
+	//Encoder_Left = Read_Encoder(2); 
+	//Encoder_Right = -Read_Encoder(8);                           
 
-//		Angle_Balance = roll;            // 读取航姿中的ROLL
-//		Gyro_Balance = gyrox;            // 读取平衡角速度（这里指X轴角速率）
-//		Gyro_Turn = gyroy;               // 读取转向角速度（这里指Y轴角速率）
-//		Acceleration_Z = aacz;           // 读取Z轴加速度
-
-//		//printf("\r\n加速度： %8.2f%8.2f%8.2f    ", roll, yaw, pitch);
-//	}
-//	
-//	Balance_Pwm = Balance(Angle_Balance,Gyro_Balance); 
-//	Velocity_Pwm = velocity(Encoder_Left,Encoder_Right); 
-//	Turn_Pwm = 0;  
+	//Balance_Pwm = Balance(Angle_Balance,Gyro_Balance); 
+	//Velocity_Pwm = velocity(Encoder_Left,Encoder_Right); 
+	//Turn_Pwm = 0;  
 
 	//printf("\r\n加速度： %8.2d%8.2f%8.2d%8.2d%8.2d%8.2d    ", Balance_Pwm, Gyro_Balance, Velocity_Pwm, Turn_Pwm, Encoder_Left, Encoder_Right);
-	
-//	Moto1=Balance_Pwm+Velocity_Pwm+Turn_Pwm + joy_left_pwm * 10;       // 电机1PWM
-//	Moto2=Balance_Pwm+Velocity_Pwm-Turn_Pwm + joy_right_pwm * 10;      // 电机2PWM
-	
-	
-	
-	
-	if(bat_volt < 7.4)
-	{
-		Set_Pwm(0, 0);  
-		delay_ms(1000);
-		Battery_Low_Sound();
-	}
-	else
-	{
-		Moto1 = joy_left_pwm * 10;       // 电机1PWM
-		Moto2 = joy_right_pwm * 10;      // 电机2PWM
-		Set_Pwm(-Moto1, -Moto2);    
-	}
-	
+
+	//Moto1=Balance_Pwm+Velocity_Pwm+Turn_Pwm + joy_left_pwm * 10;       // 电机1PWM
+	//Moto2=-Balance_Pwm+Velocity_Pwm-Turn_Pwm + joy_right_pwm * 10;      // 电机2PWM
+    
+    //print_mpu9250_data();
+    //print_tank_data();
+
+    if (bat_volt < 10.8) {              // low battery voltage for 3S
+        motorSet(0, 0);
+        Battery_Low_Sound();
+    } else {
+        motorL = tankControlRange(tankThrottleGet() - tankYawGet()) * 71.99;
+        motorR = tankControlRange(tankThrottleGet() + tankYawGet()) * 71.99;
+
+        motorSet(motorL, motorR);
+    }
 }
-
-
-
-
 
 void ReadEncoder(void)
 {
@@ -100,49 +97,6 @@ void ReadEncoder(void)
 	Encoder_Right = (short)TIM4 -> CNT;
 	TIM4 -> CNT = 0;
 }
-
-
-void Set_Pwm(int moto1, int moto2)
-{
-	if(moto1 < 0)
-	{
-		MotorDriver_L_Turn_Reverse();
-		TIM_SetCompare3(TIM4, myabs(moto1)); 
-	}
-	else if(moto1 > 0)
-	{
-		MotorDriver_L_Turn_Forward();
-		TIM_SetCompare3(TIM4, myabs(moto1)); 
-	}
-	else
-	{
-		MotorDriver_L_Turn_Stop();
-		TIM_SetCompare3(TIM4, myabs(0)); 
-	}
-	
-	
-  
-	
-	if(moto2 < 0)
-	{
-		MotorDriver_R_Turn_Reverse();
-		TIM_SetCompare4(TIM4, myabs(moto2));
-	}
-	else if(moto2 > 0)
-	{
-		MotorDriver_R_Turn_Forward();
-		TIM_SetCompare4(TIM4, myabs(moto2));
-	}
-	else
-	{
-		MotorDriver_R_Turn_Stop();
-		TIM_SetCompare4(TIM4, myabs(0)); 
-	}
-}
-
-
-
-
 
 uint8_t Turn_Off(float angle, int voltage)
 {
@@ -248,33 +202,3 @@ int velocity(int encoder_left,int encoder_right)
 	
 	return Velocity;
 }
-
-
-int myabs(int a)
-{ 		   
-	int temp;
-	if(a < 0)
-	{
-		temp = -(a); 
-	}
-	else
-	{
-		temp = a;
-	}
-	
-	
-	if((7199 - temp) < 0)
-	{
-		temp = -(7199 - temp);
-	}
-	else
-	{
-		temp = 7199 - temp;
-	}
-	
-	
-	return temp;
-}
-
-
-

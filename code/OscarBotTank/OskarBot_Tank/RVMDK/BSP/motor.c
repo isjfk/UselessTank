@@ -1,6 +1,6 @@
 #include "stm32f10x.h"
 #include "motor.h"
-
+#include "service/Math.h"
 
 #define	MOTOR_L_IN1_LOW			(GPIO_ResetBits(GPIOC, GPIO_Pin_0))
 #define	MOTOR_L_IN1_HIGH		(GPIO_SetBits(GPIOC, GPIO_Pin_0))
@@ -12,15 +12,14 @@
 #define	MOTOR_R_IN2_LOW			(GPIO_ResetBits(GPIOC, GPIO_Pin_3))
 #define	MOTOR_R_IN2_HIGH		(GPIO_SetBits(GPIOC, GPIO_Pin_3))
 
-
-
-
+uint16_t motorMax;
 
 //PWM输出初始化
 //arr：自动重装值
 //psc：时钟预分频数
-void Motor_Init(u16 arr, u16 psc)
-{  
+void Motor_Init(u16 arr, u16 psc) {
+    motorMax = arr;
+
 	GPIO_InitTypeDef GPIO_InitStructure;
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
@@ -68,7 +67,32 @@ void Motor_Init(u16 arr, u16 psc)
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
 
+void motorSet(int motorLeft, int motorRight) {
+    motorLeft = irange(motorLeft, -motorMax, motorMax);
+    motorRight = irange(motorRight, -motorMax, motorMax);
 
+	if(motorLeft < 0) {
+		MotorDriver_L_Turn_Reverse();
+		TIM_SetCompare3(TIM4, motorMax - iabs(motorLeft)); 
+	} else if(motorLeft > 0) {
+		MotorDriver_L_Turn_Forward();
+		TIM_SetCompare3(TIM4, motorMax - iabs(motorLeft)); 
+	} else {
+		MotorDriver_L_Turn_Stop();
+		TIM_SetCompare3(TIM4, motorMax - iabs(0)); 
+	}
+
+	if(motorRight < 0) {
+		MotorDriver_R_Turn_Reverse();
+		TIM_SetCompare4(TIM4, motorMax - iabs(motorRight));
+	} else if(motorRight > 0) {
+		MotorDriver_R_Turn_Forward();
+		TIM_SetCompare4(TIM4, motorMax - iabs(motorRight));
+	} else {
+		MotorDriver_R_Turn_Stop();
+		TIM_SetCompare4(TIM4, motorMax - iabs(0)); 
+	}
+}
 
 /**
 	*	@brief		左轮电机正转
@@ -77,8 +101,8 @@ void Motor_Init(u16 arr, u16 psc)
 	*/
 void	MotorDriver_L_Turn_Forward(void)
 {
-	MOTOR_L_IN1_LOW;
-	MOTOR_L_IN2_HIGH;
+	MOTOR_L_IN1_HIGH;
+	MOTOR_L_IN2_LOW;
 }
 
 /**
@@ -88,8 +112,8 @@ void	MotorDriver_L_Turn_Forward(void)
 	*/
 void	MotorDriver_L_Turn_Reverse(void)
 {
-	MOTOR_L_IN1_HIGH;
-	MOTOR_L_IN2_LOW;
+	MOTOR_L_IN1_LOW;
+	MOTOR_L_IN2_HIGH;
 }
 
 /**
@@ -110,8 +134,8 @@ void	MotorDriver_L_Turn_Stop(void)
 	*/
 void	MotorDriver_R_Turn_Forward(void)
 {	
-	MOTOR_R_IN1_HIGH;
-	MOTOR_R_IN2_LOW;
+	MOTOR_R_IN1_LOW;
+	MOTOR_R_IN2_HIGH;
 }
 
 /**
@@ -121,10 +145,9 @@ void	MotorDriver_R_Turn_Forward(void)
 	*/
 void	MotorDriver_R_Turn_Reverse(void)
 {	
-	MOTOR_R_IN1_LOW;
-	MOTOR_R_IN2_HIGH;
+	MOTOR_R_IN1_HIGH;
+	MOTOR_R_IN2_LOW;
 }
-
 
 /**
 	*	@brief		右轮电机停转

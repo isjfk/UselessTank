@@ -26,7 +26,8 @@
 
 #include "packet.h"
 #include "log.h"
-#include "usart.h"
+#include "stm32f10x.h"
+#include "uart.h"
 
 #define BUF_SIZE        (256)
 #define PACKET_LENGTH   (23)
@@ -57,7 +58,7 @@ int _MLPrintLog (int priority, const char* tag, const char* fmt, ...)
     va_list args;
     int length, ii, i;
     char buf[BUF_SIZE], out[PACKET_LENGTH], this_length;
-    FILE * noUse;
+
     /* This can be modified to exit for unsupported priorities. */
     switch (priority) {
     case MPL_LOG_UNKNOWN:
@@ -93,7 +94,7 @@ int _MLPrintLog (int priority, const char* tag, const char* fmt, ...)
         memset(out+3, 0, 18);
         memcpy(out+3, buf+ii, this_length);
         for (i=0; i<PACKET_LENGTH; i++) {
-          fputc(out[i],noUse);
+          fputc(out[i]);
         }
     }
     
@@ -107,7 +108,6 @@ void eMPL_send_quat(long *quat)
 {
     char out[PACKET_LENGTH];
     int i;
-    FILE *noUse;
     if (!quat)
         return;
     memset(out, 0, PACKET_LENGTH);
@@ -133,7 +133,7 @@ void eMPL_send_quat(long *quat)
     out[22] = '\n';
     
     for (i=0; i<PACKET_LENGTH; i++) {
-      fputc(out[i],noUse);
+      fputc(out[i]);
     }
 }
 
@@ -141,7 +141,6 @@ void eMPL_send_data(unsigned char type, long *data)
 {
     char out[PACKET_LENGTH];
     int i;
-    FILE *noUse;
     if (!data)
         return;
     memset(out, 0, PACKET_LENGTH);
@@ -207,7 +206,7 @@ void eMPL_send_data(unsigned char type, long *data)
         return;
     }
     for (i=0; i<PACKET_LENGTH; i++) {
-      fputc(out[i],noUse);
+      fputc(out[i]);
     }
 }
 

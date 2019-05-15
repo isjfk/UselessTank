@@ -32,10 +32,11 @@
 #include "delay.h"
 #include "usart.h"
 #include "led.h"
-#include "mpu9250.h"
-#include "inv_mpu.h"
-#include "inv_mpu_dmp_motion_driver.h" 
 #include "adc.h"
+
+#include "system/SysTick.h"
+#include "board/Board.h"
+#include "device/DevMpu9250.h"
 
 
 
@@ -43,22 +44,19 @@
 /* Private define ------------------------------------------------------------*/
 /* Extern define ------------------------------------------------------------*/
 extern u8 psx_buf[];
-extern int Moto1,Moto2;  
-extern int joy_left_pwm, joy_right_pwm;
+extern int Moto1,Moto2;
 extern u8 uart_receive_buf[UART_BUF_SIZE], uart1_get_ok, uart1_mode;
-extern float bat_volt;
+extern float volatile bat_volt;
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
 
-
 int main(void)
 {
-	// 系统时钟初始化 System clock initialization
-	SystemInit();
-	
+    boardInit();
+
 	// 电池电压检测初始化
 	Adc_Init();
 	
@@ -80,9 +78,6 @@ int main(void)
 	// 总线舵机输出 Bus servo output
 	zx_uart_send_str((u8 *)"#255P1500T2000!");
 	
-	// 毫秒中断初始化 Millisecond interrupt initialization
-	SysTick_Int_Init();
-	
 	// SPI Flash存储器初始化 Flash memory Initialization
 //	W25Q_Init();	
 //	if(W25Q_TYPE != W25Q64)
@@ -98,46 +93,32 @@ int main(void)
 	
 	// 减速电机PWM初始化 Motor PWM Initialization
 	Motor_Init(7199, 0);
-	
-	// 蜂鸣器和LED初始化 Buzzer and LED initialization
-	Beep_Led_Init();
-	
-	// MPU9250 DMP 初始化 MPU9250 DMP initialization
-//	while(mpu_dmp_init())
-//	{   
-// 		delay_ms(200);
-//	}
-	
-	Sys_OK_Sound();
-	
-	
-	joy_left_pwm = 0;
-	joy_right_pwm = 0;
-	
+
 	// 初始化电池电压
 	Init_Volt();
-	
-  /* 主循环 Infinite loop */
-  while (1)
-  {
+
+    Sys_OK_Sound();
+
+    /* 主循环 Infinite loop */
+    while (1) {
 		// 电池电压检测
 		Detect_Volt();
-		
+
 		// 航姿参考系统算法 (AHRS)Attitude and heading reference system
 		AHRS();
-		
+
 		// ps2手柄命令处理 PS2 handle command processing
 		handle_ps2();
-		
+
 		// ps2按键响应 Key response
 		handle_button();
-		
+
 		// 串口消息处理 Serial message processing
 		handle_uart();
-		
+
 		// 舵机执行动作 Servos perform action
 		handle_action();
-		
+
 		// 串口1输出电池电压
 		//printf("Vottage:%4.1f\r\n", bat_volt);
 		//printf("[0]:%d, [1]:%d, [2]:%d, [3]:%d, [4]:%d, [5]:%d, [6]:%d, [7]:%d, [8]:%d, M1:%d ~\r\n", psx_buf[0], psx_buf[1], psx_buf[2], psx_buf[3], psx_buf[4], psx_buf[5], psx_buf[6], psx_buf[7], psx_buf[8], myabs(Moto1));

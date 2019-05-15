@@ -15,8 +15,6 @@ typedef struct
 	float 		inc;	//增量	
 }servo;
 
-extern u32 systick_ms;
-
 u8 check_dj_state(void);
 void handle_action(void);
 void do_action(u8 *uart_receive_buf);
@@ -31,8 +29,6 @@ float abs_float(float value);
 void duoji_inc_handle(u8 index);
 void TIM3_IRQHandler(void);
 void servo_init(void);
-void SysTick_Int_Init(void);
-void SysTick_ms(void);
 uint16_t str_contain_str(unsigned char *str, unsigned char *str2);
 
 #endif

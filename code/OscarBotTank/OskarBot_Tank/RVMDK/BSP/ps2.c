@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <math.h>
+
+#include "system/SysTick.h"
 #include "ps2.h"
 #include "delay.h"
 #include "servo.h"
@@ -5,7 +9,8 @@
 #include "stdbool.h"
 #include "string.h"
 #include "led.h"
-#include <stdlib.h>
+
+#include "Tank.h"
 
 
 extern bool balance_task;
@@ -18,7 +23,6 @@ extern servo duoji_doing[DJ_NUM];
 /* Private define ------------------------------------------------------------*/
 
 
-int joy_left_pwm, joy_right_pwm;
 uint16_t cmd_status = 0;
 
 
@@ -69,14 +73,14 @@ const char *pre_cmd_set_grn[PSX_BUTTON_NUM] =
 
 void handle_ps2(void)
 {
-	static u32 systick_ms_bak = 0;
+	static u32 sysTickMsBak = 0;
 	
-	if(systick_ms - systick_ms_bak < 20)
+	if(sysTickMs - sysTickMsBak < 20)
 	{
 		return;
 	}
 	
-	systick_ms_bak = systick_ms;
+	sysTickMsBak = sysTickMs;
 	psx_write_read(psx_buf);
 	
 	return;
@@ -164,15 +168,10 @@ void parse_cmd(u8 *cmd)
 		
 		cmd_status = 100;
 		uart1_send_str(cmd);
-		joy_left_pwm = (x - 0x7F) * 3;
-		joy_right_pwm = -joy_left_pwm;
-		
-		joy_left_pwm = joy_left_pwm - (y - 0x7F) * 3;
-		joy_right_pwm = joy_right_pwm - (y - 0x7F) * 3;
-		
-		
-		
-		
+
+        tankThrottleSet(y * (200.0 / 65535.0) - 100);
+        tankYawSet(x * (200.0 / 65535.0) - 100);
+
 		servo1 = servo1 * 8 + 600;
 		
 		duoji_doing[0].aim = servo1;
@@ -312,9 +311,81 @@ void parse_cmd(u8 *cmd)
 	}
 }
 
+#define BUTTON_SELECT   (1<<0)
+#define BUTTON_START    (1<<3)
+void handleCfgButton(char newValue, char orgValue) {
+    if (!(newValue & BUTTON_SELECT) && (orgValue & BUTTON_SELECT)) {
+        tankPidDisableOnThrottleZero = !tankPidDisableOnThrottleZero;
+        if (!tankPidDisableOnThrottleZero) {
+            beep(200, 90);
+        }
+    }
+    if (!(newValue & BUTTON_START) && (orgValue & BUTTON_START)) {
+        tankPidEnabled = !tankPidEnabled;
+        if (tankPidEnabled) {
+            beep(200, 90);
+        }
+    }
+}
 
-
-
+#define BUTTON_L1       (1<<2)
+#define BUTTON_L2       (1<<0)
+#define BUTTON_R1       (1<<3)
+#define BUTTON_R2       (1<<1)
+#define BUTTON_T        (1<<4)
+#define BUTTON_X        (1<<6)
+#define BUTTON_S        (1<<7)
+#define BUTTON_O        (1<<5)
+void handlePidButton(char newValue, char orgValue) {
+    if (!(newValue & BUTTON_L1) && (orgValue & BUTTON_L1)) {
+        tankPidSet.pid[0].kP += 10;
+        if (fabs(tankPidSet.pid[0].kP) < 0.1) {
+            beep(200, 90);
+        }
+    }
+    if (!(newValue & BUTTON_L2) && (orgValue & BUTTON_L2)) {
+        tankPidSet.pid[0].kP -= 10;
+        if (fabs(tankPidSet.pid[0].kP) < 0.1) {
+            beep(200, 90);
+        }
+    }
+    if (!(newValue & BUTTON_R1) && (orgValue & BUTTON_R1)) {
+        tankPidSet.pid[0].kI += 1;
+        if (fabs(tankPidSet.pid[0].kI) < 0.1) {
+            beep(200, 90);
+        }
+    }
+    if (!(newValue & BUTTON_R2) && (orgValue & BUTTON_R2)) {
+        tankPidSet.pid[0].kI -= 1;
+        if (fabs(tankPidSet.pid[0].kI) < 0.1) {
+            beep(200, 90);
+        }
+    }
+    if (!(newValue & BUTTON_T) && (orgValue & BUTTON_T)) {
+        tankPidSet.pid[0].kD += 1;
+        if (fabs(tankPidSet.pid[0].kD) < 0.1) {
+            beep(200, 90);
+        }
+    }
+    if (!(newValue & BUTTON_X) && (orgValue & BUTTON_X)) {
+        tankPidSet.pid[0].kD -= 1;
+        if (fabs(tankPidSet.pid[0].kD) < 0.1) {
+            beep(200, 90);
+        }
+    }
+    if (!(newValue & BUTTON_S) && (orgValue & BUTTON_S)) {
+        tankPidSet.pid[0].iLimit += 10;
+        if (fabs(tankPidSet.pid[0].iLimit) < 0.1) {
+            beep(200, 90);
+        }
+    }
+    if (!(newValue & BUTTON_O) && (orgValue & BUTTON_O)) {
+        tankPidSet.pid[0].iLimit -= 10;
+        if (fabs(tankPidSet.pid[0].iLimit) < 0.1) {
+            beep(200, 90);
+        }
+    }
+}
 
 void handle_button(void)
 {
@@ -329,6 +400,9 @@ void handle_button(void)
 	}
 	else
 	{
+        handleCfgButton(psx_buf[3], psx_button_bak[0]);
+        handlePidButton(psx_buf[4], psx_button_bak[1]);
+
 		parse_psx_buf(psx_buf+3, psx_buf[1]);
 		psx_button_bak[0] = psx_buf[3];
 		psx_button_bak[1] = psx_buf[4];
@@ -352,22 +426,24 @@ void handle_button(void)
 		{
 			psx_buf[6] = 0x7F;
 		}
-		
-		
-		joy_left_pwm = (psx_buf[5] - 0x7F) * 3;
-		joy_right_pwm = -joy_left_pwm;
 
-		joy_left_pwm = joy_left_pwm + (0x7F - psx_buf[6]) * 5;
-		joy_right_pwm = joy_right_pwm + (0x7F - psx_buf[6]) * 5;
-		
+        float throttle = (255 - psx_buf[6]) * (200.0 / 255.0) - 100;
+        float yaw = (255 - psx_buf[5]) * (200.0 / 255.0) - 100;
+        // Dead zone.
+        if (fabs(throttle) < 10) {
+            throttle = 0;
+        }
+        if (fabs(yaw) < 10) {
+            yaw = 0;
+        }
+
+        // Limit yaw speed to easy control.
+        yaw = yaw * 0.5;
+
+        tankThrottleSet(throttle);
+        tankYawSet(yaw);
 	}
-	
-	
-	
 
-	
-	
-	
 	return;
 }
 

@@ -20,11 +20,6 @@
 
 #ifndef _INV_MPU_H_
 #define _INV_MPU_H_
-#include "sys.h"
-
-//定义输出速度
-#define DEFAULT_MPU_HZ  (100)		//100Hz
-#define COMPASS_READ_MS (100)
 
 #define INV_X_GYRO      (0x40)
 #define INV_Y_GYRO      (0x20)
@@ -32,8 +27,6 @@
 #define INV_XYZ_GYRO    (INV_X_GYRO | INV_Y_GYRO | INV_Z_GYRO)
 #define INV_XYZ_ACCEL   (0x08)
 #define INV_XYZ_COMPASS (0x01)
-
-
 
 struct int_param_s {
 #if defined EMPL_TARGET_MSP430 || defined MOTION_DRIVER_TARGET_MSP430
@@ -137,13 +130,5 @@ int mpu_run_self_test(long *gyro, long *accel);
 int mpu_run_6500_self_test(long *gyro, long *accel, unsigned char debug);
 int mpu_register_tap_cb(void (*func)(unsigned char, unsigned char));
 
-//自行添加的一些函数
-void mget_ms(unsigned long *time);
-unsigned short inv_row_2_scale(const signed char *row);
-unsigned short inv_orientation_matrix_to_scalar(const signed char *mtx);
-u8 run_self_test(void);
-u8 mpu_dmp_init(void);
-u8 mpu_dmp_get_data(float *pitch,float *roll,float *yaw);
-u8 mpu_mpl_get_data(float *pitch,float *roll,float *yaw);
 #endif  /* #ifndef _INV_MPU_H_ */
 
