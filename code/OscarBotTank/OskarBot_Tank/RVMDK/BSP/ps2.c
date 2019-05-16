@@ -120,24 +120,46 @@ void parse_cmd(u8 *cmd)
 			   (uart_receive_buf[i + 3] == '0') &&
 			   (uart_receive_buf[i + 4] == ':'))
 			{
+                uint8_t negative = 0;
 				x = 0;
 				
 				i = i + 5;
+                if (uart_receive_buf[i] == '-') {
+                    negative = 1;
+                    i++;
+                }
+
 				while(uart_receive_buf[i] && uart_receive_buf[i] != 'X')
 				{
 					x =  x * 10 + uart_receive_buf[i] - '0';
 					i++;
 				}
+
+                if (negative) {
+                    x = -x;
+                }
 			}
 			else if(uart_receive_buf[i] == 'X') 
 			{
+                uint8_t negative = 0;
 				y = 0;
+
 				i++;
+
+                if (uart_receive_buf[i] == '-') {
+                    negative = 1;
+                    i++;
+                }
+
 				while(uart_receive_buf[i] && uart_receive_buf[i] != 'Y')
 				{
 					y = y * 10 + uart_receive_buf[i] - '0';
 					i++;
 				}
+
+                if (negative) {
+                    y = -y;
+                }
 			}
 			else if(uart_receive_buf[i] == 'Y') 
 			{
@@ -169,8 +191,8 @@ void parse_cmd(u8 *cmd)
 		cmd_status = 100;
 		uart1_send_str(cmd);
 
-        tankThrottleSet(y * (200.0 / 65535.0) - 100);
-        tankYawSet(x * (200.0 / 65535.0) - 100);
+        tankThrottleSet(y / 30000.0);
+        tankYawSet(x / 30000.0);
 
 		servo1 = servo1 * 8 + 600;
 		
@@ -315,8 +337,8 @@ void parse_cmd(u8 *cmd)
 #define BUTTON_START    (1<<3)
 void handleCfgButton(char newValue, char orgValue) {
     if (!(newValue & BUTTON_SELECT) && (orgValue & BUTTON_SELECT)) {
-        tankPidDisableOnThrottleZero = !tankPidDisableOnThrottleZero;
-        if (!tankPidDisableOnThrottleZero) {
+        tankPidDisableOnControlLow = !tankPidDisableOnControlLow;
+        if (!tankPidDisableOnControlLow) {
             beep(200, 90);
         }
     }
@@ -438,7 +460,7 @@ void handle_button(void)
         }
 
         // Limit yaw speed to easy control.
-        yaw = yaw * 0.5;
+        yaw = yaw * 0.3;
 
         tankThrottleSet(throttle);
         tankYawSet(yaw);

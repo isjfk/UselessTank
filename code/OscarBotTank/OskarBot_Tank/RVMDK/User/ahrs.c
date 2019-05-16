@@ -1,7 +1,6 @@
 #include <math.h>
 
 #include "ahrs.h"
-#include "math.h"
 #include "stdbool.h"
 #include "motor.h"
 #include "usart.h"

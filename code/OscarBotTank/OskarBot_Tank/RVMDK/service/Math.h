@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <math.h>
 
 #ifndef __SVC_MATH_H
 #define __SVC_MATH_H

@@ -3,11 +3,12 @@
 #include "service/Math.h"
 
 #define LOOP_FREQ_DEFAULT   100
+#define PD_SCALA            100
 
-#define K_P_DEFAULT         (100.f)
+#define K_P_DEFAULT         (60.f)
 #define K_I_DEFAULT         (30.f)
 #define K_D_DEFAULT         (2.f)
-#define D_NEW_VALUE_WEIGHT_DEFAULT (0.1f)
+#define D_NEW_VALUE_WEIGHT_DEFAULT (0.5f)
 #define I_LIMIT_DEFAULT     (30.f)
 
 void pidInit(PidSet *pidSet) {
@@ -31,7 +32,6 @@ void pidInit(PidSet *pidSet) {
         pid->i = 0;
         pid->d = 0;
         pid->sum = 0;
-        pid->setPointFixed = 0;
 
         pid->prevErrorFiltered = 0;
     }
@@ -55,11 +55,10 @@ void pidLoop(PidSet *pidSet) {
         float prevErrorFiltered = pid->prevErrorFiltered;
         float currErrorFiltered = prevErrorFiltered * (1 - pid->dNewValueWeight) + error * pid->dNewValueWeight;
 
-        pid->p = error * pid->kP / loopFreqHz;
+        pid->p = error * pid->kP / PD_SCALA;
         pid->i = frange(pid->i + error * pid->kI / loopFreqHz, -pid->iLimit, pid->iLimit);
-        pid->d = (currErrorFiltered - prevErrorFiltered) * pid->kD;
+        pid->d = (currErrorFiltered - prevErrorFiltered) * pid->kD * loopFreqHz / PD_SCALA;
         pid->sum = pid->p + pid->i + pid->d;
-        pid->setPointFixed = pid->setPoint + pid->sum;
 
         pid->prevErrorFiltered = currErrorFiltered;
     }

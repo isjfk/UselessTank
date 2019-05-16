@@ -18,7 +18,7 @@ extern float tankYawFixed;
 
 extern PidSet tankPidSet;
 extern uint8_t tankPidEnabled;
-extern uint8_t tankPidDisableOnThrottleZero;
+extern uint8_t tankPidDisableOnControlLow;
 
 void tankInit(void);
 void tankPidLoop(void);

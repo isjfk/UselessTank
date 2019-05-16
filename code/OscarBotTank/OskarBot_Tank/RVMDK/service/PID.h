@@ -24,7 +24,6 @@ typedef struct {
     float i;
     float d;
     float sum;
-    float setPointFixed;
 
     // Internal data.
     float prevErrorFiltered;

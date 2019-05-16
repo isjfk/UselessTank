@@ -1,4 +1,5 @@
 #include "Tank.h"
+#include "system/SysIrq.h"
 #include "device/DevMpu9250.h"
 #include "service/Math.h"
 #include "service/PID.h"
@@ -30,9 +31,10 @@ float tankYawFixed;
 PID tankPid[1];
 PidSet tankPidSet;
 uint8_t tankPidEnabled;
-uint8_t tankPidDisableOnThrottleZero;
+uint8_t tankPidDisableOnControlLow;
 
-float tankControlRange(float value);
+uint8_t isThrottleLow(float value);
+uint8_t isYawLow(float value);
 
 void tankInit(void) {
     tankThrottle = 0;
@@ -44,19 +46,19 @@ void tankInit(void) {
     pidInit(&tankPidSet);
 
     tankPidSet.loopFreqHz = MPU_FREQ_HZ_DEFAULT;
-    tankPidSet.pid[0].kP = 100;
+    tankPidSet.pid[0].kP = 60;
     tankPidSet.pid[0].kI = 30;
     tankPidSet.pid[0].kD = 2;
-    tankPidSet.pid[0].dNewValueWeight = 0.1;
+    tankPidSet.pid[0].dNewValueWeight = 0.5;
     tankPidSet.pid[0].iLimit = 30;
 
     tankPidEnabled = 1;
-    tankPidDisableOnThrottleZero = 1;
+    tankPidDisableOnControlLow = 1;
 }
 
 void tankPidLoop(void) {
     if (!tankPidEnabled
-        || (tankPidDisableOnThrottleZero && (tankThrottle == 0))) {
+        || (tankPidDisableOnControlLow && isThrottleLow(tankThrottle) && isYawLow(tankYaw))) {
         tankYawFixed = tankYaw;
         tankThrottleFixed = tankThrottle;
         return;
@@ -73,36 +75,94 @@ void tankPidLoop(void) {
 
     pidLoop(&tankPidSet);
     if (tankPidSet.updated) {
-        tankYawFixed = tankControlRange(tankPidSet.pid[0].setPointFixed);
+        tankYawFixed = tankControlRange(tankYaw + tankPidSet.pid[0].sum);
     }
 
     tankThrottleFixed = tankThrottle;
 }
 
 float tankControlSet(float throttle, float yaw) {
+    uint8_t irqEnabled = isEi();
+    if (irqEnabled) {
+        di();
+    }
+
     tankThrottle = throttle;
     tankYaw = yaw;
+
+    if (irqEnabled) {
+        ei();
+    }
 }
 
 float tankControlGet(float *throttle, float *yaw) {
+    uint8_t irqEnabled = isEi();
+    if (irqEnabled) {
+        di();
+    }
+
     *throttle = tankThrottleFixed;
     *yaw = tankYawFixed;
+
+    if (irqEnabled) {
+        ei();
+    }
 }
 
 float tankThrottleGet(void) {
-    return tankThrottleFixed;
+    uint8_t irqEnabled = isEi();
+    if (irqEnabled) {
+        di();
+    }
+
+    float throttle = tankThrottleFixed;
+
+    if (irqEnabled) {
+        ei();
+    }
+
+    return throttle;
 }
 
 void tankThrottleSet(float throttle) {
+    uint8_t irqEnabled = isEi();
+    if (irqEnabled) {
+        di();
+    }
+
     tankThrottle = throttle;
+
+    if (irqEnabled) {
+        ei();
+    }
 }
 
 float tankYawGet(void) {
-    return tankYawFixed;
+    uint8_t irqEnabled = isEi();
+    if (irqEnabled) {
+        di();
+    }
+
+    float yaw = tankYawFixed;
+
+    if (irqEnabled) {
+        ei();
+    }
+
+    return yaw;
 }
 
 void tankYawSet(float yaw) {
+    uint8_t irqEnabled = isEi();
+    if (irqEnabled) {
+        di();
+    }
+
     tankYaw = yaw;
+
+    if (irqEnabled) {
+        ei();
+    }
 }
 
 float tankControlRange(float value) {
@@ -113,4 +173,12 @@ float tankControlRange(float value) {
         return TANK_CTRL_MAX;
     }
     return value;
+}
+
+uint8_t isThrottleLow(float value) {
+    return fabs(value) < 10;
+}
+
+uint8_t isYawLow(float value) {
+    return fabs(value) < 25;
 }
