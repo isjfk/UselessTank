@@ -27,20 +27,20 @@ public class CameraPanTiltController {
 
     @RequestMapping(method = { RequestMethod.GET })
     public ResponseEntity<CameraAngle> get(){
-        CameraAngle angle = cameraPanTiltService.getCameraAngle();
-        return new ResponseEntity<>(angle, HttpStatus.OK);
+        CameraAngle cameraAngle = cameraPanTiltService.getCameraAngle();
+        return new ResponseEntity<>(cameraAngle, HttpStatus.OK);
     }
 
     @RequestMapping(method = { RequestMethod.POST })
     public ResponseEntity<CameraAngle> post(@RequestBody CameraAngle angle){
-        CameraAngle newAngle = cameraPanTiltService.setCameraAngle(angle);
-        return new ResponseEntity<>(newAngle, HttpStatus.OK);
+        CameraAngle cameraAngle = cameraPanTiltService.setCameraAngle(angle);
+        return new ResponseEntity<>(cameraAngle, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/range", method = { RequestMethod.GET })
     public ResponseEntity<CameraAngleRange> getRange(){
-        CameraAngleRange range = cameraPanTiltService.getCameraAngleRange();
-        return new ResponseEntity<>(range, HttpStatus.OK);
+        CameraAngleRange cameraAngleRange = cameraPanTiltService.getCameraAngleRange();
+        return new ResponseEntity<>(cameraAngleRange, HttpStatus.OK);
     }
 
     /**

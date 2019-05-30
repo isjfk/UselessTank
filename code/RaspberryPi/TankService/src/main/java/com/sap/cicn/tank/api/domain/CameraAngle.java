@@ -8,18 +8,26 @@ import java.math.BigDecimal;
 /**
  * @author I311334
  */
-public class CameraAngle implements Cloneable {
+public class CameraAngle extends CameraAngleRange {
 
     private BigDecimal pan;
     private BigDecimal tilt;
-
-    private CameraAngleRange range;
 
     /**
      * Construct instance.
      */
     public CameraAngle() {
         super();
+    }
+
+    /**
+     * Construct instance.
+     *
+     * @param cameraAngle
+     */
+    public CameraAngle(CameraAngle cameraAngle) {
+        super(cameraAngle);
+        this.copyFrom(cameraAngle);
     }
 
     /**
@@ -34,24 +42,22 @@ public class CameraAngle implements Cloneable {
         this.tilt = tilt;
     }
 
+    public CameraAngle copyFrom(CameraAngle that) {
+        super.copyFrom(that);
+
+        this.pan = this.getPanRange().limit(that.pan);
+        this.tilt = this.getPanRange().limit(that.tilt);
+
+        return this;
+    }
+
     /**
-     * Construct instance.
-     *
-     * @param pan
-     * @param tilt
-     * @param range
+     * {@inheritDoc}
      */
-    public CameraAngle(BigDecimal pan, BigDecimal tilt, CameraAngleRange range) {
-        super();
-        if (range != null) {
-            this.pan = range.panInRange(pan);
-            this.tilt = range.tiltInRange(tilt);
-            this.range = range;
-        } else {
-            this.pan = pan;
-            this.tilt = tilt;
-            this.range = range;
-        }
+    @Override
+    public CameraAngle clone() {
+        CameraAngle that = (CameraAngle) super.clone();
+        return that;
     }
 
     /**
@@ -65,7 +71,7 @@ public class CameraAngle implements Cloneable {
      * @param pan the pan to set
      */
     public void setPan(BigDecimal pan) {
-        this.pan = pan;
+        this.pan = getPanRange().limit(pan);
     }
 
     /**
@@ -79,35 +85,7 @@ public class CameraAngle implements Cloneable {
      * @param tilt the tilt to set
      */
     public void setTilt(BigDecimal tilt) {
-        this.tilt = tilt;
-    }
-
-    /**
-     * @return the range
-     */
-    public CameraAngleRange getRange() {
-        return range;
-    }
-
-    /**
-     * @param range the range to set
-     */
-    public void setRange(CameraAngleRange range) {
-        this.range = range;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public CameraAngle clone() {
-        try {
-            CameraAngle that = (CameraAngle) super.clone();
-            that.setRange(this.range.clone());
-            return that;
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
+        this.tilt = getTiltRange().limit(tilt);
     }
 
     /**
@@ -115,13 +93,7 @@ public class CameraAngle implements Cloneable {
      */
     @Override
     public String toString() {
-        return "CameraAngle [pan="
-                + pan
-                + ", tilt="
-                + tilt
-                + ", range="
-                + range
-                + "]";
+        return "CameraAngle [pan=" + pan + ", tilt=" + tilt + ", super()=" + super.toString() + "]";
     }
 
 }

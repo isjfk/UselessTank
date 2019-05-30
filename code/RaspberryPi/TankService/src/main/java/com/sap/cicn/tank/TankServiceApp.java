@@ -11,10 +11,10 @@ import com.sap.cicn.tank.spring.ApplicationContextHolder;
  * Created by i065037 on 2019/3/25.
  */
 @SpringBootApplication
-public class UselessTankApp {
+public class TankServiceApp {
 
     public static void main(String[] args) {
-        SpringApplication.run(UselessTankApp.class,args);
+        SpringApplication.run(TankServiceApp.class,args);
     }
 
     @Bean

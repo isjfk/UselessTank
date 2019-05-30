@@ -33,7 +33,7 @@ export class DirectonControlComponent implements OnInit {
         }
 
 		//console.log(this.keyMap);
-		this.sendControlCommand();
+		this.sendTankControl();
 		this.sendCameraAngle();
 	}
 
@@ -48,7 +48,7 @@ export class DirectonControlComponent implements OnInit {
         }
 
 		//console.log(this.keyMap);
-		this.sendControlCommand();
+		this.sendTankControl();
 		this.sendCameraAngle();
     }
 
@@ -58,7 +58,7 @@ export class DirectonControlComponent implements OnInit {
 		this.keyMap.clear();
 
 		//console.log(this.keyMap);
-		this.sendControlCommand();
+		this.sendTankControl();
 		this.sendCameraAngle();
     }
 
@@ -112,6 +112,48 @@ export class DirectonControlComponent implements OnInit {
 		y = (y > 255) ? 255 : y;
 
 		this.tankcontrol.sendControlCommand(x.toString(), y.toString()).subscribe(result=>{});
+	}
+
+	sendTankControl() {
+		let throttleValue = 100;
+		let yawValue = 30;
+
+		let throttle = 0;
+		let yaw = 0;
+
+		// W
+		if (this.keyMap.get(87)) {
+			throttle = throttle + throttleValue;
+			this.el.nativeElement.querySelector("#upbtn").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#upbtn").style.backgroundColor = 'white';
+		}
+
+		// S
+		if (this.keyMap.get(83)) {
+			throttle = throttle - throttleValue;
+			this.el.nativeElement.querySelector("#downbtn").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#downbtn").style.backgroundColor = 'white';
+		}
+
+		// A
+		if (this.keyMap.get(65)) {
+			yaw = yaw + yawValue;
+			this.el.nativeElement.querySelector("#leftbtn").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#leftbtn").style.backgroundColor = 'white';
+		}
+
+		// D
+		if (this.keyMap.get(68)) {
+			yaw = yaw - yawValue;
+			this.el.nativeElement.querySelector("#rightbtn").style.backgroundColor = 'yellow';
+		} else {
+			this.el.nativeElement.querySelector("#rightbtn").style.backgroundColor = 'white';
+		}
+
+		this.tankcontrol.sendTankControl(throttle.toString(), yaw.toString()).subscribe(result=>{});
 	}
 
 	sendCameraAngle() {

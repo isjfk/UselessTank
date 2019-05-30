@@ -21,14 +21,15 @@ public interface CameraPanTiltService {
     /**
      * Set camera angle range.
      *
-     * @return camera angle range.
+     * @param cameraAngleRange camera angle range
+     * @return actual camera angle range set
      */
-    void setCameraAngleRange(CameraAngleRange cameraAngleRange);
+    CameraAngleRange setCameraAngleRange(CameraAngleRange cameraAngleRange);
 
     /**
      * Get current camera angle.
      *
-     * @return current camera angle.
+     * @return current camera angle
      */
     CameraAngle getCameraAngle();
 
@@ -39,15 +40,15 @@ public interface CameraPanTiltService {
      * <li>angle.tilt: Angle in vertical direction. <0 to down, >0 to up.
      * </ul>
      *
-     * @param angle camera angle
+     * @param cameraAngle camera angle
      * @return actual camera angle set
      */
-    CameraAngle setCameraAngle(CameraAngle angle);
+    CameraAngle setCameraAngle(CameraAngle cameraAngle);
 
     /**
      * Set camera to center angle.
      *
-     * @return actual camera angle set
+     * @return camera angle set
      */
     CameraAngle centerCamera();
 

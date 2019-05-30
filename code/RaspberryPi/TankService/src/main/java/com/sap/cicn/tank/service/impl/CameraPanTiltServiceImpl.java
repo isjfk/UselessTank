@@ -5,7 +5,9 @@ package com.sap.cicn.tank.service.impl;
 
 import java.math.BigDecimal;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.sap.cicn.tank.api.domain.CameraAngle;
 import com.sap.cicn.tank.api.domain.CameraAngleRange;
+import com.sap.cicn.tank.common.exception.BusinessException;
 import com.sap.cicn.tank.common.logger.LightLogger;
 import com.sap.cicn.tank.hardware.driver.PCA9635Driver;
 import com.sap.cicn.tank.service.CameraPanTiltService;
@@ -33,7 +36,11 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
 
     private static final BigDecimal SERVO_CENTER_ANGLE = BigDecimal.valueOf(90);
 
-    private AtomicReference<CameraAngle> cameraAngleRef = new AtomicReference<>();
+    private CameraAngle cameraAngle = new CameraAngle();
+    private ReentrantReadWriteLock cameraAngleLock = new ReentrantReadWriteLock();
+    private ReadLock cameraAngleReadLock = cameraAngleLock.readLock();
+    private WriteLock cameraAngleWriteLock = cameraAngleLock.writeLock();
+
     private Semaphore cameraAngleUpdateSemaphore = new Semaphore(1);
     private Runnable cameraAngleUpdateTask = new Runnable() {
         @Override
@@ -63,25 +70,18 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
     public CameraPanTiltServiceImpl() {
         super();
 
-        CameraAngleRange cameraAngleRange = new CameraAngleRange();
+        cameraAngle.getPanRange().setMin(BigDecimal.valueOf(-90));
+        cameraAngle.getPanRange().setMax(BigDecimal.valueOf(90));
+        cameraAngle.getPanRange().setCenter(BigDecimal.valueOf(0));
+        cameraAngle.getPanRange().setOffset(BigDecimal.valueOf(7));
 
-        cameraAngleRange.setPanMin(BigDecimal.valueOf(-90));
-        cameraAngleRange.setPanCenter(BigDecimal.valueOf(0));
-        cameraAngleRange.setPanMax(BigDecimal.valueOf(90));
-        cameraAngleRange.setPanOffset(BigDecimal.valueOf(7));
+        cameraAngle.getTiltRange().setMin(BigDecimal.valueOf(-40));
+        cameraAngle.getTiltRange().setMax(BigDecimal.valueOf(50));
+        cameraAngle.getTiltRange().setCenter(BigDecimal.valueOf(0));
+        cameraAngle.getTiltRange().setOffset(BigDecimal.valueOf(-7));
 
-        cameraAngleRange.setTiltMin(BigDecimal.valueOf(-40));
-        cameraAngleRange.setTiltCenter(BigDecimal.valueOf(0));
-        cameraAngleRange.setTiltMax(BigDecimal.valueOf(50));
-        cameraAngleRange.setTiltOffset(BigDecimal.valueOf(-7));
-
-        CameraAngle cameraAngle = new CameraAngle();
-
-        cameraAngle.setRange(cameraAngleRange);
-        cameraAngle.setPan(cameraAngleRange.getPanCenter());
-        cameraAngle.setTilt(cameraAngleRange.getTiltCenter());
-
-        cameraAngleRef.set(cameraAngle);
+        cameraAngle.setPan(cameraAngle.getPanRange().getCenter());
+        cameraAngle.setTilt(cameraAngle.getTiltRange().getCenter());
     }
 
     /**
@@ -113,10 +113,16 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
     }
 
     private void cameraAngleUpdate() {
-        CameraAngle angle = cameraAngleRef.get();
-        CameraAngleRange angleRange = angle.getRange();
-        BigDecimal panAngle = SERVO_CENTER_ANGLE.add(angle.getPan()).add(angleRange.getPanOffset());
-        BigDecimal tiltAngle = SERVO_CENTER_ANGLE.subtract(angle.getTilt()).subtract(angleRange.getTiltOffset());
+        BigDecimal panAngle = null;
+        BigDecimal tiltAngle = null;
+
+        cameraAngleReadLock.lock();
+        try {
+            panAngle = SERVO_CENTER_ANGLE.add(cameraAngle.getPan()).add(cameraAngle.getPanRange().getOffset());
+            tiltAngle = SERVO_CENTER_ANGLE.subtract(cameraAngle.getTilt()).subtract(cameraAngle.getTiltRange().getOffset());
+        } finally {
+            cameraAngleReadLock.unlock();
+        }
 
         driver.setServoAngle(SERVO_PAN_CHANNEL, panAngle);
         driver.setServoAngle(SERVO_TILT_CHANNEL, tiltAngle);
@@ -132,24 +138,32 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
      */
     @Override
     public CameraAngleRange getCameraAngleRange() {
-        return cameraAngleRef.get().getRange().clone();
+        cameraAngleReadLock.lock();
+        try {
+            return new CameraAngleRange(cameraAngle);
+        } finally {
+            cameraAngleReadLock.unlock();
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void setCameraAngleRange(CameraAngleRange cameraAngleRange) {
-        CameraAngleRange newAngleRange = cameraAngleRange.clone();
-
-        CameraAngle orgAngle = cameraAngleRef.get();
-        CameraAngle newAngle = new CameraAngle(orgAngle.getPan(), orgAngle.getTilt(), newAngleRange);
-        while (!this.cameraAngleRef.compareAndSet(orgAngle, newAngle)) {
-            orgAngle = cameraAngleRef.get();
-            newAngle = new CameraAngle(orgAngle.getPan(), orgAngle.getTilt(), newAngleRange);
+    public CameraAngleRange setCameraAngleRange(CameraAngleRange cameraAngleRange) {
+        if (cameraAngleRange == null) {
+            throw new BusinessException("cameraAngleRange is null");
         }
 
-        triggerCameraAngleUpdate();
+        cameraAngleWriteLock.lock();
+        try {
+            cameraAngle.copyFrom(cameraAngleRange);
+
+            triggerCameraAngleUpdate();
+            return new CameraAngleRange(cameraAngle);
+        } finally {
+            cameraAngleWriteLock.unlock();
+        }
     }
 
     /**
@@ -157,23 +171,33 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
      */
     @Override
     public CameraAngle getCameraAngle() {
-        return cameraAngleRef.get().clone();
+        cameraAngleReadLock.lock();
+        try {
+            return new CameraAngle(cameraAngle);
+        } finally {
+            cameraAngleReadLock.unlock();
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public CameraAngle setCameraAngle(CameraAngle angle) {
-        CameraAngle orgAngle = cameraAngleRef.get();
-        CameraAngle newAngle = new CameraAngle(angle.getPan(), angle.getTilt(), orgAngle.getRange());
-        while (!this.cameraAngleRef.compareAndSet(orgAngle, newAngle)) {
-            orgAngle = cameraAngleRef.get();
-            newAngle = new CameraAngle(angle.getPan(), angle.getTilt(), orgAngle.getRange());
+    public CameraAngle setCameraAngle(CameraAngle cameraAngle) {
+        if (cameraAngle == null) {
+            throw new BusinessException("cameraAngle is null");
         }
 
-        triggerCameraAngleUpdate();
-        return newAngle.clone();
+        cameraAngleWriteLock.lock();
+        try {
+            this.cameraAngle.setPan(cameraAngle.getPan());
+            this.cameraAngle.setTilt(cameraAngle.getTilt());
+
+            triggerCameraAngleUpdate();
+            return new CameraAngle(this.cameraAngle);
+        } finally {
+            cameraAngleWriteLock.unlock();
+        }
     }
 
     /**
@@ -181,8 +205,9 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
      */
     @Override
     public CameraAngle centerCamera() {
-        CameraAngleRange range = getCameraAngleRange();
-        return setCameraAngle(new CameraAngle(range.getPanCenter(), range.getTiltCenter()));
+        return setCameraAngle(new CameraAngle(
+                cameraAngle.getPanRange().getCenter(),
+                cameraAngle.getTiltRange().getCenter()));
     }
 
 }
