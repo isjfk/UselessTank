@@ -7,8 +7,9 @@
 #include "delay.h"
 #include "encoder.h"
 #include "led.h"
+#include "ps2.h"
 
-#include "Tank.h"
+#include "tank/Tank.h"
 #include "system/SysTick.h"
 #include "device/DevMpu9250.h"
 
@@ -51,12 +52,13 @@ void print_mpu9250_data() {
         devMpu9250GetCompassFloat(compass, &accuracy, &timestamp);
         devMpu9250GetHeadingFloat(heading, &accuracy, &timestamp);
 
-        printf("\r\ngyro[%8.2f %8.2f %8.2f], accel[%8.2f %8.2f %8.2f], compass[%8.2f %8.2f %8.2f], heading[%8.2f]", gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], compass[0], compass[1], compass[2], heading[0]);
+        printf("gyro[%8.2f %8.2f %8.2f], accel[%8.2f %8.2f %8.2f], compass[%8.2f %8.2f %8.2f], heading[%8.2f]\r\n", gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], compass[0], compass[1], compass[2], heading[0]);
     }
 }
 
 void print_tank_data() {
-    printf("\r\nthrottle[%8.2f], throttleFixed[%8.2f], yaw[%8.2f], yawFixed[%8.2f]", tankThrottle, tankThrottleFixed, tankYaw, tankYawFixed);
+    //printf("throttle[%8.2f], throttleFixed[%8.2f], yaw[%8.2f], yawFixed[%8.2f]\r\n", tankThrottle, tankThrottleFixed, tankYaw, tankYawFixed);
+    printf("ps2thr[%8.2f], thr[%8.2f], ps2yaw[%8.2f], yaw[%8.2f]\r\n", ps2Throttle, tankThrottle, ps2Yaw, tankYaw);
 }
 
 void AHRS(void)

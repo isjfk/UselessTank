@@ -1,6 +1,6 @@
 #include "stm32f10x.h"
 #include "motor.h"
-#include "service/Math.h"
+#include "common/CommonMath.h"
 
 #define	MOTOR_L_IN1_LOW			(GPIO_ResetBits(GPIOC, GPIO_Pin_0))
 #define	MOTOR_L_IN1_HIGH		(GPIO_SetBits(GPIOC, GPIO_Pin_0))

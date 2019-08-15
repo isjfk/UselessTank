@@ -2,6 +2,7 @@
 #include <math.h>
 
 #include "system/SysTick.h"
+#include "common/CommonString.h"
 #include "ps2.h"
 #include "delay.h"
 #include "servo.h"
@@ -10,7 +11,7 @@
 #include "string.h"
 #include "led.h"
 
-#include "Tank.h"
+#include "tank/Tank.h"
 
 
 extern bool balance_task;
@@ -20,11 +21,13 @@ extern u8 uart_receive_buf[UART_BUF_SIZE], uart1_get_ok, uart1_mode;
 extern u8 group_do_ok;
 extern int do_start_index, do_time, group_num_start, group_num_end, group_num_times;
 extern servo duoji_doing[DJ_NUM];
+
 /* Private define ------------------------------------------------------------*/
 
+float ps2Throttle;
+float ps2Yaw;
 
 uint16_t cmd_status = 0;
-
 
 u8 car_dw = 1;
 
@@ -105,109 +108,67 @@ void handle_ps2(void)
 
 void parse_cmd(u8 *cmd)
 {
-	int pos, i, index, int1, int2, x, y, servo1, servo2;
-	unsigned int temp[4];
-	
-	//uart1_send_str(cmd);
-	if(pos = str_contain_str(uart_receive_buf, (u8 *)"$AP0:"), pos) 
+	int pos, i, index, int1, int2;
+    uint8_t c;
+    uint8_t negative;
+    int data;
+
+	uart1_send_str(cmd);
+    uart1_send_str((u8*) "\r\n");
+
+	if (strIsStartWith(uart_receive_buf, (uint8_t *)"$AP0:"))
 	{
-		i = 0;
-		while(uart_receive_buf[i])
+		i = 5;
+
+        data = 0;
+        if (uart_receive_buf[i] == '-') {
+            negative = 1;
+            i++;
+        } else {
+            negative = 0;
+        }
+
+		while (uart_receive_buf[i])
 		{
-			if((uart_receive_buf[i] == '$') && 
-				 (uart_receive_buf[i + 1] == 'A') &&
-			   (uart_receive_buf[i + 2] == 'P') &&
-			   (uart_receive_buf[i + 3] == '0') &&
-			   (uart_receive_buf[i + 4] == ':'))
-			{
-                uint8_t negative = 0;
-				x = 0;
-				
-				i = i + 5;
+            c = uart_receive_buf[i++];
+
+            if (c >= '0' && c <= '9') {
+                data = data * 10 + (c - '0');
+            } else {
+                if (negative) {
+                    data = -data;
+                }
+
+                if (c == 'X') {
+                    tankYawSet(data / 300.0);
+                } else if (c == 'Y') {
+                    tankThrottleSet(data / 300.0);
+                } else if (c == 'A') {
+                    data = data * 8 + 600;
+
+                    duoji_doing[0].aim = data;
+                    duoji_doing[0].time = 100;
+                    duoji_doing[0].inc = (duoji_doing[0].aim -  duoji_doing[0].cur) / (duoji_doing[0].time/20.000);
+                } else if (c == 'B') {
+                    data = data * 9.5 + 600;
+
+                    duoji_doing[1].aim = data;
+                    duoji_doing[1].time = 100;
+                    duoji_doing[1].inc = (duoji_doing[1].aim -  duoji_doing[1].cur) / (duoji_doing[1].time/20.000);
+                }
+
+                data = 0;
                 if (uart_receive_buf[i] == '-') {
                     negative = 1;
                     i++;
+                } else {
+                    negative = 0;
                 }
-
-				while(uart_receive_buf[i] && uart_receive_buf[i] != 'X')
-				{
-					x =  x * 10 + uart_receive_buf[i] - '0';
-					i++;
-				}
-
-                if (negative) {
-                    x = -x;
-                }
-			}
-			else if(uart_receive_buf[i] == 'X') 
-			{
-                uint8_t negative = 0;
-				y = 0;
-
-				i++;
-
-                if (uart_receive_buf[i] == '-') {
-                    negative = 1;
-                    i++;
-                }
-
-				while(uart_receive_buf[i] && uart_receive_buf[i] != 'Y')
-				{
-					y = y * 10 + uart_receive_buf[i] - '0';
-					i++;
-				}
-
-                if (negative) {
-                    y = -y;
-                }
-			}
-			else if(uart_receive_buf[i] == 'Y') 
-			{
-				servo1 = 0;
-				i++;
-				while(uart_receive_buf[i] && uart_receive_buf[i] != 'A')
-				{
-					servo1 = servo1 * 10 + uart_receive_buf[i] - '0';
-					i++;
-				}
-			}
-			else if(uart_receive_buf[i] == 'A') 
-			{
-				servo2 = 0;
-				i++;
-				while(uart_receive_buf[i] && uart_receive_buf[i] != 'B')
-				{
-					servo2 = servo2 * 10 + uart_receive_buf[i] - '0';
-					i++;
-				}
-			}
-			else
-			{
-				i++;
-			}
+            }
 		}	
-		
-		
+
 		cmd_status = 100;
-		uart1_send_str(cmd);
-
-        tankThrottleSet(y / 30000.0);
-        tankYawSet(x / 30000.0);
-
-		servo1 = servo1 * 8 + 600;
-		
-		duoji_doing[0].aim = servo1;
-		duoji_doing[0].time = 100;
-		duoji_doing[0].inc = (duoji_doing[0].aim -  duoji_doing[0].cur) / (duoji_doing[0].time/20.000);
-		
-		servo2 = servo2 * 9.5 + 600;
-		
-		duoji_doing[1].aim = servo2;
-		duoji_doing[1].time = 100;
-		duoji_doing[1].inc = (duoji_doing[1].aim -  duoji_doing[1].cur) / (duoji_doing[1].time/20.000);
-		
 		memset(uart_receive_buf, 0, sizeof(uart_receive_buf));
-		
 	}
 	else if(pos = str_contain_str(uart_receive_buf, (u8 *)"$DST!"), pos)
 	{
@@ -449,18 +410,11 @@ void handle_button(void)
 			psx_buf[6] = 0x7F;
 		}
 
-        float throttle = (255 - psx_buf[6]) * (200.0 / 255.0) - 100;
-        float yaw = (255 - psx_buf[5]) * (200.0 / 255.0) - 100;
-        // Dead zone.
-        if (fabs(throttle) < 10) {
-            throttle = 0;
-        }
-        if (fabs(yaw) < 10) {
-            yaw = 0;
-        }
+        ps2Throttle = (255 - psx_buf[6]) * (200.0 / 255.0) - 100;
+        ps2Yaw = (255 - psx_buf[5]) * (200.0 / 255.0) - 100;
 
-        // Limit yaw speed to easy control.
-        yaw = yaw * 0.3;
+        float throttle = tankRcCurveThrottleValue(ps2Throttle);
+        float yaw = tankRcCurveYawValue(ps2Yaw);
 
         tankThrottleSet(throttle);
         tankYawSet(yaw);

@@ -13,6 +13,9 @@
 #define ei()        __enable_irq()
 #define di()        __disable_irq()
 
+#define irqLock()   uint8_t __sys_irqEnabled = isEi(); if (__sys_irqEnabled) { di(); }
+#define irqUnLock() if (__sys_irqEnabled) { ei(); }
+
 #ifdef __cplusplus
 }
 #endif

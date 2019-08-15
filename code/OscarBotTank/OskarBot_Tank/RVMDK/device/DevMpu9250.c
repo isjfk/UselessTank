@@ -176,12 +176,12 @@ inv_error_t devMpu9250Loop(void) {
     uint8_t mpl_updated = 0;
     inv_time_t currSysTickMs;
 
+    devMpu9250GyroUpdated = 0;
+    devMpu9250CompassUpdated = 0;
+
     if (devMpu9250Status) {
         return devMpu9250Status;
     }
-
-    devMpu9250GyroUpdated = 0;
-    devMpu9250CompassUpdated = 0;
 
     get_tick_count(&currSysTickMs);
     if ((currSysTickMs - prevGyroSysTickMs) >= (1000 / MPU_FREQ_HZ_DEFAULT)) {

@@ -1,17 +1,17 @@
 /**
   ******************************************************************************
-  * @file    
+  * @file
   * @author: Oskar Wei
 	* @Mail: 990092230@qq.com
   * @version 1.1
-  * @date    
+  * @date
   * @brief   Main program body
   ******************************************************************************
   * @attention
   *
   * COPYRIGHT Oskarbot 2017
   ******************************************************************************
-  */  
+  */
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
@@ -35,8 +35,10 @@
 #include "adc.h"
 
 #include "system/SysTick.h"
-#include "board/Board.h"
+#include "system/SysIrq.h"
+#include "board/BoardInit.h"
 #include "device/DevMpu9250.h"
+#include "tank/Tank.h"
 
 
 
@@ -59,38 +61,32 @@ int main(void)
 
 	// 电池电压检测初始化
 	Adc_Init();
-	
+
 	// PS2手柄初始化 Handle initialization
-	PSX_init();	
-	
+	PSX_init();
+
 	// 伺服类外设（数字舵机）初始化 Servo peripherals initialization
-	servo_init();
-	
-	// 串口初始化，波特率115200 Serial port initialization, baud rate of 115200
-	tb_usart1_init(9600);
-	tb_usart2_init(115200);
-	tb_usart3_init(115200);
-	
-	
+//	servo_init();
+
 	// 中断使能 Enable interruption
-	tb_interrupt_open();
-	
+	ei();
+
 	// 总线舵机输出 Bus servo output
 	zx_uart_send_str((u8 *)"#255P1500T2000!");
-	
+
 	// SPI Flash存储器初始化 Flash memory Initialization
-//	W25Q_Init();	
+//	W25Q_Init();
 //	if(W25Q_TYPE != W25Q64)
 //	{
 //		while(1)BEEP_ON;
 //	}
 
 	// 左侧编码器初始化 Left encoder initialization
-	Left_Encoder_Init();
-	
+//	Left_Encoder_Init();
+
 	// 右侧编码器初始化 Right encoder initialization
-	Right_Encoder_Init();
-	
+//	Right_Encoder_Init();
+
 	// 减速电机PWM初始化 Motor PWM Initialization
 	Motor_Init(7199, 0);
 
@@ -104,20 +100,20 @@ int main(void)
 		// 电池电压检测
 		Detect_Volt();
 
-		// 航姿参考系统算法 (AHRS)Attitude and heading reference system
-		AHRS();
-
 		// ps2手柄命令处理 PS2 handle command processing
 		handle_ps2();
 
 		// ps2按键响应 Key response
 		handle_button();
 
-		// 串口消息处理 Serial message processing
-		handle_uart();
+        // Tank loop.
+        tankLoop();
+
+		// 航姿参考系统算法 (AHRS)Attitude and heading reference system
+		AHRS();
 
 		// 舵机执行动作 Servos perform action
-		handle_action();
+//		handle_action();
 
 		// 串口1输出电池电压
 		//printf("Vottage:%4.1f\r\n", bat_volt);
@@ -144,7 +140,7 @@ int main(void)
   * @retval None
   */
 void assert_failed(uint8_t* file, uint32_t line)
-{ 
+{
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 

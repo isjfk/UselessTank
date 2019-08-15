@@ -287,7 +287,7 @@ void tb_usart3_send_str(u8 *Data)
 
 /**========================中断处理函数=============================**/
 //串口收发中断处理函数
-int USART1_IRQHandler(void) 
+int _USART1_IRQHandler(void) 
 {
 	u8 sbuf_bak;
 	static u16 buf_index = 0;
@@ -364,7 +364,7 @@ int USART1_IRQHandler(void)
 	return 0;
 }
 
-int USART2_IRQHandler(void) 
+int _USART2_IRQHandler(void) 
 { 
 	
 	u8 sbuf_bak;
@@ -462,7 +462,7 @@ int USART2_IRQHandler(void)
 	return 0;
 }
 
-int USART3_IRQHandler(void)
+int _USART3_IRQHandler(void)
 { 
 	u8 sbuf_bak;
 	static u16 buf_index = 0;
@@ -603,8 +603,9 @@ void handle_uart(void)
 		//uart1_send_str(uart_receive_buf);
 		if(uart1_mode == 1) 
 		{					//命令模式
-			//uart1_send_str("cmd:");
+			//uart1_send_str((u8*) "cmd:");
 			//uart1_send_str(uart_receive_buf);
+            //uart1_send_str((u8*) "\n");
 			parse_cmd(uart_receive_buf);			
 		}
 		else if(uart1_mode == 2) 

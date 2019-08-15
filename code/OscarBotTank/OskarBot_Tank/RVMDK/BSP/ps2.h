@@ -23,6 +23,9 @@
 
 //#define PS2_ACK(x) if(x) GPIO_SetBits(GPIOC,1 << 15);else GPIO_ResetBits(GPIOC,1 << 15);
 
+extern float ps2Throttle;
+extern float ps2Yaw;
+
 void PSX_init(void);
 void psx_io_config(void);
 unsigned char psx_transfer(unsigned char dat);
