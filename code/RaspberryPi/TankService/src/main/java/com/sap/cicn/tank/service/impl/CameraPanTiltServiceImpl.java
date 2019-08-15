@@ -91,14 +91,22 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
     public void afterPropertiesSet() throws Exception {
         driver = PCA9635Driver.getInstance();
         if (driver == null) {
-            log.error("Error find PCA9635 device, probably it's local development environment. Camera Pan-Tilt will not start.");
+            log.error("Error find PCA9635 device. Camera Pan-Tilt will not start.");
             return;
         }
 
-        driver
-                .oscClock(25000000)     // 25MHz
-                .pwmFreq(50)            // 50Hz
-                .init();
+        try {
+            driver
+                    .oscClock(25000000)     // 25MHz
+                    .pwmFreq(50)            // 50Hz
+                    .init();
+        } catch (Exception e) {
+            log.debug("Error initialize PCA9635 device. Camera Pan-Tilt will not start.");
+            log.error("Error initialize PCA9635 device. Camera Pan-Tilt will not start.");
+
+            driver.close();
+            driver = null;
+        }
 
         new Thread(cameraAngleUpdateTask, "CameraAngleUpdateThread").start();
 
@@ -109,7 +117,9 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
      */
     @Override
     public void destroy() throws Exception {
-        driver.close();
+        if (driver != null) {
+            driver.close();
+        }
     }
 
     private void cameraAngleUpdate() {
@@ -124,8 +134,10 @@ public class CameraPanTiltServiceImpl implements CameraPanTiltService, Initializ
             cameraAngleReadLock.unlock();
         }
 
-        driver.setServoAngle(SERVO_PAN_CHANNEL, panAngle);
-        driver.setServoAngle(SERVO_TILT_CHANNEL, tiltAngle);
+        if (driver != null) {
+            driver.setServoAngle(SERVO_PAN_CHANNEL, panAngle);
+            driver.setServoAngle(SERVO_TILT_CHANNEL, tiltAngle);
+        }
     }
 
     @Scheduled(fixedRate = 3 * 1000)

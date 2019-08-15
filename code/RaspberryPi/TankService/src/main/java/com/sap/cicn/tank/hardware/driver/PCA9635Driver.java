@@ -134,7 +134,6 @@ public class PCA9635Driver {
             device.write(MODE1_ADDRESS, (byte) mode1);
         } catch (Exception e) {
             log.error(e, "Error close PCA9635 on I2C bus[", address.getBusNumber(), "] address[", address.getAddress(), "].");
-            throw new InternalException(e, "Error close PCA9635 on I2C bus[", address.getBusNumber(), "] address[", address.getAddress(), "].");
         }
     }
 
