@@ -327,8 +327,8 @@
             <uC99>1</uC99>
             <uGnu>0</uGnu>
             <useXO>0</useXO>
-            <v6Lang>1</v6Lang>
-            <v6LangP>1</v6LangP>
+            <v6Lang>3</v6Lang>
+            <v6LangP>3</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
             <v6Lto>0</v6Lto>
@@ -457,6 +457,11 @@
               <FileType>1</FileType>
               <FilePath>.\RVMDK\system\SysTick.c</FilePath>
             </File>
+            <File>
+              <FileName>SysDelay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\system\SysDelay.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -466,6 +471,11 @@
               <FileName>DevUsart.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\device\DevUsart.c</FilePath>
+            </File>
+            <File>
+              <FileName>DevUsartRetarget.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\device\DevUsartRetarget.c</FilePath>
             </File>
             <File>
               <FileName>DevMpu9250.c</FileName>
@@ -498,21 +508,6 @@
               <FilePath>.\RVMDK\BSP\timer.c</FilePath>
             </File>
             <File>
-              <FileName>delay.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\BSP\delay.c</FilePath>
-            </File>
-            <File>
-              <FileName>led.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\BSP\led.c</FilePath>
-            </File>
-            <File>
-              <FileName>usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\BSP\usart.c</FilePath>
-            </File>
-            <File>
               <FileName>encoder.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\BSP\encoder.c</FilePath>
@@ -526,11 +521,6 @@
               <FileName>i2c.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\BSP\i2c.c</FilePath>
-            </File>
-            <File>
-              <FileName>mpu9250.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\BSP\mpu9250.c</FilePath>
             </File>
             <File>
               <FileName>sys.c</FileName>
@@ -557,15 +547,20 @@
               <FileType>1</FileType>
               <FilePath>.\RVMDK\BSP\adc.c</FilePath>
             </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\BSP\usart.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>DMP</GroupName>
           <Files>
             <File>
-              <FileName>mpu9250_board.c</FileName>
+              <FileName>DevMpu9250_board.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\RVMDK\DMP\integration\mpu9250_board.c</FilePath>
+              <FilePath>.\RVMDK\DMP\integration\DevMpu9250_board.c</FilePath>
             </File>
             <File>
               <FileName>inv_mpu.c</FileName>
@@ -649,6 +644,12 @@
     <components>
       <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.2.0" condition="ARMv6_7_8-M Device">
         <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="5.5.1"/>
+        <targetInfos>
+          <targetInfo name="Target"/>
+        </targetInfos>
+      </component>
+      <component Cclass="Device" Cgroup="DMA" Cvendor="Keil" Cversion="1.2" condition="STM32F1xx CMSIS">
+        <package name="STM32F1xx_DFP" schemaVersion="1.4.0" url="http://www.keil.com/pack/" vendor="Keil" version="2.3.0"/>
         <targetInfos>
           <targetInfo name="Target"/>
         </targetInfos>

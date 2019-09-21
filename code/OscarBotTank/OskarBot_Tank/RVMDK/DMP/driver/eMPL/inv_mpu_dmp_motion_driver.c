@@ -36,7 +36,7 @@
 #include "i2c.h"   
 #include "main.h"
 //#include "board-st_discovery.h"
-#include "mpu9250_board.h"
+#include "DevMpu9250_board.h"
    
 #define i2c_write   Sensors_I2C_WriteRegister
 #define i2c_read    Sensors_I2C_ReadRegister 

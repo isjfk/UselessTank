@@ -9,18 +9,27 @@
  extern "C" {
 #endif
 
+#define SYS_TICK_FREQ   (1000u)
+
 extern volatile uint32_t sysTickMs;
+
+extern uint32_t sysTickValMax;
+extern uint32_t sysTickValPerMs;
+extern uint32_t sysTickValPerUs;
 
 void sysTickInit(void);
 
-inline void sysTickInc(void);
-extern void sysTickInc(void);
+static inline void sysTickInc(void) {
+    sysTickMs++;
+}
 
-inline uint32_t sysTickCurrent(void);
-extern uint32_t sysTickCurrent(void);
+static inline uint32_t sysTickCurrentMs(void) {
+    return sysTickMs;
+}
 
-inline void sysTickGetMs(uint32_t *tick);
-extern void sysTickGetMs(uint32_t *tick);
+static inline void sysTickGetMs(uint32_t *tick) {
+    *tick = sysTickMs;
+}
 
 #ifdef __cplusplus
 }

@@ -9,9 +9,9 @@ Purpose :
 /****************************** Defines *******************************/
 /***************************** Prototypes *****************************/
 
-#include "usart.h"
+#include "device/DevUsart.h"
 
-#define fputc(c)	tb_usart1_send_byte(c)
+#define fputc(c)	devUsartSendData(USART1, c)
 
 #endif // __UART_H__
 

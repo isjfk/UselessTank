@@ -19,7 +19,10 @@ typedef struct {
     size_t parity;
 } DevUsartCount;
 
-void devUsartSendByte(USART_TypeDef* usartPort, uint8_t b);
+int16_t devUsartSendData(USART_TypeDef* usartPort, int16_t data);
+int16_t devUsartRecvData(USART_TypeDef* usartPort);
+
+int devUsartSendStr(USART_TypeDef* usartPort, const char* str);
 
 void devUsartCountInit(DevUsartCount* usartCount, USART_TypeDef* usartPort);
 void devUsartCountIrq(DevUsartCount* usartCount);

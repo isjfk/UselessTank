@@ -1,6 +1,6 @@
 #include "stm32f10x.h"
 #include "led.h"
-#include "delay.h"
+#include "system/SysDelay.h"
 
 
 /**
@@ -22,20 +22,20 @@ void Beep_Led_Init(void)
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 
 	LED_ON;
-	delay_ms(90);
+	sysDelayMs(100);
 
 	LED_OFF;
-	delay_ms(90);
+	sysDelayMs(100);
 }
 
 void beep(uint16_t onTime, uint16_t offTime) {
     BEEP_ON;
     LED_ON;
-    delay_ms(onTime);
+    sysDelayMs(onTime);
 
     BEEP_OFF;
     LED_OFF;
-    delay_ms(offTime);
+    sysDelayMs(offTime);
 }
 
 /**
@@ -45,9 +45,9 @@ void beep(uint16_t onTime, uint16_t offTime) {
 	*/
 void Sys_OK_Sound(void)
 {
-    beep(90, 90);
-    beep(90, 90);
-    beep(90, 90);
+    beep(100, 100);
+    beep(100, 100);
+    beep(100, 100);
 }
 
 /**

@@ -16,9 +16,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
 #include <stdio.h>
-#include "led.h"
 #include "usart.h"
-#include "delay.h"
 #include "ahrs.h"
 #include "stdbool.h"
 #include "motor.h"
@@ -29,15 +27,14 @@
 #include "string.h"
 #include "w25q64.h"
 #include "sys.h"
-#include "delay.h"
 #include "usart.h"
-#include "led.h"
 #include "adc.h"
 
 #include "system/SysTick.h"
 #include "system/SysIrq.h"
-#include "board/BoardInit.h"
 #include "device/DevMpu9250.h"
+#include "board/BoardInit.h"
+#include "board/Board.h"
 #include "tank/Tank.h"
 
 
@@ -72,13 +69,13 @@ int main(void)
 	ei();
 
 	// 总线舵机输出 Bus servo output
-	zx_uart_send_str((u8 *)"#255P1500T2000!");
+//	zx_uart_send_str((u8 *)"#255P1500T2000!");
 
 	// SPI Flash存储器初始化 Flash memory Initialization
 //	W25Q_Init();
 //	if(W25Q_TYPE != W25Q64)
 //	{
-//		while(1)BEEP_ON;
+//		while(1) boardBeepOn();
 //	}
 
 	// 左侧编码器初始化 Left encoder initialization
@@ -93,7 +90,7 @@ int main(void)
 	// 初始化电池电压
 	Init_Volt();
 
-    Sys_OK_Sound();
+    alarmSystemOk();
 
     /* 主循环 Infinite loop */
     while (1) {

@@ -13,7 +13,7 @@
 
 void pidInit(PidSet *pidSet) {
     pidSet->loopFreqHz = LOOP_FREQ_DEFAULT;
-    pidSet->prevSysTick = sysTickCurrent();
+    pidSet->prevSysTick = sysTickCurrentMs();
     pidSet->updated = 0;
 
     for (int i = 0; i < pidSet->size; i++) {
@@ -38,7 +38,7 @@ void pidInit(PidSet *pidSet) {
 }
 
 void pidLoop(PidSet *pidSet) {
-    uint32_t currSysTick = sysTickCurrent();
+    uint32_t currSysTick = sysTickCurrentMs();
     uint32_t loopFreqHz = pidSet->loopFreqHz;
     if ((currSysTick - pidSet->prevSysTick) < (1000 / loopFreqHz)) {
         pidSet->updated = 0;

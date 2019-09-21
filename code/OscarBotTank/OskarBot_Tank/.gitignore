@@ -9,6 +9,7 @@ JLinkSettings.txt
 *.uvguix.*
 EventRecorderStub.scvd
 JLinkSettings.ini
+*.log
 
 ##################################################
 # C.gitignore

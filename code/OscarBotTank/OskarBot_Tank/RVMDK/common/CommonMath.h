@@ -8,14 +8,17 @@
  extern "C" {
 #endif
 
-inline int iabs(int value);
-extern int iabs(int value);
+static inline int iabs(int value) {
+    return (value < 0) ? -value : value;
+}
 
-inline int irange(int value, int min, int max);
-extern int irange(int value, int min, int max);
+static inline int irange(int value, int min, int max) {
+    return (value < min) ? min : ((value > max) ? max : value);
+}
 
-inline float frange(float value, float min, float max);
-extern float frange(float value, float min, float max);
+static inline float frange(float value, float min, float max) {
+    return (value < min) ? min : ((value > max) ? max : value);
+}
 
 #ifdef __cplusplus
 }

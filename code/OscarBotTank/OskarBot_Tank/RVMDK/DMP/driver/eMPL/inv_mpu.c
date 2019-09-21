@@ -41,11 +41,11 @@
 #include "main.h"
 #include "log.h"
 //#include "board-st_discovery.h"
-#include "mpu9250_board.h"
+#include "DevMpu9250_board.h"
    
 #define i2c_write   Sensors_I2C_WriteRegister
 #define i2c_read    Sensors_I2C_ReadRegister 
-//#define delay_ms    mdelay
+#define delay_ms    sysDelayMs
 #define get_ms      get_tick_count
 #define log_i       MPL_LOGI
 #define log_e       MPL_LOGE

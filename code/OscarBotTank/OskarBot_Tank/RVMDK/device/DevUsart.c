@@ -1,8 +1,25 @@
 #include "DevUsart.h"
 
-void devUsartSendByte(USART_TypeDef* usartPort, uint8_t b) {
+int16_t devUsartSendData(USART_TypeDef* usartPort, int16_t data) {
     while (USART_GetFlagStatus(usartPort, USART_FLAG_TXE) != SET);
-    USART_SendData(usartPort, b);
+    USART_SendData(usartPort, data);
+    return data;
+}
+
+int16_t devUsartRecvData(USART_TypeDef* usartPort) {
+    if (USART_GetFlagStatus(usartPort, USART_FLAG_RXNE) != SET) {
+        return -1;  // EOF
+    }
+    return USART_ReceiveData(usartPort);
+}
+
+int devUsartSendStr(USART_TypeDef* usartPort, const char* str) {
+    int count = 0;
+    while (*str) {
+        devUsartSendData(usartPort, *str++);
+        count++;
+    }
+    return count;
 }
 
 void devUsartCountInit(DevUsartCount* usartCount, USART_TypeDef* usartPort) {

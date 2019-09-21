@@ -1,5 +1,4 @@
 #include "stm32f10x.h"
-#include "device/DevUsart.h"
 
 #ifndef __BOARD_H
 #define __BOARD_H
@@ -7,6 +6,21 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
+
+#define boardLedOn()    GPIO_ResetBits(GPIOB, GPIO_Pin_14)
+#define boardLedOff()   GPIO_SetBits(GPIOB, GPIO_Pin_14)
+
+#define boardBeepOn()   GPIO_SetBits(GPIOB, GPIO_Pin_13)
+#define boardBeepOff()  GPIO_ResetBits(GPIOB, GPIO_Pin_13)
+
+void alarm(uint16_t onTime, uint16_t offTime);
+
+void alarmSystemOk(void);
+void alarmBatteryLow(void);
+
+void alarmSystemError(void);
+void alarmGyroInitError(void);
+void alarmGyroLoopError(void);
 
 #ifdef __cplusplus
 }

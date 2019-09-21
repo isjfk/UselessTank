@@ -80,7 +80,7 @@ void tankPidInit(void) {
     pidInit(&tankPidSet);
 
     tankPidSet.loopFreqHz = MPU_FREQ_HZ_DEFAULT;
-    tankPidSet.pid[0].kP = 60;
+    tankPidSet.pid[0].kP = 20;
     tankPidSet.pid[0].kI = 30;
     tankPidSet.pid[0].kD = 2;
     tankPidSet.pid[0].dNewValueWeight = 0.5;

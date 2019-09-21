@@ -1,17 +1,18 @@
+#include "ps2.h"
+
 #include <stdlib.h>
 #include <math.h>
 
-#include "system/SysTick.h"
 #include "common/CommonString.h"
-#include "ps2.h"
-#include "delay.h"
+#include "system/SysTick.h"
+#include "system/SysDelay.h"
+#include "board/Board.h"
+#include "tank/Tank.h"
+
 #include "servo.h"
 #include "usart.h"
 #include "stdbool.h"
 #include "string.h"
-#include "led.h"
-
-#include "tank/Tank.h"
 
 
 extern bool balance_task;
@@ -245,18 +246,13 @@ void parse_cmd(u8 *cmd)
 	{		
 		car_dw--;
 		if(car_dw == 0)car_dw = 1;
-		BEEP_ON;
-		delay_ms(100);
-		BEEP_OFF;
+		alarm(100, 100);
 	}
 	else if(pos = str_contain_str(uart_receive_buf, (u8 *)"$DWD!"), pos) 
 	{		
 		car_dw++;
 		if(car_dw == 4)car_dw = 3;
-		BEEP_ON;
-		delay_ms(100);
-		BEEP_OFF;
-		
+		alarm(100, 100);
 	}
 	else if(pos = str_contain_str(uart_receive_buf, (u8 *)"$CAR_FARWARD!"), pos) 
 	{		
@@ -300,13 +296,13 @@ void handleCfgButton(char newValue, char orgValue) {
     if (!(newValue & BUTTON_SELECT) && (orgValue & BUTTON_SELECT)) {
         tankPidDisableOnControlLow = !tankPidDisableOnControlLow;
         if (!tankPidDisableOnControlLow) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_START) && (orgValue & BUTTON_START)) {
         tankPidEnabled = !tankPidEnabled;
         if (tankPidEnabled) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
 }
@@ -323,49 +319,49 @@ void handlePidButton(char newValue, char orgValue) {
     if (!(newValue & BUTTON_L1) && (orgValue & BUTTON_L1)) {
         tankPidSet.pid[0].kP += 10;
         if (fabs(tankPidSet.pid[0].kP) < 0.1) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_L2) && (orgValue & BUTTON_L2)) {
         tankPidSet.pid[0].kP -= 10;
         if (fabs(tankPidSet.pid[0].kP) < 0.1) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_R1) && (orgValue & BUTTON_R1)) {
         tankPidSet.pid[0].kI += 1;
         if (fabs(tankPidSet.pid[0].kI) < 0.1) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_R2) && (orgValue & BUTTON_R2)) {
         tankPidSet.pid[0].kI -= 1;
         if (fabs(tankPidSet.pid[0].kI) < 0.1) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_T) && (orgValue & BUTTON_T)) {
         tankPidSet.pid[0].kD += 1;
         if (fabs(tankPidSet.pid[0].kD) < 0.1) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_X) && (orgValue & BUTTON_X)) {
         tankPidSet.pid[0].kD -= 1;
         if (fabs(tankPidSet.pid[0].kD) < 0.1) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_S) && (orgValue & BUTTON_S)) {
         tankPidSet.pid[0].iLimit += 10;
         if (fabs(tankPidSet.pid[0].iLimit) < 0.1) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_O) && (orgValue & BUTTON_O)) {
         tankPidSet.pid[0].iLimit -= 10;
         if (fabs(tankPidSet.pid[0].iLimit) < 0.1) {
-            beep(200, 90);
+            alarm(200, 100);
         }
     }
 }
@@ -528,9 +524,7 @@ void parse_psx_buf(unsigned char *buf, unsigned char mode)
 			}
 		}
 		bak = temp2;
-		BEEP_ON;
-		delay_ms(10);
-		BEEP_OFF;
+		alarm(10, 10);
 	}	
 	return;
 }
@@ -591,16 +585,16 @@ unsigned char psx_transfer(unsigned char dat)
 	wt_data = dat;
 	rd_data = 0;
 	//PS2_CLK(1);
-	//tb_delay_us(10);
+	//sysDelayUs(10);
 	for(i = 0;i < 8;i++)
 	{
 		PS2_CMD((wt_data & (0x01 << i)));
 		PS2_CLK(1);
-		delay_us(10);
+		sysDelayUs(10);
 		PS2_CLK(0);
-		delay_us(10);
+		sysDelayUs(10);
 		PS2_CLK(1);
-		//tb_delay_us(15);
+		//sysDelayUs(15);
 		if(PS2_DAT) 
 		{
 			rd_data |= 0x01<<i;

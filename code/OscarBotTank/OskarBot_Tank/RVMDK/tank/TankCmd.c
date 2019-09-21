@@ -4,6 +4,7 @@
 
 #include "TankCmd.h"
 #include "Tank.h"
+#include "device/DevUsart.h"
 #include "board/Board.h"
 
 uint8_t cmdInData[256];
@@ -44,10 +45,10 @@ void tankCmdLoop(void) {
 
     tankCmdParse(data);
 
-    devUsartSendByte(USART1, data);
+    devUsartSendData(USART1, data);
     if (data == cmdSuffix) {
-        devUsartSendByte(USART1, '\r');
-        devUsartSendByte(USART1, '\n');
+        devUsartSendData(USART1, '\r');
+        devUsartSendData(USART1, '\n');
     }
 }
 

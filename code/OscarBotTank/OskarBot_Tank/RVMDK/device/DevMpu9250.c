@@ -1,7 +1,6 @@
 #include "DevMpu9250.h"
 #include "system/SysIrq.h"
-#include "mpu9250_board.h"
-#include "i2c.h"
+#include "DevMpu9250_board.h"
 
 unsigned char *mpl_key = (unsigned char*)"eMPL 5.1";
 
@@ -87,9 +86,8 @@ inv_error_t devMpu9250Init(void) {
      * bias measurement can be made when running the self-test (see case 't' in
      * handle_input), but this algorithm can be enabled if the self-test can't
      * be executed in your application.
-     *
-     * inv_enable_in_use_auto_calibration();
      */
+    inv_enable_in_use_auto_calibration();
 
     /* Compass calibration algorithms. */
     inv_enable_vector_compass_cal();
@@ -155,7 +153,7 @@ inv_error_t devMpu9250Init(void) {
             (long)compass_fsr<<15);
 
     // Wait 500ms for device stabilize.
-    delay_ms(500);
+    sysDelayMs(500);
     get_tick_count(&currSysTickMs);
     prevGyroSysTickMs = currSysTickMs;
     prevCompassSysTickMs = currSysTickMs;

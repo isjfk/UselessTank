@@ -2,32 +2,41 @@
 #include "Board.h"
 #include "tank/Tank.h"
 #include "system/SysTick.h"
+#include "system/SysDelay.h"
 #include "device/DevMpu9250.h"
 #include "device/DevUsart.h"
 
-#include "led.h"    // FIXME:
-
+void boardBeepLedInit(void);
 void boardTimerInit(void);
 void boardUsartInit(void);
 
 void boardInit(void) {
-    // Should be called already before main()
-    //SystemInit();
-
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
 
     sysTickInit();
-    Beep_Led_Init();
+    boardBeepLedInit();
 
     tankInit();
 
+    sysDelayMs(500);
     if (devMpu9250Init()) {
-        beepGyroInitError();
+        alarmGyroInitError();
         NVIC_SystemReset();
     }
 
     boardTimerInit();
     boardUsartInit();
+}
+
+void boardBeepLedInit(void) {
+	GPIO_InitTypeDef gpio_InitStruct;
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
+	gpio_InitStruct.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
+	gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
+	gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB, &gpio_InitStruct);
 }
 
 void boardTimerInit(void) {

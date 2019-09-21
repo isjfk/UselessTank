@@ -4,14 +4,13 @@
 #include "stdbool.h"
 #include "motor.h"
 #include "usart.h"
-#include "delay.h"
 #include "encoder.h"
-#include "led.h"
 #include "ps2.h"
 
-#include "tank/Tank.h"
 #include "system/SysTick.h"
 #include "device/DevMpu9250.h"
+#include "board/Board.h"
+#include "tank/Tank.h"
 
 // 电池电压
 extern float volatile bat_volt;
@@ -36,7 +35,7 @@ extern uint8_t rx_buffer[64];
 void print_mpu9250_data() {
     static int prevTick = 0;
 
-    int currTick = sysTickCurrent();
+    int currTick = sysTickCurrentMs();
     if (currTick - prevTick > 500) {
         prevTick = currTick;
 
@@ -52,7 +51,7 @@ void print_mpu9250_data() {
         devMpu9250GetCompassFloat(compass, &accuracy, &timestamp);
         devMpu9250GetHeadingFloat(heading, &accuracy, &timestamp);
 
-        printf("gyro[%8.2f %8.2f %8.2f], accel[%8.2f %8.2f %8.2f], compass[%8.2f %8.2f %8.2f], heading[%8.2f]\r\n", gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], compass[0], compass[1], compass[2], heading[0]);
+        printf("gyro[%8.2f %8.2f %8.2f], accel[%8.2f %8.2f %8.2f], compass[%8.2f %8.2f %8.2f], heading[%8.2f] accuracy[%d]\r\n", gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], compass[0], compass[1], compass[2], heading[0], (int) accuracy);
     }
 }
 
@@ -76,12 +75,12 @@ void AHRS(void)
 	//Moto1=Balance_Pwm+Velocity_Pwm+Turn_Pwm + joy_left_pwm * 10;       // 电机1PWM
 	//Moto2=-Balance_Pwm+Velocity_Pwm-Turn_Pwm + joy_right_pwm * 10;      // 电机2PWM
     
-    //print_mpu9250_data();
+    print_mpu9250_data();
     //print_tank_data();
 
-    if (bat_volt < 10.8) {              // low battery voltage for 3S
+    if (bat_volt < 10.2) {              // low battery voltage for 3S
         motorSet(0, 0);
-        Battery_Low_Sound();
+        alarmBatteryLow();
     } else {
         motorL = tankControlRange(tankThrottleGet() - tankYawGet()) * 71.99;
         motorR = tankControlRange(tankThrottleGet() + tankYawGet()) * 71.99;
