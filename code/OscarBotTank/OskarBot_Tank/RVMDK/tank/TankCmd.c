@@ -7,8 +7,11 @@
 #include "device/DevUsart.h"
 #include "board/Board.h"
 
-uint8_t cmdInData[256];
+uint8_t cmdInData[512];
 CommonDataBuf cmdInBuf;
+
+uint8_t cmdOutData[512];
+CommonDataBuf cmdOutBuf;
 
 uint8_t tankCmdEnabled = 0;
 
@@ -32,6 +35,7 @@ void tankCmdParse(uint8_t data);
 
 void tankCmdInit(void) {
     dataBufInit(&cmdInBuf, cmdInData, sizeof(cmdInData));
+    dataBufInit(&cmdOutBuf, cmdOutData, sizeof(cmdOutData));
 
     tankCmdStateReset();
     tankCmdEnabled = 1;
@@ -39,7 +43,7 @@ void tankCmdInit(void) {
 
 void tankCmdLoop(void) {
     uint8_t data;
-    if (tankCmdReadByte(&data) != COMMON_DATABUF_OK) {
+    if (tankCmdInReadByte(&data) != COMMON_DATABUF_OK) {
         return;
     }
 
@@ -117,7 +121,7 @@ void tankCmdParse(uint8_t data) {
     }
 }
 
-CommonDataBufError tankCmdReadByte(uint8_t *data) {
+CommonDataBufError tankCmdInReadByte(uint8_t *data) {
     if (!tankCmdEnabled) {
         return -1;
     }
@@ -125,7 +129,7 @@ CommonDataBufError tankCmdReadByte(uint8_t *data) {
     return dataBufReadByte(&cmdInBuf, data);
 }
 
-CommonDataBufError tankCmdAppendByte(uint8_t data) {
+CommonDataBufError tankCmdInAppendByte(uint8_t data) {
     if (!tankCmdEnabled) {
         return -1;
     }

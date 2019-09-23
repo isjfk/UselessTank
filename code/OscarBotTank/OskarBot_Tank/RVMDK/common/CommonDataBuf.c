@@ -19,38 +19,50 @@ CommonDataBufError dataBufInit(CommonDataBuf *dataBuf, uint8_t *buf, size_t bufS
 }
 
 CommonDataBufError dataBufReadByte(CommonDataBuf *dataBuf, uint8_t *data) {
+    return dataBufReadByteArray(dataBuf, data, 1);
+}
+
+CommonDataBufError dataBufAppendByte(CommonDataBuf *dataBuf, uint8_t data) {
+    return dataBufAppendByteArray(dataBuf, &data, 1);
+}
+
+CommonDataBufError dataBufReadByteArray(CommonDataBuf *dataBuf, uint8_t *data, size_t dataSize) {
     irqLock();
 
-    if (dataBuf->dataSize == 0) {
+    if (dataBuf->dataSize < dataSize) {
         irqUnLock();
-        return COMMON_DATABUF_ERRNO_BUF_EMPTY;
+        return COMMON_DATABUF_ERRNO_DATA_INSUFFICIENT;
     }
 
-    *data = dataBuf->buf[dataBuf->dataStartIndex++];
-    dataBuf->dataStartIndex %= dataBuf->bufSize;
-    dataBuf->dataSize--;
+    while (dataSize-- > 0) {
+        *data++ = dataBuf->buf[dataBuf->dataStartIndex++];
+        dataBuf->dataStartIndex %= dataBuf->bufSize;
+        dataBuf->dataSize--;
 
-    dataBuf->outCount++;
+        dataBuf->outCount++;
+    }
 
     irqUnLock();
     return 0;
 }
 
-CommonDataBufError dataBufAppendByte(CommonDataBuf *dataBuf, uint8_t data) {
+CommonDataBufError dataBufAppendByteArray(CommonDataBuf *dataBuf, uint8_t *data, size_t dataSize) {
     irqLock();
 
-    if (dataBuf->dataSize >= dataBuf->bufSize) {
+    if ((dataBuf->bufSize - dataBuf->dataSize) < dataSize) {
         dataBuf->overflowCount++;
 
         irqUnLock();
-        return COMMON_DATABUF_ERRNO_BUF_FULL;
+        return COMMON_DATABUF_ERRNO_SPACE_INSUFFICIENT;
     }
 
-    dataBuf->buf[dataBuf->dataEndIndex++] = data;
-    dataBuf->dataEndIndex %= dataBuf->bufSize;
-    dataBuf->dataSize++;
+    while (dataSize-- > 0) {
+        dataBuf->buf[dataBuf->dataEndIndex++] = *data++;
+        dataBuf->dataEndIndex %= dataBuf->bufSize;
+        dataBuf->dataSize++;
 
-    dataBuf->inCount++;
+        dataBuf->inCount++;
+    }
 
     irqUnLock();
     return 0;

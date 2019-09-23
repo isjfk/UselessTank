@@ -48,7 +48,7 @@ float yawCurveData[][2] = {
 
 PID tankPid[1];
 PidSet tankPidSet;
-uint8_t tankPidEnabled = 0;
+uint8_t tankPidEnabled = 1;
 uint8_t tankPidDisableOnControlLow = 1;
 
 uint8_t isThrottleLow(float value);
@@ -61,10 +61,12 @@ void tankPidInit(void);
 float tankThrottleSlowSet(float targetValue) {
     float fullSpeedTime = 1;    // seconds
     float step = (TANK_CTRL_MAX - TANK_CTRL_MID) / MPU_FREQ_HZ_DEFAULT / fullSpeedTime;
-    if (tankThrottleFixed > targetValue) {
+    if (tankThrottleFixed > (targetValue + step)) {
         return tankControlRange(tankThrottleFixed - step);
-    } else {
+    } else if (tankThrottleFixed < (targetValue - step)) {
         return tankControlRange(tankThrottleFixed + step);
+    } else {
+        return tankControlRange(targetValue);
     }
 }
 
@@ -80,14 +82,11 @@ void tankPidInit(void) {
     pidInit(&tankPidSet);
 
     tankPidSet.loopFreqHz = MPU_FREQ_HZ_DEFAULT;
-    tankPidSet.pid[0].kP = 20;
+    tankPidSet.pid[0].kP = 25;
     tankPidSet.pid[0].kI = 30;
     tankPidSet.pid[0].kD = 2;
     tankPidSet.pid[0].dNewValueWeight = 0.5;
     tankPidSet.pid[0].iLimit = 30;
-
-    tankPidEnabled = 1;
-    tankPidDisableOnControlLow = 1;
 }
 
 void tankLoop(void) {
@@ -100,13 +99,6 @@ void tankLoop(void) {
 }
 
 void tankPidLoop(void) {
-    if (!tankPidEnabled
-        || (tankPidDisableOnControlLow && isThrottleLow(tankThrottle) && isYawLow(tankYaw))) {
-        tankYawFixed = tankYaw;
-        tankThrottleFixed = tankThrottleSlowSet(tankThrottle);
-        return;
-    }
-
     float gyro[3];
     devMpu9250GetGyroFloat(gyro, NULL, NULL);
 
@@ -118,7 +110,12 @@ void tankPidLoop(void) {
 
     pidLoop(&tankPidSet);
     if (tankPidSet.updated) {
-        tankYawFixed = tankControlRange(tankYaw + tankPidSet.pid[0].sum);
+        if (!tankPidEnabled
+                || (tankPidDisableOnControlLow && isThrottleLow(tankThrottle) && isYawLow(tankYaw))) {
+            tankYawFixed = tankYaw;
+        } else {
+            tankYawFixed = tankControlRange(tankYaw + tankPidSet.pid[0].sum);
+        }
     }
 
     tankThrottleFixed = tankThrottleSlowSet(tankThrottle);

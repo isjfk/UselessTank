@@ -10,10 +10,10 @@
 
 typedef int32_t CommonDataBufError;
 
-#define COMMON_DATABUF_OK               (0)
-#define COMMON_DATABUF_ERRNO_UNKNOWN    (-1)
-#define COMMON_DATABUF_ERRNO_BUF_EMPTY  (-1001)
-#define COMMON_DATABUF_ERRNO_BUF_FULL   (-2001)
+#define COMMON_DATABUF_OK                       (0)
+#define COMMON_DATABUF_ERRNO_UNKNOWN            (-1)
+#define COMMON_DATABUF_ERRNO_DATA_INSUFFICIENT  (-1001)
+#define COMMON_DATABUF_ERRNO_SPACE_INSUFFICIENT (-2001)
 
 typedef struct {
     uint8_t *buf;
@@ -31,6 +31,9 @@ CommonDataBufError dataBufInit(CommonDataBuf *dataBuf, uint8_t *buf, size_t bufS
 
 CommonDataBufError dataBufReadByte(CommonDataBuf *dataBuf, uint8_t *data);
 CommonDataBufError dataBufAppendByte(CommonDataBuf *dataBuf, uint8_t data);
+
+CommonDataBufError dataBufReadByteArray(CommonDataBuf *dataBuf, uint8_t *data, size_t dataSize);
+CommonDataBufError dataBufAppendByteArray(CommonDataBuf *dataBuf, uint8_t *data, size_t dataSize);
 
 #ifdef __cplusplus
 }

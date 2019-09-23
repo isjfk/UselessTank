@@ -168,10 +168,10 @@ void USART1_IRQHandler(void) {
         return;
     } else {
         USART_ClearITPendingBit(USART1, USART_IT_RXNE);
-    }
 
-    uint8_t b = USART_ReceiveData(USART1);
-    tankCmdAppendByte(b);
+        uint8_t b = USART_ReceiveData(USART1);
+        tankCmdInAppendByte(b);
+    }
 }
 
 void USART2_IRQHandler(void) {
@@ -179,10 +179,10 @@ void USART2_IRQHandler(void) {
         return;
     } else {
         USART_ClearITPendingBit(USART2, USART_IT_RXNE);
-    }
 
-    uint8_t b = USART_ReceiveData(USART2);
-    tankCmdAppendByte(b);
+        uint8_t b = USART_ReceiveData(USART2);
+        tankCmdInAppendByte(b);
+    }
 }
 
 void USART3_IRQHandler(void) {

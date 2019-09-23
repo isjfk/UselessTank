@@ -1,5 +1,19 @@
 #include "Board.h"
+#include "system/SysTick.h"
 #include "system/SysDelay.h"
+
+float batteryHealthVoltage = 10.2;      // For 3S LiPo battery.
+float boardBatteryVoltage = 0;
+uint32_t boardBatteryVoltageSysTickMs = 0;
+
+void boardMeasureBatteryVoltage(void);
+
+void boardLoop(void) {
+    boardMeasureBatteryVoltage();
+    if (!boardIsBatteryHealth()) {
+        alarmBatteryLow();
+    }
+}
 
 void alarm(uint16_t onTime, uint16_t offTime) {
     boardBeepOn();
@@ -40,4 +54,41 @@ void alarmGyroLoopError(void) {
     alarm(200, 200);
     alarm(200, 200);
     alarm(200, 1000);
+}
+
+float boardGetBatteryVoltage(void) {
+    return boardBatteryVoltage;
+}
+
+float boardBatteryVoltageFromAdc(void) {
+	ADC_RegularChannelConfig(ADC1, 14, 1, ADC_SampleTime_239Cycles5);
+	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+
+	return ADC_GetConversionValue(ADC1) * 3.3 * 6 / 4096;
+}
+
+void boardMeasureBatteryVoltage(void) {
+	float voltageCurrent = boardBatteryVoltageFromAdc();
+    uint32_t sysTickMsCurrent = sysTickCurrentMs();
+    uint32_t cycleTimeMs = sysTickMsCurrent - boardBatteryVoltageSysTickMs;
+    uint32_t voltageRegulationCycleMs = 1000;
+
+    if ((boardBatteryVoltageSysTickMs == 0) || (cycleTimeMs > voltageRegulationCycleMs)) {
+        boardBatteryVoltage = voltageCurrent;
+    } else {
+        float orgVoltagePercent = (voltageRegulationCycleMs - cycleTimeMs) / (float) voltageRegulationCycleMs;
+        float currVoltagePercent = cycleTimeMs / (float) voltageRegulationCycleMs;
+        boardBatteryVoltage = orgVoltagePercent * boardBatteryVoltage + currVoltagePercent * voltageCurrent;
+    }
+
+    boardBatteryVoltageSysTickMs = sysTickMsCurrent;
+}
+
+int8_t boardIsBatteryLow(void) {
+    return boardGetBatteryVoltage() < batteryHealthVoltage;
+}
+
+int8_t boardIsBatteryHealth(void) {
+    return !boardIsBatteryLow();
 }

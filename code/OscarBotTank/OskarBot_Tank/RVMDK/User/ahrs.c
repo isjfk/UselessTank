@@ -5,7 +5,6 @@
 #include "motor.h"
 #include "usart.h"
 #include "encoder.h"
-#include "ps2.h"
 
 #include "system/SysTick.h"
 #include "device/DevMpu9250.h"
@@ -56,8 +55,8 @@ void print_mpu9250_data() {
 }
 
 void print_tank_data() {
-    //printf("throttle[%8.2f], throttleFixed[%8.2f], yaw[%8.2f], yawFixed[%8.2f]\r\n", tankThrottle, tankThrottleFixed, tankYaw, tankYawFixed);
-    printf("ps2thr[%8.2f], thr[%8.2f], ps2yaw[%8.2f], yaw[%8.2f]\r\n", ps2Throttle, tankThrottle, ps2Yaw, tankYaw);
+    printf("throttle[%8.2f], throttleFixed[%8.2f], yaw[%8.2f], yawFixed[%8.2f]\r\n", tankThrottle, tankThrottleFixed, tankYaw, tankYawFixed);
+    //printf("ps2thr[%8.2f], thr[%8.2f], ps2yaw[%8.2f], yaw[%8.2f]\r\n", ps2Throttle, tankThrottle, ps2Yaw, tankYaw);
 }
 
 void AHRS(void)
@@ -75,15 +74,18 @@ void AHRS(void)
 	//Moto1=Balance_Pwm+Velocity_Pwm+Turn_Pwm + joy_left_pwm * 10;       // 电机1PWM
 	//Moto2=-Balance_Pwm+Velocity_Pwm-Turn_Pwm + joy_right_pwm * 10;      // 电机2PWM
     
-    print_mpu9250_data();
+    //print_mpu9250_data();
     //print_tank_data();
 
-    if (bat_volt < 10.2) {              // low battery voltage for 3S
-        motorSet(0, 0);
-        alarmBatteryLow();
+    if (boardIsBatteryLow()) {
+        motorSet(0, 0);;
     } else {
-        motorL = tankControlRange(tankThrottleGet() - tankYawGet()) * 71.99;
-        motorR = tankControlRange(tankThrottleGet() + tankYawGet()) * 71.99;
+        float throttle = tankThrottleGet();
+        float yaw = tankYawGet();
+        int motorMax = 7199;
+
+        motorL = tankControlRange(throttle - yaw) * motorMax / 100;
+        motorR = tankControlRange(throttle + yaw) * motorMax / 100;
 
         motorSet(motorL, motorR);
     }

@@ -21,14 +21,13 @@
 #include "stdbool.h"
 #include "motor.h"
 #include "encoder.h"
-#include "ps2.h"
+//#include "ps2.h"
 #include "servo.h"
 #include "main.h"
 #include "string.h"
 #include "w25q64.h"
 #include "sys.h"
 #include "usart.h"
-#include "adc.h"
 
 #include "system/SysTick.h"
 #include "system/SysIrq.h"
@@ -56,17 +55,11 @@ int main(void)
 {
     boardInit();
 
-	// 电池电压检测初始化
-	Adc_Init();
-
 	// PS2手柄初始化 Handle initialization
-	PSX_init();
+//	PSX_init();
 
 	// 伺服类外设（数字舵机）初始化 Servo peripherals initialization
 //	servo_init();
-
-	// 中断使能 Enable interruption
-	ei();
 
 	// 总线舵机输出 Bus servo output
 //	zx_uart_send_str((u8 *)"#255P1500T2000!");
@@ -87,21 +80,17 @@ int main(void)
 	// 减速电机PWM初始化 Motor PWM Initialization
 	Motor_Init(7199, 0);
 
-	// 初始化电池电压
-	Init_Volt();
-
     alarmSystemOk();
 
     /* 主循环 Infinite loop */
     while (1) {
-		// 电池电压检测
-		Detect_Volt();
+		boardLoop();
 
 		// ps2手柄命令处理 PS2 handle command processing
-		handle_ps2();
+//		handle_ps2();
 
 		// ps2按键响应 Key response
-		handle_button();
+//		handle_button();
 
         // Tank loop.
         tankLoop();

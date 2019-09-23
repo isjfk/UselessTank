@@ -45,6 +45,9 @@ inv_error_t devMpu9250Init(void) {
     unsigned short compass_fsr;
     inv_time_t currSysTickMs;
 
+    // Wait 500ms to wait for device stable.
+    sysDelayMs(500);
+
     IIC_Init();
 
     devMpu9250Status = mpu_init(&int_param);

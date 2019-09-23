@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "stm32f10x.h"
 
 #ifndef __BOARD_H
@@ -13,6 +14,8 @@
 #define boardBeepOn()   GPIO_SetBits(GPIOB, GPIO_Pin_13)
 #define boardBeepOff()  GPIO_ResetBits(GPIOB, GPIO_Pin_13)
 
+void boardLoop(void);
+
 void alarm(uint16_t onTime, uint16_t offTime);
 
 void alarmSystemOk(void);
@@ -21,6 +24,10 @@ void alarmBatteryLow(void);
 void alarmSystemError(void);
 void alarmGyroInitError(void);
 void alarmGyroLoopError(void);
+
+float boardGetBatteryVoltage(void);
+int8_t boardIsBatteryLow(void);
+int8_t boardIsBatteryHealth(void);
 
 #ifdef __cplusplus
 }

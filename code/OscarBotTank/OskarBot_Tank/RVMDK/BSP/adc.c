@@ -1,6 +1,6 @@
 #include "adc.h"
 
-float volatile bat_volt = 0;
+volatile float bat_volt = 0;
 
 
 /**

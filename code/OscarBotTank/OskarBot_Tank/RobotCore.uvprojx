@@ -543,11 +543,6 @@
               <FilePath>.\RVMDK\BSP\w25q64.c</FilePath>
             </File>
             <File>
-              <FileName>adc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\BSP\adc.c</FilePath>
-            </File>
-            <File>
               <FileName>usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\BSP\usart.c</FilePath>
