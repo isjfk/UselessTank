@@ -7,13 +7,11 @@
  extern "C" {
 #endif
 
-extern CommonDataBuf cmdInBuf;
-
 void tankCmdInit(void);
 void tankCmdLoop(void);
 
-CommonDataBufError tankCmdInReadByte(uint8_t *data);
-CommonDataBufError tankCmdInAppendByte(uint8_t data);
+CommonDataBufError tankCmdReadByte(uint8_t *data);
+CommonDataBufError tankCmdAppendByte(uint8_t data);
 
 #ifdef __cplusplus
 }

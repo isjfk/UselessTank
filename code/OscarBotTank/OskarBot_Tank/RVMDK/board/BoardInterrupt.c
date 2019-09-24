@@ -26,6 +26,7 @@
 
 #include "tank/Tank.h"
 #include "tank/TankCmd.h"
+#include "tank/TankMsg.h"
 #include "board/Board.h"
 #include "system/SysTick.h"
 #include "device/DevMpu9250.h"
@@ -156,43 +157,44 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 void TIM5_IRQHandler(void) {
-    if (TIM_GetITStatus(TIM5, TIM_IT_Update) != SET) {
-        return;
-    } else {
+    if (TIM_GetITStatus(TIM5, TIM_IT_Update) == SET) {
         TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
     }
 }
 
 void USART1_IRQHandler(void) {
-    if (USART_GetITStatus(USART1, USART_IT_RXNE) != SET) {
-        return;
-    } else {
+    if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET) {
         USART_ClearITPendingBit(USART1, USART_IT_RXNE);
 
         uint8_t b = USART_ReceiveData(USART1);
-        tankCmdInAppendByte(b);
+        tankCmdAppendByte(b);
     }
 }
 
 void USART2_IRQHandler(void) {
-    if (USART_GetITStatus(USART2, USART_IT_RXNE) != SET) {
-        return;
-    } else {
+    if (USART_GetITStatus(USART2, USART_IT_RXNE) == SET) {
         USART_ClearITPendingBit(USART2, USART_IT_RXNE);
 
         uint8_t b = USART_ReceiveData(USART2);
-        tankCmdInAppendByte(b);
+        tankCmdAppendByte(b);
+    }
+
+    if (USART_GetITStatus(USART2, USART_IT_TXE) == SET) {
+        uint8_t b;
+        if (tankMsgReadByte(&b) == COMMON_DATABUF_OK) {
+            USART_SendData(USART2, b);
+        } else {
+            USART_ITConfig(USART2, USART_IT_TXE, DISABLE);
+        }
     }
 }
 
 void USART3_IRQHandler(void) {
-    if (USART_GetITStatus(USART3, USART_IT_RXNE) != SET) {
-        return;
-    } else {
+    if (USART_GetITStatus(USART3, USART_IT_RXNE) == SET) {
         USART_ClearITPendingBit(USART3, USART_IT_RXNE);
-    }
 
-    uint8_t b = USART_ReceiveData(USART3);
+        uint8_t b = USART_ReceiveData(USART3);
+    }
 }
 
 /**

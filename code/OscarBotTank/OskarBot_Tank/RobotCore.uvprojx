@@ -383,19 +383,24 @@
           <GroupName>common</GroupName>
           <Files>
             <File>
+              <FileName>CommonDataBuf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\common\CommonDataBuf.c</FilePath>
+            </File>
+            <File>
               <FileName>CommonMath.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\common\CommonMath.c</FilePath>
             </File>
             <File>
+              <FileName>CommonMisc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\common\CommonMisc.c</FilePath>
+            </File>
+            <File>
               <FileName>CommonString.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\common\CommonString.c</FilePath>
-            </File>
-            <File>
-              <FileName>CommonDataBuf.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\common\CommonDataBuf.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -426,6 +431,11 @@
               <FileName>TankCmd.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\tank\TankCmd.c</FilePath>
+            </File>
+            <File>
+              <FileName>TankMsg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\tank\TankMsg.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -467,6 +477,11 @@
         <Group>
           <GroupName>device</GroupName>
           <Files>
+            <File>
+              <FileName>DevCrc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\device\DevCrc.c</FilePath>
+            </File>
             <File>
               <FileName>DevUsart.c</FileName>
               <FileType>1</FileType>

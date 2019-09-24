@@ -74,6 +74,7 @@ void tankInit(void) {
     tankControlInit();
     tankPidInit();
     tankCmdInit();
+    tankMsgInit();
 }
 
 void tankPidInit(void) {
@@ -95,6 +96,7 @@ void tankLoop(void) {
     devMpu9250Loop();
     if (devMpu9250GyroUpdated) {
         tankPidLoop();
+        tankMsgLoop();
     }
 }
 
