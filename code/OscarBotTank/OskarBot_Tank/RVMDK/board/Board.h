@@ -25,6 +25,7 @@ void alarmSystemError(void);
 void alarmGyroInitError(void);
 void alarmGyroLoopError(void);
 
+void boardMeasureBatteryVoltage(void);
 float boardGetBatteryVoltage(void);
 int8_t boardIsBatteryLow(void);
 int8_t boardIsBatteryHealth(void);

@@ -88,8 +88,6 @@ int main(void)
 
 		// ps2手柄命令处理 PS2 handle command processing
 //		handle_ps2();
-
-		// ps2按键响应 Key response
 //		handle_button();
 
         // Tank loop.

@@ -12,6 +12,7 @@ void boardBeepLedInit(void);
 void boardTimerInit(void);
 void boardUsartInit(void);
 void boardMonitorInit(void);
+void checkBatteryStatusOnInit(void);
 
 void boardInit(void) {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
@@ -35,6 +36,8 @@ void boardInit(void) {
     }
 
     tankInit();
+    
+    checkBatteryStatusOnInit();
 }
 
 void boardSwdInit(void) {
@@ -221,4 +224,14 @@ void boardAdcInit(void) {
 
 void boardMonitorInit(void) {
     boardAdcInit();
+}
+
+void checkBatteryStatusOnInit(void) {
+    // Alarm battery low in case battery is not connected only in initialize.
+    boardMeasureBatteryVoltage();
+    if (boardGetBatteryVoltage() < 0.5) {
+        alarmBatteryLow();
+        alarmBatteryLow();
+        alarmBatteryLow();
+    }
 }

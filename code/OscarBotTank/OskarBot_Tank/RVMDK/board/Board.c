@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "Board.h"
 #include "system/SysTick.h"
 #include "system/SysDelay.h"
@@ -5,8 +7,6 @@
 float batteryHealthVoltage = 10.2;      // For 3S LiPo battery.
 float boardBatteryVoltage = 0;
 uint32_t boardBatteryVoltageSysTickMs = 0;
-
-void boardMeasureBatteryVoltage(void);
 
 void boardLoop(void) {
     boardMeasureBatteryVoltage();
@@ -86,7 +86,10 @@ void boardMeasureBatteryVoltage(void) {
 }
 
 int8_t boardIsBatteryLow(void) {
-    return boardGetBatteryVoltage() < batteryHealthVoltage;
+    float batteryVoltage = boardGetBatteryVoltage();
+
+    // Don't consider battery low in case battery is not connected.
+    return (batteryVoltage > 0.5) && (batteryVoltage < batteryHealthVoltage);
 }
 
 int8_t boardIsBatteryHealth(void) {

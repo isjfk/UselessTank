@@ -78,17 +78,18 @@ void AHRS(void)
     //print_tank_data();
 
     if (boardIsBatteryLow()) {
-        motorSet(0, 0);;
-    } else {
-        float throttle = tankThrottleGet();
-        float yaw = tankYawGet();
-        int motorMax = 7199;
-
-        motorL = tankControlRange(throttle - yaw) * motorMax / 100;
-        motorR = tankControlRange(throttle + yaw) * motorMax / 100;
-
-        motorSet(motorL, motorR);
+        motorSet(0, 0);
+        return;
     }
+
+    float throttle = tankThrottleGet();
+    float yaw = tankYawGet();
+    int motorMax = 7199;
+
+    motorL = tankControlRange(throttle - yaw) * motorMax / 100;
+    motorR = tankControlRange(throttle + yaw) * motorMax / 100;
+
+    motorSet(motorL, motorR);
 }
 
 void ReadEncoder(void)

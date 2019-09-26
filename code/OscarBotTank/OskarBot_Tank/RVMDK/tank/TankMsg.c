@@ -30,7 +30,7 @@ CommonDataBufError tankMsgSend(float gyro[3], float accel[3], float compass[3]);
 void tankMsgInit(void) {
     dataBufInit(&tankMsgBuf, tankMsgData, sizeof(tankMsgData));
 
-    tankMsg.header = 0x55AA56AA;
+    tankMsg.header = 0xAA55AA55;        // Actually [ 0x55, 0xAA, 0x55, 0xAA ] in message byte stream.
     tankMsg.dataByteLength = sizeof(tankMsg.data);
     for (size_t i = 0; i < arrayLen(tankMsg.data); i++) {
         tankMsg.data[i] = 0;

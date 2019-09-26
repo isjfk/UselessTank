@@ -1,5 +1,6 @@
 #include "Tank.h"
 #include "TankCmd.h"
+#include "TankMsg.h"
 #include "common/CommonMath.h"
 #include "system/SysIrq.h"
 #include "device/DevMpu9250.h"
@@ -100,6 +101,16 @@ void tankLoop(void) {
     }
 }
 
+uint32_t shouldRunTankPid(void) {
+    if (!tankPidEnabled) {
+        return false;
+    }
+    if (tankPidDisableOnControlLow && isThrottleLow(tankThrottle) && isYawLow(tankYaw)) {
+        return false;
+    }
+    return true;
+}
+
 void tankPidLoop(void) {
     float gyro[3];
     devMpu9250GetGyroFloat(gyro, NULL, NULL);
@@ -108,7 +119,7 @@ void tankPidLoop(void) {
     yawGyro = yawGyro / TANK_GYRO_YAW_MAX * TANK_CTRL_MAX;
 
     tankPidSet.pid[0].setPoint = tankYaw;
-    tankPidSet.pid[0].measure = yawGyro;
+    tankPidSet.pid[0].measure = shouldRunTankPid() ? yawGyro : tankYaw;
 
     pidLoop(&tankPidSet);
     if (tankPidSet.updated) {
