@@ -16,30 +16,36 @@ uint8_t tankMsgData[512];
 CommonDataBuf tankMsgBuf;
 
 typedef struct {
-    uint32_t header;
-    size_t dataByteLength;
-    uint32_t data[9];
-    uint32_t crc;
-} TankMsgStruct;
+    float gyro[3];
+    float accel[3];
+    float compass[3];
+    float quat[4];
+    uint32_t motorEncoderLeft;
+    uint32_t motorEncoderRight;
+} TankMsgData;
 
-TankMsgStruct tankMsg;
+typedef struct {
+    uint64_t startTag;
+    uint32_t header;
+    uint32_t dataLength;
+    TankMsgData data;
+    uint32_t crc;
+} TankMsg;
+
+TankMsg tankMsg;
 uint8_t tankMsgBcd[sizeof(tankMsg) * 2 + 2];
 
-CommonDataBufError tankMsgSend(float gyro[3], float accel[3], float compass[3]);
+CommonDataBufError tankMsgSend();
 
 void tankMsgInit(void) {
     dataBufInit(&tankMsgBuf, tankMsgData, sizeof(tankMsgData));
 
-    tankMsg.header = 0xAA55AA55;        // Actually [ 0x55, 0xAA, 0x55, 0xAA ] in message byte stream.
-    tankMsg.dataByteLength = sizeof(tankMsg.data);
-    for (size_t i = 0; i < arrayLen(tankMsg.data); i++) {
-        tankMsg.data[i] = 0;
-    }
-    tankMsg.crc = 0;
+    memset(&tankMsg, 0, sizeof(tankMsg));
+    tankMsg.startTag = 0xAA55AA55AA55AA55;  // Actually [ 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA ] in message byte stream.
+    tankMsg.header = 0x00000001;            // Protocol version 1. [ 0x01, 0x00, 0x00, 0x00 ] in message byte stream.
+    tankMsg.dataLength = sizeof(tankMsg.data);
 
-    for (size_t i = 0; i < sizeof(tankMsgBcd); i++) {
-        tankMsgBcd[i] = 0;
-    }
+    memset(&tankMsgBcd, 0, sizeof(tankMsgBcd));
     tankMsgBcd[sizeof(tankMsgBcd) - 2] = '\r';
     tankMsgBcd[sizeof(tankMsgBcd) - 1] = '\n';
 
@@ -47,15 +53,18 @@ void tankMsgInit(void) {
 }
 
 void tankMsgLoop(void) {
-    float gyro[3];
-    float accel[3];
-    float compass[3];
+    int8_t accuracy;
+    inv_time_t timestamp;
 
-    devMpu9250GetGyroFloat(gyro, NULL, NULL);
-    devMpu9250GetAccelFloat(accel, NULL, NULL);
-    devMpu9250GetCompassFloat(compass, NULL, NULL);
+    devMpu9250GetGyroFloat(tankMsg.data.gyro, &accuracy, &timestamp);
+    devMpu9250GetAccelFloat(tankMsg.data.accel, &accuracy, &timestamp);
+    devMpu9250GetCompassFloat(tankMsg.data.compass, &accuracy, &timestamp);
+    devMpu9250GetQuatFloat(tankMsg.data.quat, &accuracy, &timestamp);
 
-    tankMsgSend(gyro, accel, compass);
+    tankMsg.data.motorEncoderLeft = 0;
+    tankMsg.data.motorEncoderRight = 0;
+
+    tankMsgSend();
 }
 
 CommonDataBufError tankMsgReadByte(uint8_t *data) {
@@ -72,19 +81,8 @@ uint16_t byte2bcd(uint8_t b) {
     return bcd;
 }
 
-CommonDataBufError tankMsgSend(float gyro[3], float accel[3], float compass[3]) {
-    size_t dataIndex = 0;
-
-    tankMsg.data[dataIndex++] = (gyro != NULL) ? gyro[0] : 0;
-    tankMsg.data[dataIndex++] = (gyro != NULL) ? gyro[1] : 0;
-    tankMsg.data[dataIndex++] = (gyro != NULL) ? gyro[2] : 0;
-    tankMsg.data[dataIndex++] = (accel != NULL) ? accel[0] : 0;
-    tankMsg.data[dataIndex++] = (accel != NULL) ? accel[1] : 0;
-    tankMsg.data[dataIndex++] = (accel != NULL) ? accel[2] : 0;
-    tankMsg.data[dataIndex++] = (compass != NULL) ? compass[0] : 0;
-    tankMsg.data[dataIndex++] = (compass != NULL) ? compass[1] : 0;
-    tankMsg.data[dataIndex++] = (compass != NULL) ? compass[2] : 0;
-    tankMsg.crc = devCrcByteArray((uint8_t *) tankMsg.data, tankMsg.dataByteLength);
+CommonDataBufError tankMsgSend() {
+    tankMsg.crc = devCrcByteArray((uint8_t *) &tankMsg.data, tankMsg.dataLength);
 
     CommonDataBufError bufStatus;
     if (tankMsgTypeBinary) {
