@@ -317,50 +317,50 @@ void handleCfgButton(char newValue, char orgValue) {
 #define BUTTON_O        (1<<5)
 void handlePidButton(char newValue, char orgValue) {
     if (!(newValue & BUTTON_L1) && (orgValue & BUTTON_L1)) {
-        tankPidSet.pid[0].kP += 10;
-        if (fabs(tankPidSet.pid[0].kP) < 0.1) {
+        tankPidCtrl.pid[0].kP += 10;
+        if (fabs(tankPidCtrl.pid[0].kP) < 0.1) {
             alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_L2) && (orgValue & BUTTON_L2)) {
-        tankPidSet.pid[0].kP -= 10;
-        if (fabs(tankPidSet.pid[0].kP) < 0.1) {
+        tankPidCtrl.pid[0].kP -= 10;
+        if (fabs(tankPidCtrl.pid[0].kP) < 0.1) {
             alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_R1) && (orgValue & BUTTON_R1)) {
-        tankPidSet.pid[0].kI += 1;
-        if (fabs(tankPidSet.pid[0].kI) < 0.1) {
+        tankPidCtrl.pid[0].kI += 1;
+        if (fabs(tankPidCtrl.pid[0].kI) < 0.1) {
             alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_R2) && (orgValue & BUTTON_R2)) {
-        tankPidSet.pid[0].kI -= 1;
-        if (fabs(tankPidSet.pid[0].kI) < 0.1) {
+        tankPidCtrl.pid[0].kI -= 1;
+        if (fabs(tankPidCtrl.pid[0].kI) < 0.1) {
             alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_T) && (orgValue & BUTTON_T)) {
-        tankPidSet.pid[0].kD += 1;
-        if (fabs(tankPidSet.pid[0].kD) < 0.1) {
+        tankPidCtrl.pid[0].kD += 1;
+        if (fabs(tankPidCtrl.pid[0].kD) < 0.1) {
             alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_X) && (orgValue & BUTTON_X)) {
-        tankPidSet.pid[0].kD -= 1;
-        if (fabs(tankPidSet.pid[0].kD) < 0.1) {
+        tankPidCtrl.pid[0].kD -= 1;
+        if (fabs(tankPidCtrl.pid[0].kD) < 0.1) {
             alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_S) && (orgValue & BUTTON_S)) {
-        tankPidSet.pid[0].iLimit += 10;
-        if (fabs(tankPidSet.pid[0].iLimit) < 0.1) {
+        tankPidCtrl.pid[0].iLimit += 10;
+        if (fabs(tankPidCtrl.pid[0].iLimit) < 0.1) {
             alarm(200, 100);
         }
     }
     if (!(newValue & BUTTON_O) && (orgValue & BUTTON_O)) {
-        tankPidSet.pid[0].iLimit -= 10;
-        if (fabs(tankPidSet.pid[0].iLimit) < 0.1) {
+        tankPidCtrl.pid[0].iLimit -= 10;
+        if (fabs(tankPidCtrl.pid[0].iLimit) < 0.1) {
             alarm(200, 100);
         }
     }

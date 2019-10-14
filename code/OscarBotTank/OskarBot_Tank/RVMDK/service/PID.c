@@ -11,13 +11,13 @@
 #define D_NEW_VALUE_WEIGHT_DEFAULT (0.5f)
 #define I_LIMIT_DEFAULT     (30.f)
 
-void pidInit(PidSet *pidSet) {
-    pidSet->loopFreqHz = LOOP_FREQ_DEFAULT;
-    pidSet->prevSysTick = sysTickCurrentMs();
-    pidSet->updated = 0;
+void pidInit(PidController *pidCtrl) {
+    pidCtrl->loopFreqHz = LOOP_FREQ_DEFAULT;
+    pidCtrl->prevSysTick = sysTickCurrentMs();
+    pidCtrl->updated = 0;
 
-    for (int i = 0; i < pidSet->size; i++) {
-        PID *pid = pidSet->pid + i;
+    for (int i = 0; i < pidCtrl->size; i++) {
+        PID *pid = pidCtrl->pid + i;
 
         pid->kP = K_P_DEFAULT;
         pid->kI = K_I_DEFAULT;
@@ -37,16 +37,16 @@ void pidInit(PidSet *pidSet) {
     }
 }
 
-void pidLoop(PidSet *pidSet) {
+void pidLoop(PidController *pidCtrl) {
     uint32_t currSysTick = sysTickCurrentMs();
-    uint32_t loopFreqHz = pidSet->loopFreqHz;
-    if ((currSysTick - pidSet->prevSysTick) < (1000 / loopFreqHz)) {
-        pidSet->updated = 0;
+    uint32_t loopFreqHz = pidCtrl->loopFreqHz;
+    if ((currSysTick - pidCtrl->prevSysTick) < (1000 / loopFreqHz)) {
+        pidCtrl->updated = 0;
         return;
     }
 
-    for (int i = 0; i < pidSet->size; i++) {
-        PID *pid = pidSet->pid + i;
+    for (int i = 0; i < pidCtrl->size; i++) {
+        PID *pid = pidCtrl->pid + i;
 
         // PID error.
         float error = pid->setPoint - pid->measure;
@@ -63,6 +63,6 @@ void pidLoop(PidSet *pidSet) {
         pid->prevErrorFiltered = currErrorFiltered;
     }
 
-    pidSet->prevSysTick = currSysTick;
-    pidSet->updated = 1;
+    pidCtrl->prevSysTick = currSysTick;
+    pidCtrl->updated = 1;
 }

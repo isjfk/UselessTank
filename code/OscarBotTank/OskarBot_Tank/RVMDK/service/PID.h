@@ -36,11 +36,11 @@ typedef struct {
     uint32_t loopFreqHz;
     uint32_t prevSysTick;
     uint8_t updated;
-} PidSet;
+} PidController;
 
-void pidInit(PidSet *pidSet);
+void pidInit(PidController *pidCtrl);
 
-void pidLoop(PidSet *pidSet);
+void pidLoop(PidController *pidCtrl);
 
 #ifdef __cplusplus
 }

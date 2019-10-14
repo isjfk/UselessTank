@@ -328,6 +328,16 @@ int devMpu9250GetQuatFloat(float *data, int8_t *accuracy, inv_time_t *timestamp)
 
 int devMpu9250GetEulerFloat(float *data, int8_t *accuracy, inv_time_t *timestamp) {
     long q16Data[3];
+    int8_t tmp_ac;
+    inv_time_t tmp_ts;
+
+    // API inv_get_sensor_type_quat() did not handle the case accuracy & timestmap is NULL.
+    if (accuracy == NULL) {
+        accuracy = &tmp_ac;
+    }
+    if (timestamp == NULL) {
+        timestamp = &tmp_ts;
+    }
 
     uint8_t irqEnabled = isEi();
     if (irqEnabled) {
@@ -347,6 +357,16 @@ int devMpu9250GetEulerFloat(float *data, int8_t *accuracy, inv_time_t *timestamp
 
 int devMpu9250GetRotMatFloat(float *data, int8_t *accuracy, inv_time_t *timestamp) {
     long q30Data[9];
+    int8_t tmp_ac;
+    inv_time_t tmp_ts;
+
+    // API inv_get_sensor_type_quat() did not handle the case accuracy & timestmap is NULL.
+    if (accuracy == NULL) {
+        accuracy = &tmp_ac;
+    }
+    if (timestamp == NULL) {
+        timestamp = &tmp_ts;
+    }
 
     uint8_t irqEnabled = isEi();
     if (irqEnabled) {
@@ -372,6 +392,16 @@ int devMpu9250GetRotMatFloat(float *data, int8_t *accuracy, inv_time_t *timestam
 
 int devMpu9250GetHeadingFloat(float *data, int8_t *accuracy, inv_time_t *timestamp) {
     long q16Data[1];
+    int8_t tmp_ac;
+    inv_time_t tmp_ts;
+
+    // API inv_get_sensor_type_quat() did not handle the case accuracy & timestmap is NULL.
+    if (accuracy == NULL) {
+        accuracy = &tmp_ac;
+    }
+    if (timestamp == NULL) {
+        timestamp = &tmp_ts;
+    }
 
     uint8_t irqEnabled = isEi();
     if (irqEnabled) {

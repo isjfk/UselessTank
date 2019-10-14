@@ -18,7 +18,7 @@
  * -100.0: full speed backward.
  */
 float tankThrottle;
-float tankThrottleFixed;
+float tankThrottleInput;
 
 /**
  * Tank yaw.
@@ -29,7 +29,7 @@ float tankThrottleFixed;
  * -100.0: full right.
  */
 float tankYaw;
-float tankYawFixed;
+float tankYawInput;
 
 RcCurve throttleCurve;
 float throttleCurveData[][2] = {
@@ -47,8 +47,20 @@ float yawCurveData[][2] = {
     { 100, 30 },
 };
 
+// Level to throttle limit curve.
+RcCurve level2ThrottleMinCurve;
+float level2ThrottleMinCurveData[][2] = {
+    { 20, TANK_CTRL_MIN },
+    { 30, 0 },
+};
+RcCurve level2ThrottleMaxCurve;
+float level2ThrottleMaxCurveData[][2] = {
+    { -30, 0 },
+    { -20, TANK_CTRL_MAX },
+};
+
 PID tankPid[1];
-PidSet tankPidSet;
+PidController tankPidCtrl;
 uint8_t tankPidEnabled = 1;
 uint8_t tankPidDisableOnControlLow = 1;
 
@@ -59,16 +71,36 @@ void tankControlInit(void);
 void tankPidInit(void);
 
 // FIXME: temp solution
-float tankThrottleSlowSet(float targetValue) {
-    float fullSpeedTime = 1;    // seconds
+void tankThrottleSlowSet() {
+    float throttleInput = tankThrottleInput;
+    float throttle = tankThrottle;
+
+    // Tank throttle slow inc fast stop.
+    float fullSpeedTime = 0.5;    // Slow set time in seconds.
     float step = (TANK_CTRL_MAX - TANK_CTRL_MID) / MPU_FREQ_HZ_DEFAULT / fullSpeedTime;
-    if (tankThrottleFixed > (targetValue + step)) {
-        return tankControlRange(tankThrottleFixed - step);
-    } else if (tankThrottleFixed < (targetValue - step)) {
-        return tankControlRange(tankThrottleFixed + step);
+    if (fabsf(throttleInput - throttle) <= step) {
+        throttle = throttleInput;
     } else {
-        return tankControlRange(targetValue);
+        if (((throttle > 0) && (throttleInput < 0))
+                || ((throttle < 0) && (throttleInput > 0))) {
+            throttle = 0;
+        } else if (fInRange(throttleInput, -throttle, throttle)) {
+            throttle = throttleInput;
+        } else {
+            throttle += (throttleInput > throttle) ? step : -step;
+        }
     }
+    throttle = tankControlRange(throttle);
+
+    // Limit throttle by tank level.
+    float euler[3];
+    devMpu9250GetEulerFloat(euler, NULL, NULL);
+
+    float level = euler[0];
+    float throttleMin = tankControlRange(rcCurveValue(&level2ThrottleMinCurve, level));
+    float throttleMax = tankControlRange(rcCurveValue(&level2ThrottleMaxCurve, level));
+
+    tankThrottle = frange(throttle, throttleMin, throttleMax);
 }
 
 void tankInit(void) {
@@ -79,16 +111,16 @@ void tankInit(void) {
 }
 
 void tankPidInit(void) {
-    tankPidSet.pid = tankPid;
-    tankPidSet.size = 1;
-    pidInit(&tankPidSet);
+    tankPidCtrl.pid = tankPid;
+    tankPidCtrl.size = 1;
+    pidInit(&tankPidCtrl);
 
-    tankPidSet.loopFreqHz = MPU_FREQ_HZ_DEFAULT;
-    tankPidSet.pid[0].kP = 25;
-    tankPidSet.pid[0].kI = 30;
-    tankPidSet.pid[0].kD = 2;
-    tankPidSet.pid[0].dNewValueWeight = 0.5;
-    tankPidSet.pid[0].iLimit = 30;
+    tankPidCtrl.loopFreqHz = MPU_FREQ_HZ_DEFAULT;
+    tankPidCtrl.pid[0].kP = 25;
+    tankPidCtrl.pid[0].kI = 30;
+    tankPidCtrl.pid[0].kD = 2;
+    tankPidCtrl.pid[0].dNewValueWeight = 0.5;
+    tankPidCtrl.pid[0].iLimit = 30;
 }
 
 void tankLoop(void) {
@@ -105,7 +137,7 @@ uint32_t shouldRunTankPid(void) {
     if (!tankPidEnabled) {
         return false;
     }
-    if (tankPidDisableOnControlLow && isThrottleLow(tankThrottle) && isYawLow(tankYaw)) {
+    if (tankPidDisableOnControlLow && isThrottleLow(tankThrottleInput) && isYawLow(tankYawInput)) {
         return false;
     }
     return true;
@@ -118,36 +150,40 @@ void tankPidLoop(void) {
     float yawGyro = frange(gyro[2], -TANK_GYRO_YAW_MAX, TANK_GYRO_YAW_MAX);
     yawGyro = yawGyro / TANK_GYRO_YAW_MAX * TANK_CTRL_MAX;
 
-    tankPidSet.pid[0].setPoint = tankYaw;
-    tankPidSet.pid[0].measure = shouldRunTankPid() ? yawGyro : tankYaw;
+    tankPidCtrl.pid[0].setPoint = tankYawInput;
+    tankPidCtrl.pid[0].measure = shouldRunTankPid() ? yawGyro : tankYawInput;
 
-    pidLoop(&tankPidSet);
-    if (tankPidSet.updated) {
+    pidLoop(&tankPidCtrl);
+
+    if (tankPidCtrl.updated) {
         if (!tankPidEnabled
-                || (tankPidDisableOnControlLow && isThrottleLow(tankThrottle) && isYawLow(tankYaw))) {
-            tankYawFixed = tankYaw;
+                || (tankPidDisableOnControlLow && isThrottleLow(tankThrottleInput) && isYawLow(tankYawInput))) {
+            tankYaw = tankYawInput;
         } else {
-            tankYawFixed = tankControlRange(tankYaw + tankPidSet.pid[0].sum);
+            tankYaw = tankControlRange(tankYawInput + tankPidCtrl.pid[0].sum);
         }
     }
 
-    tankThrottleFixed = tankThrottleSlowSet(tankThrottle);
+    tankThrottleSlowSet();
 }
 
 void tankControlInit(void) {
-    tankThrottle = 0;
+    tankThrottleInput = 0;
     tankYaw = 0;
-    tankYawFixed = 0;
+    tankYawInput = 0;
 
     rcCurveInitHelper(throttleCurve, throttleCurveData);
     rcCurveInitHelper(yawCurve, yawCurveData);
+
+    rcCurveInitHelper(level2ThrottleMinCurve, level2ThrottleMinCurveData);
+    rcCurveInitHelper(level2ThrottleMaxCurve, level2ThrottleMaxCurveData);
 }
 
 void tankControlSet(float throttle, float yaw) {
     irqLock();
 
-    tankThrottle = tankControlRange(throttle);
-    tankYaw = tankControlRange(yaw);
+    tankThrottleInput = tankControlRange(throttle);
+    tankYawInput = tankControlRange(yaw);
 
     irqUnLock();
 }
@@ -155,8 +191,8 @@ void tankControlSet(float throttle, float yaw) {
 void tankControlGet(float *throttle, float *yaw) {
     irqLock();
 
-    *throttle = tankThrottleFixed;
-    *yaw = tankYawFixed;
+    *throttle = tankThrottle;
+    *yaw = tankYaw;
 
     irqUnLock();
 }
@@ -164,7 +200,7 @@ void tankControlGet(float *throttle, float *yaw) {
 float tankThrottleGet(void) {
     irqLock();
 
-    float throttle = tankThrottleFixed;
+    float throttle = tankThrottle;
 
     irqUnLock();
     return throttle;
@@ -173,7 +209,7 @@ float tankThrottleGet(void) {
 void tankThrottleSet(float throttle) {
     irqLock();
 
-    tankThrottle = tankControlRange(throttle);
+    tankThrottleInput = tankControlRange(throttle);
 
     irqUnLock();
 }
@@ -181,7 +217,7 @@ void tankThrottleSet(float throttle) {
 float tankYawGet(void) {
     irqLock();
 
-    float yaw = tankYawFixed;
+    float yaw = tankYaw;
 
     irqUnLock();
     return yaw;
@@ -190,27 +226,21 @@ float tankYawGet(void) {
 void tankYawSet(float yaw) {
     irqLock();
 
-    tankYaw = tankControlRange(yaw);
+    tankYawInput = tankControlRange(yaw);
 
     irqUnLock();
 }
 
 float tankControlRange(float value) {
-    if (value < TANK_CTRL_MIN) {
-        return TANK_CTRL_MIN;
-    }
-    if (value > TANK_CTRL_MAX) {
-        return TANK_CTRL_MAX;
-    }
-    return value;
+    return frange(value, TANK_CTRL_MIN, TANK_CTRL_MAX);
 }
 
-float tankRcCurveThrottleValue(float input) {
-    return rcCurveValue(&throttleCurve, input);
+float tankRcCurveThrottleValue(float rcValue) {
+    return rcCurveValue(&throttleCurve, rcValue);
 }
 
-float tankRcCurveYawValue(float input) {
-    return rcCurveValue(&yawCurve, input);
+float tankRcCurveYawValue(float rcValue) {
+    return rcCurveValue(&yawCurve, rcValue);
 }
 
 uint8_t isThrottleLow(float value) {

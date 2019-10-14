@@ -12,11 +12,11 @@
 #define TANK_CTRL_MAX   (100.f)
 
 extern float tankThrottle;
-extern float tankThrottleFixed;
+extern float tankThrottleInput;
 extern float tankYaw;
-extern float tankYawFixed;
+extern float tankYawInput;
 
-extern PidSet tankPidSet;
+extern PidController tankPidCtrl;
 extern uint8_t tankPidEnabled;
 extern uint8_t tankPidDisableOnControlLow;
 

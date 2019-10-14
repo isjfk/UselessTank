@@ -54,7 +54,7 @@ void print_mpu9250_data() {
 }
 
 void print_tank_data() {
-    printf("throttle[%8.2f], throttleFixed[%8.2f], yaw[%8.2f], yawFixed[%8.2f]\r\n", tankThrottle, tankThrottleFixed, tankYaw, tankYawFixed);
+    printf("throttle[%8.2f], throttleInput[%8.2f], yaw[%8.2f], yawInput[%8.2f]\r\n", tankThrottle, tankThrottleInput, tankYaw, tankYawInput);
     //printf("ps2thr[%8.2f], thr[%8.2f], ps2yaw[%8.2f], yaw[%8.2f]\r\n", ps2Throttle, tankThrottle, ps2Yaw, tankYaw);
 }
 
