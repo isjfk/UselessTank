@@ -10,8 +10,9 @@ typedef struct {
 } TankMsgData;
 
 typedef struct {
-    uint64_t startTag;
+    uint32_t startTag;
     uint32_t header;
+    uint32_t timestamp;
     uint32_t dataLength;
     TankMsgData data;
     uint32_t crc;

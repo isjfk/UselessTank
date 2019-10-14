@@ -523,11 +523,6 @@
               <FilePath>.\RVMDK\BSP\timer.c</FilePath>
             </File>
             <File>
-              <FileName>encoder.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\BSP\encoder.c</FilePath>
-            </File>
-            <File>
               <FileName>motor.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\BSP\motor.c</FilePath>

@@ -4,7 +4,6 @@
 #include "stdbool.h"
 #include "motor.h"
 #include "usart.h"
-#include "encoder.h"
 
 #include "system/SysTick.h"
 #include "device/DevMpu9250.h"

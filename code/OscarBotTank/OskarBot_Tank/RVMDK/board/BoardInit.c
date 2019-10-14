@@ -1,9 +1,9 @@
 #include "BoardInit.h"
 #include "Board.h"
-#include "tank/Tank.h"
 #include "system/SysIrq.h"
 #include "system/SysTick.h"
 #include "system/SysDelay.h"
+#include "device/DevCrc.h"
 #include "device/DevMpu9250.h"
 #include "device/DevUsart.h"
 
@@ -12,7 +12,7 @@ void boardBeepLedInit(void);
 void boardTimerInit(void);
 void boardUsartInit(void);
 void boardMonitorInit(void);
-void checkBatteryStatusOnInit(void);
+void boardEncoderInit(void);
 
 void boardInit(void) {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
@@ -20,9 +20,10 @@ void boardInit(void) {
     sysTickInit();
 
     boardBeepLedInit();
-    boardTimerInit();
+    //boardTimerInit();
     boardUsartInit();
     boardMonitorInit();
+    boardEncoderInit();
 
     // Enable IRQ so SysTick can get correct value.
     // MPU9250 requires SysTick to initialize.
@@ -35,13 +36,12 @@ void boardInit(void) {
         NVIC_SystemReset();
     }
 
-    tankInit();
-    
-    checkBatteryStatusOnInit();
+    devCrcInit();
 }
 
 void boardSwdInit(void) {
     GPIO_InitTypeDef gpio_InitStruct;
+    GPIO_StructInit(&gpio_InitStruct);
 
     gpio_InitStruct.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
 	gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
@@ -53,10 +53,10 @@ void boardSwdInit(void) {
 }
 
 void boardBeepLedInit(void) {
-	GPIO_InitTypeDef gpio_InitStruct;
-
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
+    GPIO_InitTypeDef gpio_InitStruct;
+    GPIO_StructInit(&gpio_InitStruct);
 	gpio_InitStruct.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
 	gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
 	gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
@@ -64,23 +64,23 @@ void boardBeepLedInit(void) {
 }
 
 void boardTimerInit(void) {
-    NVIC_InitTypeDef nvic_InitStruct;
-    TIM_TimeBaseInitTypeDef tim_TimeBaseInitStruct;
-
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
 
+    TIM_TimeBaseInitTypeDef tim_TimeBaseInitStruct;
+    TIM_TimeBaseStructInit(&tim_TimeBaseInitStruct);
+    tim_TimeBaseInitStruct.TIM_Prescaler = (SystemCoreClock / 1000000) - 1;
+    tim_TimeBaseInitStruct.TIM_Period = 1000 - 1;
+    TIM_TimeBaseInit(TIM5, &tim_TimeBaseInitStruct);
+
+    TIM_ARRPreloadConfig(TIM5, ENABLE);
+
+    NVIC_InitTypeDef nvic_InitStruct;
     nvic_InitStruct.NVIC_IRQChannel = TIM5_IRQn;
     nvic_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;
     nvic_InitStruct.NVIC_IRQChannelSubPriority = 1;
     nvic_InitStruct.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvic_InitStruct);
 
-    TIM_TimeBaseStructInit(&tim_TimeBaseInitStruct);
-    tim_TimeBaseInitStruct.TIM_Prescaler = (SystemCoreClock / 1000000) - 1;
-    tim_TimeBaseInitStruct.TIM_Period = 1000 - 1;
-
-    TIM_TimeBaseInit(TIM5, &tim_TimeBaseInitStruct);
-    TIM_ARRPreloadConfig(TIM5, ENABLE);
     TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);
     TIM_Cmd(TIM5, ENABLE);
 }
@@ -200,6 +200,7 @@ void boardAdcInit(void) {
 	RCC_ADCCLKConfig(RCC_PCLK2_Div6);
 
     GPIO_InitTypeDef gpio_InitStruct;
+    GPIO_StructInit(&gpio_InitStruct);
 	gpio_InitStruct.GPIO_Pin = GPIO_Pin_4;
 	gpio_InitStruct.GPIO_Mode = GPIO_Mode_AIN;
 	GPIO_Init(GPIOC, &gpio_InitStruct);
@@ -226,12 +227,69 @@ void boardMonitorInit(void) {
     boardAdcInit();
 }
 
-void checkBatteryStatusOnInit(void) {
-    // Alarm battery low in case battery is not connected only in initialize.
-    boardMeasureBatteryVoltage();
-    if (boardGetBatteryVoltage() < 0.5) {
-        alarmBatteryLow();
-        alarmBatteryLow();
-        alarmBatteryLow();
-    }
+#define ENCODER_TIM_RELOAD  (0xFFFF)
+
+void boardEncoderLeftInit(void) {
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+    GPIO_InitTypeDef gpio_InitStruct;
+    GPIO_StructInit(&gpio_InitStruct);
+	gpio_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+	gpio_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA, &gpio_InitStruct);
+
+    TIM_TimeBaseInitTypeDef tim_TimeBaseInitStruct;
+    TIM_TimeBaseStructInit(&tim_TimeBaseInitStruct);
+    tim_TimeBaseInitStruct.TIM_Prescaler = 0x0;
+    tim_TimeBaseInitStruct.TIM_Period = ENCODER_TIM_RELOAD;
+    tim_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+    tim_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseInit(TIM2, &tim_TimeBaseInitStruct);
+
+    TIM_ARRPreloadConfig(TIM2, ENABLE);
+    TIM_EncoderInterfaceConfig(TIM2, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
+
+    TIM_ICInitTypeDef tim_ICInitStruct;
+    TIM_ICStructInit(&tim_ICInitStruct);
+    tim_ICInitStruct.TIM_ICFilter = 10;
+    TIM_ICInit(TIM2, &tim_ICInitStruct);
+
+    TIM_SetCounter(TIM2, 0);
+    TIM_Cmd(TIM2, ENABLE);
+}
+
+void boardEncoderRightInit(void) {
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_AFIO, ENABLE);
+
+    GPIO_InitTypeDef gpio_InitStruct;
+    GPIO_StructInit(&gpio_InitStruct);
+	gpio_InitStruct.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+	gpio_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOC, &gpio_InitStruct);
+
+    TIM_TimeBaseInitTypeDef tim_TimeBaseInitStruct;
+    TIM_TimeBaseStructInit(&tim_TimeBaseInitStruct);
+    tim_TimeBaseInitStruct.TIM_Prescaler = 0x0;
+    tim_TimeBaseInitStruct.TIM_Period = ENCODER_TIM_RELOAD;
+    tim_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
+    tim_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseInit(TIM8, &tim_TimeBaseInitStruct);
+
+    TIM_ARRPreloadConfig(TIM8, ENABLE);
+    TIM_EncoderInterfaceConfig(TIM8, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
+
+    TIM_ICInitTypeDef tim_ICInitStruct;
+    TIM_ICStructInit(&tim_ICInitStruct);
+    tim_ICInitStruct.TIM_ICFilter = 10;
+    TIM_ICInit(TIM8, &tim_ICInitStruct);
+
+    TIM_SetCounter(TIM8, 0);
+    TIM_Cmd(TIM8, ENABLE);
+}
+
+void boardEncoderInit(void) {
+    boardEncoderLeftInit();
+    boardEncoderRightInit();
 }

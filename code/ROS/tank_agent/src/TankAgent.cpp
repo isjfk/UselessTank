@@ -113,9 +113,14 @@ error_t readTankMsg(TankMsg *tankMsg) {
     if (readTankMsgHeader(&tankMsg->header)) {
         return -1;
     }
-    tankMsg->startTag = 0xAA55AA55AA55AA55;
+
+    tankMsg->startTag = 0xAA55AA55;
     if (tankMsg->header != 0x00000001) {
         ROS_WARN("[TankAgent] Unsupported TankMsg header[%08X]!", tankMsg->header);
+        return -1;
+    }
+
+    if (readSize(&tankMsg->timestamp, sizeof(tankMsg->timestamp))) {
         return -1;
     }
 
@@ -135,18 +140,29 @@ error_t readTankMsg(TankMsg *tankMsg) {
         return -1;
     }
 
-//    uint8_t *buf = (uint8_t *) tankMsg;
-//    for (size_t i = 0; i < sizeof(TankMsg); i++) {
-//        printf("%02X", (int) buf[i]);
-//    }
-//    printf("\r\n");
-    printf("gyro[%8.2f %8.2f %8.2f] accel[%8.2f %8.2f %8.2f] compass[%8.2f %8.2f %8.2f] quat[%8.2f %8.2f %8.2f %8.2f]\r\n",
-            tankMsg->data.gyro[0], tankMsg->data.gyro[1], tankMsg->data.gyro[2],
-            tankMsg->data.accel[0], tankMsg->data.accel[1], tankMsg->data.accel[2],
-            tankMsg->data.compass[0], tankMsg->data.compass[1], tankMsg->data.compass[2],
-            tankMsg->data.quat[0], tankMsg->data.quat[1], tankMsg->data.quat[2], tankMsg->data.quat[3]);
-
     return 0;
+}
+
+void logTankMsg(TankMsg *tankMsg) {
+    uint8_t logType = 0b00000010;
+
+    if (logType & 0b00000001) {
+        uint8_t *buf = (uint8_t *) tankMsg;
+        for (size_t i = 0; i < sizeof(TankMsg); i++) {
+            printf("%02X", (int) buf[i]);
+        }
+        printf("\r\n");
+    }
+
+    if (logType & 0b00000010) {
+        printf("ts[%08d] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%6.2f %6.2f %6.2f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%08u %08u]\r\n",
+                tankMsg->timestamp,
+                tankMsg->data.gyro[0], tankMsg->data.gyro[1], tankMsg->data.gyro[2],
+                tankMsg->data.accel[0], tankMsg->data.accel[1], tankMsg->data.accel[2],
+                tankMsg->data.compass[0], tankMsg->data.compass[1], tankMsg->data.compass[2],
+                tankMsg->data.quat[0], tankMsg->data.quat[1], tankMsg->data.quat[2], tankMsg->data.quat[3],
+                tankMsg->data.motorEncoderLeft, tankMsg->data.motorEncoderRight);
+    }
 }
 
 void tankMsgThreadFunc() {
@@ -159,6 +175,7 @@ void tankMsgThreadFunc() {
             ROS_WARN("[TankAgent] Read TankMsg from serial error!");
             continue;
         }
+        logTankMsg(&tankMsg);
 
         sensor_msgs::Imu imuMsg;
         imuMsg.header.stamp = currentTime;

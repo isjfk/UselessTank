@@ -25,8 +25,9 @@ typedef struct {
 } TankMsgData;
 
 typedef struct {
-    uint64_t startTag;
+    uint32_t startTag;
     uint32_t header;
+    uint32_t timestamp;
     uint32_t dataLength;
     TankMsgData data;
     uint32_t crc;
@@ -41,15 +42,13 @@ void tankMsgInit(void) {
     dataBufInit(&tankMsgBuf, tankMsgData, sizeof(tankMsgData));
 
     memset(&tankMsg, 0, sizeof(tankMsg));
-    tankMsg.startTag = 0xAA55AA55AA55AA55;  // Actually [ 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA ] in message byte stream.
+    tankMsg.startTag = 0xAA55AA55;          // Actually [ 0x55, 0xAA, 0x55, 0xAA ] in message byte stream.
     tankMsg.header = 0x00000001;            // Protocol version 1. [ 0x01, 0x00, 0x00, 0x00 ] in message byte stream.
     tankMsg.dataLength = sizeof(tankMsg.data);
 
     memset(&tankMsgBcd, 0, sizeof(tankMsgBcd));
     tankMsgBcd[sizeof(tankMsgBcd) - 2] = '\r';
     tankMsgBcd[sizeof(tankMsgBcd) - 1] = '\n';
-
-    devCrcInit();
 }
 
 void tankMsgLoop(void) {
@@ -57,12 +56,14 @@ void tankMsgLoop(void) {
     inv_time_t timestamp;
 
     devMpu9250GetGyroFloat(tankMsg.data.gyro, &accuracy, &timestamp);
+    // Use gyro timestamp as TankMsg timestamp.
+    tankMsg.timestamp = timestamp;
     devMpu9250GetAccelFloat(tankMsg.data.accel, &accuracy, &timestamp);
     devMpu9250GetCompassFloat(tankMsg.data.compass, &accuracy, &timestamp);
     devMpu9250GetQuatFloat(tankMsg.data.quat, &accuracy, &timestamp);
 
-    tankMsg.data.motorEncoderLeft = 0;
-    tankMsg.data.motorEncoderRight = 0;
+    tankMsg.data.motorEncoderLeft = boardEncoderLeftGet();
+    tankMsg.data.motorEncoderRight = boardEncoderRightGet();
 
     tankMsgSend();
 }
@@ -82,7 +83,7 @@ uint16_t byte2bcd(uint8_t b) {
 }
 
 CommonDataBufError tankMsgSend() {
-    tankMsg.crc = devCrcByteArray((uint8_t *) &tankMsg.data, tankMsg.dataLength);
+    tankMsg.crc = devCrcByteArray(&tankMsg.header, (sizeof(tankMsg) - sizeof(tankMsg.startTag) - sizeof(tankMsg.crc)));
 
     CommonDataBufError bufStatus;
     if (tankMsgTypeBinary) {

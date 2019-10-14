@@ -2,6 +2,7 @@
 
 #include "Board.h"
 #include "system/SysTick.h"
+#include "system/SysIrq.h"
 #include "system/SysDelay.h"
 
 float batteryHealthVoltage = 10.2;      // For 3S LiPo battery.
@@ -94,4 +95,23 @@ int8_t boardIsBatteryLow(void) {
 
 int8_t boardIsBatteryHealth(void) {
     return !boardIsBatteryLow();
+}
+
+void checkBatteryStatusOnInit(void) {
+    // Alarm battery low in case battery is not connected only in initialize.
+    boardMeasureBatteryVoltage();
+    if (boardGetBatteryVoltage() < 0.5) {
+        alarmBatteryLow();
+        alarmBatteryLow();
+        alarmBatteryLow();
+    }
+}
+
+uint32_t boardEncoderLeftGet(void) {
+    // Motor left is mounted in reverse direction.
+    return (-TIM_GetCounter(TIM2)) & 0xFFFF;
+}
+
+uint32_t boardEncoderRightGet(void) {
+    return TIM_GetCounter(TIM8);
 }

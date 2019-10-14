@@ -9,7 +9,7 @@
 #endif
 
 void devCrcInit(void);
-uint32_t devCrcByteArray(uint8_t *data, size_t length);
+uint32_t devCrcByteArray(void *data, size_t length);
 
 #ifdef __cplusplus
 }

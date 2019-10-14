@@ -29,6 +29,10 @@ void boardMeasureBatteryVoltage(void);
 float boardGetBatteryVoltage(void);
 int8_t boardIsBatteryLow(void);
 int8_t boardIsBatteryHealth(void);
+void checkBatteryStatusOnInit(void);
+
+uint32_t boardEncoderLeftGet(void);
+uint32_t boardEncoderRightGet(void);
 
 #ifdef __cplusplus
 }

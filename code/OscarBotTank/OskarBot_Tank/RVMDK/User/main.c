@@ -20,7 +20,6 @@
 #include "ahrs.h"
 #include "stdbool.h"
 #include "motor.h"
-#include "encoder.h"
 //#include "ps2.h"
 #include "servo.h"
 #include "main.h"
@@ -53,7 +52,9 @@ extern float volatile bat_volt;
 
 int main(void)
 {
+    tankInit();
     boardInit();
+    checkBatteryStatusOnInit();
 
 	// PS2手柄初始化 Handle initialization
 //	PSX_init();
@@ -70,12 +71,6 @@ int main(void)
 //	{
 //		while(1) boardBeepOn();
 //	}
-
-	// 左侧编码器初始化 Left encoder initialization
-//	Left_Encoder_Init();
-
-	// 右侧编码器初始化 Right encoder initialization
-//	Right_Encoder_Init();
 
 	// 减速电机PWM初始化 Motor PWM Initialization
 	Motor_Init(7199, 0);
