@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -109,7 +110,7 @@ catkin_package(
 #  LIBRARIES tank_agent
 #  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
-  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp sensor_msgs std_msgs
+  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp sensor_msgs std_msgs tf
 )
 
 ###########
