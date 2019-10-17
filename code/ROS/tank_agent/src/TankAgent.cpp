@@ -15,6 +15,8 @@
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/MagneticField.h"
 #include "nav_msgs/Odometry.h"
+#include "geometry_msgs/TransformStamped.h"
+#include "geometry_msgs/Twist.h"
 
 char serialPort[2048];
 char serialBaudrateStr[16];
@@ -29,36 +31,40 @@ ros::Publisher *magMsgPub;
 ros::Publisher *odomMsgPub;
 tf::TransformBroadcaster *odomBroadcaster;
 
-void parseSerialParam();
+void loadParams();
 void openSerialPort();
 void closeSerialPort();
 
 void tankMsgThreadFunc();
 error_t readTankMsg(TankMsg *tankMsg);
 
+void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel);
+
 int main(int argc, char **argv) {
     ros::init(argc, argv, "tank_agent");
 
     ros::NodeHandle nh;
-    ros::Publisher ip = nh.advertise<sensor_msgs::Imu>("/tank/imu", 10);
-    ros::Publisher mp = nh.advertise<sensor_msgs::MagneticField>("/tank/mag", 10);
-    ros::Publisher op = nh.advertise<nav_msgs::Odometry>("/tank/odom", 10);
+    nodeHandle = &nh;
+
+    loadParams();
+
+    ros::Publisher ip = nh.advertise<sensor_msgs::Imu>("imu", 10);
+    ros::Publisher mp = nh.advertise<sensor_msgs::MagneticField>("mag", 10);
+    ros::Publisher op = nh.advertise<nav_msgs::Odometry>("odom", 10);
+    ros::Subscriber cmdVelSub = nh.subscribe("cmd_vel", 10, tankCmdCallback);
     tf::TransformBroadcaster ob;
 
-    nodeHandle = &nh;
     imuMsgPub = &ip;
     magMsgPub = &mp;
     odomMsgPub = &op;
     odomBroadcaster = &ob;
 
-    parseSerialParam();
     openSerialPort();
 
+    // Start TankMsg thread.
     std::thread tankMsgThread(tankMsgThreadFunc);
 
-    while (ros::ok()) {
-        ros::spinOnce();
-    }
+    ros::spin();
 
     tankMsgThread.join();
     closeSerialPort();
@@ -66,13 +72,13 @@ int main(int argc, char **argv) {
 
 error_t readSize(void *buf, size_t size) {
     while (size > 0) {
-        ssize_t readLen = read(serialFd, buf, size);
-        if (readLen < 0) {
+        ssize_t len = read(serialFd, buf, size);
+        if (len < 0) {
             ROS_WARN("[TankAgent] Read from serial error: %s", strerror(errno));
             return -1;
         }
-        buf = ((uint8_t *) buf) + readLen;
-        size -= readLen;
+        buf = ((uint8_t *) buf) + len;
+        size -= len;
     }
     return 0;
 }
@@ -148,7 +154,7 @@ error_t readTankMsg(TankMsg *tankMsg) {
 }
 
 void logTankMsg(TankMsg *tankMsg) {
-    uint8_t logType = 0b00000010;
+    uint8_t logType = 0b00000000;
 
     if (logType & 0b00000001) {
         uint8_t *buf = (uint8_t *) tankMsg;
@@ -283,7 +289,46 @@ void tankMsgThreadFunc() {
     }
 }
 
-void parseSerialParam() {
+error_t writeSize(void *buf, size_t size) {
+    while (size > 0) {
+        ssize_t len = write(serialFd, buf, size);
+        if (len < 0) {
+            ROS_WARN("[TankAgent] Write to serial error: %s", strerror(errno));
+            return -1;
+        }
+        buf = ((uint8_t *) buf) + len;
+        size -= len;
+    }
+    return 0;
+}
+
+void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
+    const double speedMax = 0.5;        // Unit: meter/second.
+    const double turnMax = M_PI;        // Unit: rad/second. To degree/second: turnMax / (2 * M_PI) * 360.0
+    const int tankRcMax = 30000;
+    double speed = cmd_vel->linear.x;
+    double turn = cmd_vel->angular.z;
+
+    speed = (speed < -speedMax) ? -speedMax : speed;
+    speed = (speed > speedMax) ? speedMax : speed;
+    turn = (turn < -turnMax) ? -turnMax : turn;
+    turn = (turn > turnMax) ? turnMax : turn;
+
+    int tankThrottle = (int) (speed / speedMax * tankRcMax);
+    int tankYaw = (int) (turn / turnMax * tankRcMax);
+
+    char buf[1024];
+    int size = sprintf(buf, "$AP0:%dX%dY!", tankYaw, tankThrottle);
+
+    writeSize(buf, size);
+
+    uint8_t logType = 0x00000000;
+    if (logType & 0x00000001) {
+        printf("Write TankCmd[%s] to serial.\r\n", buf);
+    }
+}
+
+void loadParams() {
     std::string portStr;
     std::string baudStr;
 
