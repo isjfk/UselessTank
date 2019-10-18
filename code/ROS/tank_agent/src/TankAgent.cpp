@@ -46,6 +46,8 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     nodeHandle = &nh;
 
+    ROS_INFO("[TankAgent] Start TankAgent node.");
+
     loadParams();
 
     ros::Publisher ip = nh.advertise<sensor_msgs::Imu>("imu", 10);
