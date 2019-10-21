@@ -310,7 +310,11 @@ int main(int argc, char * argv[]) {
                             int angle_value = (int)(angle * angle_compensate_multiple);
                             if ((angle_value - angle_compensate_offset) < 0) angle_compensate_offset = angle_value;
                             for (j = 0; j < angle_compensate_multiple; j++) {
-                                angle_compensate_nodes[angle_value-angle_compensate_offset+j] = nodes[i];
+								// Fix angle_compensate_nodes index out of range issue with some scan_mode.
+								int index = angle_value - angle_compensate_offset + j;
+								if ((index >= 0) && (index < angle_compensate_nodes_count)) {
+									angle_compensate_nodes[index] = nodes[i];
+								}
                             }
                         }
                     }
