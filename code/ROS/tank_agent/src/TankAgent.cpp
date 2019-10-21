@@ -9,6 +9,8 @@
 #include <thread>
 
 #include "TankAgent.h"
+#include "StdCrc32.h"
+
 #include "ros/ros.h"
 #include "ros/console.h"
 #include "tf/transform_broadcaster.h"
@@ -121,7 +123,13 @@ error_t readTankMsgHeader(uint32_t *header) {
     return 0;
 }
 
+#define MSG_DATA_LENGTH_MAX     512
+
 error_t readTankMsg(TankMsg *tankMsg) {
+    uint8_t extraBuf[MSG_DATA_LENGTH_MAX];
+
+    memset(tankMsg, 0, sizeof(tankMsg));
+
     if (readTankMsgHeader(&tankMsg->header)) {
         return -1;
     }
@@ -139,16 +147,38 @@ error_t readTankMsg(TankMsg *tankMsg) {
     if (readSize(&tankMsg->dataLength, sizeof(tankMsg->dataLength))) {
         return -1;
     }
-    if (tankMsg->dataLength > 512) {
-        ROS_WARN("[TankAgent] Unsupported TankMsg dataLength[%d]!", tankMsg->dataLength);
+    if (tankMsg->dataLength > MSG_DATA_LENGTH_MAX) {
+        ROS_WARN("[TankAgent] Unsupported TankMsg dataLength[%d], max allowed[%d]!", tankMsg->dataLength, MSG_DATA_LENGTH_MAX);
         return -1;
     }
 
-    if (readSize(&tankMsg->data, tankMsg->dataLength)) {
+    size_t dataSize = std::min(tankMsg->dataLength, sizeof(tankMsg->data));
+    if (readSize(&tankMsg->data, dataSize)) {
         return -1;
+    }
+
+    size_t extraSize = tankMsg->dataLength - dataSize;
+    if (extraSize > 0) {
+        if (readSize(extraBuf, extraSize)) {
+            return -1;
+        }
     }
 
     if (readSize(&tankMsg->crc, sizeof(tankMsg->crc))) {
+        return -1;
+    }
+
+    StdCrc32 crc32;
+    size_t tankMsgCrcSize = (((uint8_t *) &tankMsg->data) - ((uint8_t *) &tankMsg->header)) + dataSize;
+    stdCrc32Init(&crc32);
+    stdCrc32Update(&crc32, &tankMsg->header, tankMsgCrcSize);
+    if (extraSize > 0) {
+        stdCrc32Update(&crc32, extraBuf, extraSize);
+    }
+    uint32_t crc = stdCrc32Get(&crc32);
+
+    if (crc != tankMsg->crc) {
+        ROS_WARN("[TankAgent] Error validate TankMsg crc32 checksum, skip to next! Received crc32[%08X] expected crc32[%08X]", tankMsg->crc, crc);
         return -1;
     }
 

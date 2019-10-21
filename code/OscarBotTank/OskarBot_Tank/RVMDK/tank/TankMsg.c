@@ -83,7 +83,8 @@ uint16_t byte2bcd(uint8_t b) {
 }
 
 CommonDataBufError tankMsgSend() {
-    tankMsg.crc = devCrcByteArray(&tankMsg.header, (sizeof(tankMsg) - sizeof(tankMsg.startTag) - sizeof(tankMsg.crc)));
+    devCrcReset();
+    tankMsg.crc = devStdCrc32ByteArray(&tankMsg.header, (sizeof(tankMsg) - sizeof(tankMsg.startTag) - sizeof(tankMsg.crc)));
 
     CommonDataBufError bufStatus;
     if (tankMsgTypeBinary) {
