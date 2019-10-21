@@ -1,0 +1,13 @@
+<launch>
+    <node name="tank_agent_node" pkg="tank_agent" type="tank_agent_node" output="screen" />
+    <node name="tank_setup_tf" pkg="tank_setup_tf" type="tank_setup_tf_node" output="screen" />
+    <node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
+        <param name="serial_port" type="string" value="/dev/ttyUSB0" />
+        <param name="serial_baudrate" type="int" value="115200" />
+        <param name="frame_id" type="string" value="base_laser" />
+        <!-- scan_mode: Legacy, Express, Boost -->
+        <param name="scan_mode" type="string" value="Boost" /> 
+        <param name="inverted" type="bool" value="false" />
+        <param name="angle_compensate" type="bool" value="true" />
+    </node>
+</launch>
