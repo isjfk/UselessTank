@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 
@@ -7,13 +9,18 @@ int main(int argc, char** argv) {
     ros::NodeHandle nh;
     ros::Rate rate(100);
     tf::TransformBroadcaster broadcaster;
+    tf::Quaternion quat;
+    tf::Vector3 vect(0.07, 0.0, 0.09);
 
     ROS_INFO("[TankSetupTf] Start Tank TF node.");
+
+    // Rotate laser data 180 degree to correct laser angle.
+    quat.setRPY(0, 0, M_PI);
 
     while (nh.ok()) {
         broadcaster.sendTransform(
             tf::StampedTransform(
-                tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.07, 0.0, 0.09)),
+                tf::Transform(quat, vect),
                 ros::Time::now(),
                 "base_link",
                 "base_laser"));
