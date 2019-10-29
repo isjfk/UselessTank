@@ -19,7 +19,7 @@
         <!-- Publish scans from best pose at a max of 10 Hz -->
         <param name="odom_model_type" value="diff"/>
         <param name="odom_alpha5" value="0.1"/>
-        <param name="gui_publish_rate" value="10.0"/>
+        <param name="gui_publish_rate" value="2.0"/>
         <param name="laser_max_beams" value="10"/>
         <param name="min_particles" value="500"/>
         <param name="max_particles" value="5000"/>
@@ -58,7 +58,7 @@
         <rosparam file="$(find tank_2dnav)/config/costmap_local_params.yaml" command="load" />
         <rosparam file="$(find tank_2dnav)/config/costmap_global_params.yaml" command="load" />
         <rosparam file="$(find tank_2dnav)/config/base_local_planner_params.yaml" command="load" />
-        <param name="planner_frequency" value="0.5" />
+        <param name="planner_frequency" value="0.2" />
     </node>
 
 </launch>
