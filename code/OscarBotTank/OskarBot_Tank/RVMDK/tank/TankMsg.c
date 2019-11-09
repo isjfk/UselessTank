@@ -36,7 +36,7 @@ typedef struct {
 TankMsg tankMsg;
 uint8_t tankMsgBcd[sizeof(tankMsg) * 2 + 2];
 
-CommonDataBufError tankMsgSend();
+CommonDataBufError tankMsgSend(void);
 
 void tankMsgInit(void) {
     dataBufInit(&tankMsgBuf, tankMsgData, sizeof(tankMsgData));
@@ -82,7 +82,7 @@ uint16_t byte2bcd(uint8_t b) {
     return bcd;
 }
 
-CommonDataBufError tankMsgSend() {
+CommonDataBufError tankMsgSend(void) {
     devCrcReset();
     tankMsg.crc = devStdCrc32ByteArray(&tankMsg.header, (sizeof(tankMsg) - sizeof(tankMsg.startTag) - sizeof(tankMsg.crc)));
 

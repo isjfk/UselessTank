@@ -1,13 +1,20 @@
+#include <stdint.h>
+
 #include "Tank.h"
 #include "TankCmd.h"
 #include "TankMsg.h"
 #include "common/CommonMath.h"
 #include "system/SysIrq.h"
+#include "system/SysTick.h"
 #include "device/DevMpu9250.h"
 #include "service/PID.h"
 #include "service/RcCurve.h"
 
 #define TANK_GYRO_YAW_MAX           (350.f)
+
+// If the tank control was not updated in timeout, stop movement of the tank.
+uint32_t tankControlTimeout = 2 * 1000;
+uint32_t tankControlUpdateTime = 0;
 
 /**
  * Tank throttle.
@@ -125,6 +132,11 @@ void tankPidInit(void) {
 
 void tankLoop(void) {
     tankCmdLoop();
+    
+    if (tankControlIsTimeout()) {
+        tankControlSet(0, 0);
+        tankControlTimeoutClear();
+    }
 
     devMpu9250Loop();
     if (devMpu9250GyroUpdated) {
@@ -167,6 +179,22 @@ void tankPidLoop(void) {
     tankThrottleSlowSet();
 }
 
+void tankControlTimeoutUpdate(void) {
+    tankControlUpdateTime = sysTickCurrentMs();
+}
+
+void tankControlTimeoutClear(void) {
+    tankControlUpdateTime = 0;
+}
+
+int tankControlIsTimeout(void) {
+    if (tankControlUpdateTime == 0) {
+        return 0;
+    }
+
+    return sysTickCurrentMs() >= (tankControlUpdateTime + tankControlTimeout);
+}
+
 void tankControlInit(void) {
     tankThrottleInput = 0;
     tankYaw = 0;
@@ -184,6 +212,8 @@ void tankControlSet(float throttle, float yaw) {
 
     tankThrottleInput = tankControlRange(throttle);
     tankYawInput = tankControlRange(yaw);
+
+    tankControlTimeoutUpdate();
 
     irqUnLock();
 }
@@ -211,6 +241,8 @@ void tankThrottleSet(float throttle) {
 
     tankThrottleInput = tankControlRange(throttle);
 
+    tankControlTimeoutUpdate();
+
     irqUnLock();
 }
 
@@ -227,6 +259,8 @@ void tankYawSet(float yaw) {
     irqLock();
 
     tankYawInput = tankControlRange(yaw);
+
+    tankControlTimeoutUpdate();
 
     irqUnLock();
 }

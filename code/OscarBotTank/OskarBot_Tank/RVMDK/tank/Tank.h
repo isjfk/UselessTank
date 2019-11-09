@@ -24,6 +24,10 @@ void tankInit(void);
 void tankLoop(void);
 void tankPidLoop(void);
 
+void tankControlTimeoutUpdate(void);
+void tankControlTimeoutClear(void);
+int tankControlIsTimeout(void);
+
 void tankControlSet(float throttle, float yaw);
 void tankControlGet(float *throttle, float *yaw);
 

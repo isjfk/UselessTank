@@ -13,6 +13,8 @@
   ******************************************************************************
   */
 
+//#define ENABLE_PS2
+
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
 #include <stdio.h>
@@ -20,7 +22,9 @@
 #include "ahrs.h"
 #include "stdbool.h"
 #include "motor.h"
-//#include "ps2.h"
+#ifdef ENABLE_PS2
+#include "ps2.h"
+#endif
 #include "servo.h"
 #include "main.h"
 #include "string.h"
@@ -34,7 +38,6 @@
 #include "board/BoardInit.h"
 #include "board/Board.h"
 #include "tank/Tank.h"
-
 
 
 
@@ -57,7 +60,9 @@ int main(void)
     checkBatteryStatusOnInit();
 
 	// PS2手柄初始化 Handle initialization
-//	PSX_init();
+#ifdef ENABLE_PS2
+	PSX_init();
+#endif
 
 	// 伺服类外设（数字舵机）初始化 Servo peripherals initialization
 //	servo_init();
@@ -81,9 +86,11 @@ int main(void)
     while (1) {
 		boardLoop();
 
+#ifdef ENABLE_PS2
 		// ps2手柄命令处理 PS2 handle command processing
-//		handle_ps2();
-//		handle_button();
+		handle_ps2();
+		handle_button();
+#endif
 
         // Tank loop.
         tankLoop();
