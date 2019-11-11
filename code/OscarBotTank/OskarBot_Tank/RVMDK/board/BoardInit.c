@@ -6,6 +6,7 @@
 #include "device/DevCrc.h"
 #include "device/DevMpu9250.h"
 #include "device/DevUsart.h"
+#include "device/DevMotor.h"
 
 void boardSwdInit(void);
 void boardBeepLedInit(void);
@@ -25,18 +26,19 @@ void boardInit(void) {
     boardMonitorInit();
     boardEncoderInit();
 
+    devCrcInit();
+    devMotorInit();
+
     // Enable IRQ so SysTick can get correct value.
     // MPU9250 requires SysTick to initialize.
     ei();
     // Make sure SysTick run stablized.
-    sysDelayMs(5);
+    sysDelayMs(100);
 
     if (devMpu9250Init()) {
         alarmGyroInitError();
         NVIC_SystemReset();
     }
-
-    devCrcInit();
 }
 
 void boardSwdInit(void) {

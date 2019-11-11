@@ -21,7 +21,6 @@
 #include "usart.h"
 #include "ahrs.h"
 #include "stdbool.h"
-#include "motor.h"
 #ifdef ENABLE_PS2
 #include "ps2.h"
 #endif
@@ -76,9 +75,6 @@ int main(void)
 //	{
 //		while(1) boardBeepOn();
 //	}
-
-	// 减速电机PWM初始化 Motor PWM Initialization
-	Motor_Init(7199, 0);
 
     alarmSystemOk();
 

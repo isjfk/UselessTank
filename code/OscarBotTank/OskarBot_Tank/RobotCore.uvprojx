@@ -497,6 +497,11 @@
               <FileType>1</FileType>
               <FilePath>.\RVMDK\device\DevMpu9250.c</FilePath>
             </File>
+            <File>
+              <FileName>DevMotor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\device\DevMotor.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -521,11 +526,6 @@
               <FileName>timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\BSP\timer.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\BSP\motor.c</FilePath>
             </File>
             <File>
               <FileName>i2c.c</FileName>

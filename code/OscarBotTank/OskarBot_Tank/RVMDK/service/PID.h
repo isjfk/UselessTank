@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifndef __SVC_PID_H
 #define __SVC_PID_H
@@ -7,8 +8,11 @@
  extern "C" {
 #endif
 
+#define sizeofPidArray(pid)         (sizeof(pid) / sizeof(pid[0]))
+
 typedef struct {
     // PID parameters.
+    int8_t enabled;
     float kP;
     float kI;
     float kD;

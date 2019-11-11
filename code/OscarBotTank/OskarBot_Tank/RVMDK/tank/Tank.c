@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "Tank.h"
 #include "TankCmd.h"
@@ -6,6 +7,8 @@
 #include "common/CommonMath.h"
 #include "system/SysIrq.h"
 #include "system/SysTick.h"
+#include "board/Board.h"
+#include "device/DevMotor.h"
 #include "device/DevMpu9250.h"
 #include "service/PID.h"
 #include "service/RcCurve.h"
@@ -77,9 +80,12 @@ uint8_t isYawLow(float value);
 void tankControlInit(void);
 void tankPidInit(void);
 
+void tankPidLoop(void);
+void tankMotorLoop(void);
+
 // FIXME: temp solution
 void tankThrottleSlowSet() {
-    float throttleInput = tankThrottleInput;
+    float throttleInput = tankThrottleGet();
     float throttle = tankThrottle;
 
     // Tank throttle slow inc fast stop.
@@ -119,7 +125,7 @@ void tankInit(void) {
 
 void tankPidInit(void) {
     tankPidCtrl.pid = tankPid;
-    tankPidCtrl.size = 1;
+    tankPidCtrl.size = sizeofPidArray(tankPid);
     pidInit(&tankPidCtrl);
 
     tankPidCtrl.loopFreqHz = MPU_FREQ_HZ_DEFAULT;
@@ -132,7 +138,7 @@ void tankPidInit(void) {
 
 void tankLoop(void) {
     tankCmdLoop();
-    
+
     if (tankControlIsTimeout()) {
         tankControlSet(0, 0);
         tankControlTimeoutClear();
@@ -143,40 +149,55 @@ void tankLoop(void) {
         tankPidLoop();
         tankMsgLoop();
     }
+
+    tankMotorLoop();
 }
 
-uint32_t shouldRunTankPid(void) {
+int shouldRunTankPid(void) {
     if (!tankPidEnabled) {
         return false;
     }
-    if (tankPidDisableOnControlLow && isThrottleLow(tankThrottleInput) && isYawLow(tankYawInput)) {
+    if (tankPidDisableOnControlLow && isThrottleLow(tankThrottleGet()) && isYawLow(tankYawGet())) {
         return false;
     }
     return true;
 }
 
 void tankPidLoop(void) {
+    int enablePid = shouldRunTankPid();
     float gyro[3];
     devMpu9250GetGyroFloat(gyro, NULL, NULL);
 
+    float yawInput = tankYawGet();
     float yawGyro = frange(gyro[2], -TANK_GYRO_YAW_MAX, TANK_GYRO_YAW_MAX);
     yawGyro = yawGyro / TANK_GYRO_YAW_MAX * TANK_CTRL_MAX;
 
-    tankPidCtrl.pid[0].setPoint = tankYawInput;
-    tankPidCtrl.pid[0].measure = shouldRunTankPid() ? yawGyro : tankYawInput;
+    tankPidCtrl.pid[0].enabled = enablePid;
+    tankPidCtrl.pid[0].setPoint = yawInput;
+    tankPidCtrl.pid[0].measure = yawGyro;
 
     pidLoop(&tankPidCtrl);
 
     if (tankPidCtrl.updated) {
-        if (!tankPidEnabled
-                || (tankPidDisableOnControlLow && isThrottleLow(tankThrottleInput) && isYawLow(tankYawInput))) {
-            tankYaw = tankYawInput;
-        } else {
-            tankYaw = tankControlRange(tankYawInput + tankPidCtrl.pid[0].sum);
-        }
+        tankYaw = tankControlRange(yawInput + tankPidCtrl.pid[0].sum);
     }
 
     tankThrottleSlowSet();
+}
+
+void tankMotorLoop(void) {
+    if (boardIsBatteryLow()) {
+        devMotorSetSpeed(0, 0);
+        return;
+    }
+
+    float throttle = tankThrottle;
+    float yaw = tankYaw;
+
+    float motorSpeedLeft = frange(throttle - yaw, -100, 100);
+    float motorSpeedRight = frange(throttle + yaw, -100, 100);
+
+    devMotorSetSpeed(motorSpeedLeft, motorSpeedRight);
 }
 
 void tankControlTimeoutUpdate(void) {
@@ -221,8 +242,8 @@ void tankControlSet(float throttle, float yaw) {
 void tankControlGet(float *throttle, float *yaw) {
     irqLock();
 
-    *throttle = tankThrottle;
-    *yaw = tankYaw;
+    *throttle = tankThrottleInput;
+    *yaw = tankYawInput;
 
     irqUnLock();
 }
@@ -230,7 +251,7 @@ void tankControlGet(float *throttle, float *yaw) {
 float tankThrottleGet(void) {
     irqLock();
 
-    float throttle = tankThrottle;
+    float throttle = tankThrottleInput;
 
     irqUnLock();
     return throttle;
@@ -249,7 +270,7 @@ void tankThrottleSet(float throttle) {
 float tankYawGet(void) {
     irqLock();
 
-    float yaw = tankYaw;
+    float yaw = tankYawInput;
 
     irqUnLock();
     return yaw;

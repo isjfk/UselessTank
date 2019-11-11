@@ -2,7 +2,6 @@
 
 #include "ahrs.h"
 #include "stdbool.h"
-#include "motor.h"
 #include "usart.h"
 
 #include "system/SysTick.h"
@@ -60,35 +59,10 @@ void print_tank_data() {
 
 void AHRS(void)
 {
-	// 读取编码器，因为两个电机的旋转了180度的，所以需要对其中一个取反
-	//Encoder_Left = Read_Encoder(2); 
-	//Encoder_Right = -Read_Encoder(8);                           
-
-	//Balance_Pwm = Balance(Angle_Balance,Gyro_Balance); 
-	//Velocity_Pwm = velocity(Encoder_Left,Encoder_Right); 
-	//Turn_Pwm = 0;  
-
 	//printf("\r\n加速度： %8.2d%8.2f%8.2d%8.2d%8.2d%8.2d    ", Balance_Pwm, Gyro_Balance, Velocity_Pwm, Turn_Pwm, Encoder_Left, Encoder_Right);
 
-	//Moto1=Balance_Pwm+Velocity_Pwm+Turn_Pwm + joy_left_pwm * 10;       // 电机1PWM
-	//Moto2=-Balance_Pwm+Velocity_Pwm-Turn_Pwm + joy_right_pwm * 10;      // 电机2PWM
-    
     //print_mpu9250_data();
     //print_tank_data();
-
-    if (boardIsBatteryLow()) {
-        motorSet(0, 0);
-        return;
-    }
-
-    float throttle = tankThrottleGet();
-    float yaw = tankYawGet();
-    int motorMax = 7199;
-
-    motorL = tankControlRange(throttle - yaw) * motorMax / 100;
-    motorR = tankControlRange(throttle + yaw) * motorMax / 100;
-
-    motorSet(motorL, motorR);
 }
 
 void ReadEncoder(void)
