@@ -33,7 +33,7 @@ void print_mpu9250_data() {
     static int prevTick = 0;
 
     int currTick = sysTickCurrentMs();
-    if (currTick - prevTick > 500) {
+    if (currTick - prevTick > 100) {
         prevTick = currTick;
 
         int8_t accuracy;

@@ -17,15 +17,15 @@ struct platform_data_s {
  * chip-to-body matrix for your particular set up.
  */
 static struct platform_data_s gyro_pdata = {
-    .orientation = { 1, 0, 0,
-                     0, 1, 0,
-                     0, 0, 1}
+    .orientation = {  0, -1,  0,
+                      1,  0,  0,
+                      0,  0,  1 }
 };
 
 static struct platform_data_s compass_pdata = {
-    .orientation = { 0, 1, 0,
-                     1, 0, 0,
-                     0, 0, -1}
+    .orientation = { -1,  0,  0,
+                      0,  1,  0,
+                      0,  0, -1}
 };
 
 inv_error_t devMpu9250Status = -1;
