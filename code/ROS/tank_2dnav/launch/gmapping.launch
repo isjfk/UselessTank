@@ -1,0 +1,13 @@
+<launch>
+
+    <!-- Run the map server -->
+    <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" output="screen">
+        <param name="xmin" value="30"/>
+        <param name="xmax" value="30"/>
+        <param name="ymin" value="20"/>
+        <param name="ymax" value="20"/>
+        <param name="maxUrange" value="10"/>
+        <param name="maxRange" value="10"/>
+    </node>
+
+</launch>

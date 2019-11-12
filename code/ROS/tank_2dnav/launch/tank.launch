@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find tank_2dnav)/launch/tank_setup.launch" />
+    <include file="$(find tank_2dnav)/launch/tank_nav.launch" />
+</launch>

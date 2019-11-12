@@ -1,9 +1,35 @@
-obstacle_range: 10
-raytrace_range: 10
-footprint: [[-0.28, -0.15], [-0.28, 0.15], [0.22, 0.15], [0.22, -0.15]]
-inflation_radius: 1.2
-cost_scaling_factor: 3.0
+footprint: [[-0.23, -0.12], [-0.23, 0.12], [0.15, 0.12], [0.15, -0.12]]
 
-observation_sources: laser_scan_sensor
-laser_scan_sensor: {sensor_frame: base_laser, data_type: LaserScan, topic: scan_filtered, marking: true, clearing: true}
+max_obstacle_height: 0.50
+map_type: voxel
 
+inflation_layer:
+    enabled: true
+    inflation_radius:       0.5
+    cost_scaling_factor:    15.0
+
+obstacle_layer:
+    enabled: true
+    max_obstacle_height:    0.50
+    origin_z:               0.0
+    z_resolution:           0.2
+    z_voxels:               2
+    unknown_threshold:      15
+    mark_threshold:         0
+    combination_method:     1
+    track_unknown_space:    true
+    obstacle_range:         8
+    raytrace_range:         10
+    publish_voxel_map:      false
+    observation_sources:    laser_scan_sensor
+    laser_scan_sensor:
+        data_type: LaserScan
+        topic: scan_filtered
+        sensor_frame: base_laser
+        marking: true
+        clearing: true
+        min_obstacle_height: 0.15
+        max_obstacle_height: 0.25
+
+static_layer:
+    enabled: true
