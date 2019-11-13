@@ -5,7 +5,7 @@ map_type: voxel
 
 inflation_layer:
     enabled: true
-    inflation_radius:       0.5
+    inflation_radius:       0.50
     cost_scaling_factor:    15.0
 
 obstacle_layer:
@@ -28,7 +28,7 @@ obstacle_layer:
         sensor_frame: base_laser
         marking: true
         clearing: true
-        min_obstacle_height: 0.15
+        min_obstacle_height: 0.00
         max_obstacle_height: 0.25
 
 static_layer:
