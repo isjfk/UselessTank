@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <main>
-      <img id="map" src="./assets/sapnj.png" alt="Vue.js PWA" />
+      <img id="map" src="http://127.0.0.1:5000/map" alt="Vue.js PWA" />
       <router-view></router-view>
     </main>
   </div>

@@ -1,8 +1,11 @@
 <template>
   <div>
     <div v-bind:style="{position: 'absolute',top: tank.x, left: tank.y}"> <img id="tank" src="../assets/tank.png" alt="Vue.js PWA" /></div>
+    <div v-bind:style="{position: 'absolute',top: home.x + 'px', left: home.y + 'px'}" v-bind:id="home.id" @click="go(home)">
+        <span class="location">{{home.name}}</span>
+       </div>
     <div v-for="(room, $index) in rooms">       
-       <div v-bind:style="{position: 'absolute',top: room.x, left: room.y}" v-bind:id="room.id" @click="go(room)">
+       <div v-bind:style="{position: 'absolute',top: room.x + 'px', left: room.y + 'px'}" v-bind:id="room.id" @click="go(room)">
         <span class="location">{{room.name}}</span>
        </div>
     </div>  
@@ -16,6 +19,7 @@ export default {
   data () {
     return {
       tank: {x: '190px', y: '330px'},
+      home: {x: '190px', y: '330px'},
       rooms: [
         {name: 'Home', x: '220px', y: '580px'},
         { name: 'Meeting Room 3.04', x: '400px', y: '580px', id: 'r1' },
@@ -50,7 +54,9 @@ export default {
           paintStyle: { stroke: '#909399', strokeWidth: 2 }
         })
       })
-    }
+    },
+    getTankPosition () {},
+    getRoute (room) {}
   },
   created () {
 
@@ -61,7 +67,11 @@ export default {
   },
 
   mounted () {
-
+    var that = this
+    this.$axios.get('http://127.0.0.1:5000/locations').then(function (response) {
+      that.home = response.data.home
+      that.rooms = response.data.rooms
+    })
   }
 }
 </script>
