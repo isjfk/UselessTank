@@ -5,7 +5,7 @@
 #include "system/SysIrq.h"
 #include "system/SysDelay.h"
 
-float batteryHealthVoltage = 10.2;      // For 3S LiPo battery.
+float batteryHealthVoltage = 10.5;      // For 3S LiPo battery.
 float boardBatteryVoltage = 0;
 uint32_t boardBatteryVoltageSysTickMs = 0;
 
