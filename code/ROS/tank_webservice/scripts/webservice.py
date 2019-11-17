@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import request
 from flask_cors import CORS, cross_origin
 from flask import send_file
 import json
@@ -21,9 +22,9 @@ def getLocations():
     {
         "home":{"name":"Home", "x": "110", "y": "290"},
         "rooms":[     
-                    { "name": "Meeting Room 3.04", "x": "200", "y": "290", "id": "r1" },
-                    { "name": "Meeting Room 3.06", "x": "110", "y": "490", "id": "r2" },
-                    { "name": "Meeting Room 3.05", "x": "230", "y": "490", "id": "r3" }
+                    { "name": "Meeting Room 3.04", "x": "200", "y": "290", "id": "mr1" },
+                    { "name": "Meeting Room 3.06", "x": "110", "y": "490", "id": "mr2" },
+                    { "name": "Meeting Room 3.05", "x": "230", "y": "490", "id": "mr3" }
                 ]
     }
     """
@@ -39,9 +40,20 @@ def getTankLocation():
     return data
   
 
-@app.route("/calcuateRoute")
+@app.route("/getRoute")
 def getRoute():
-    return ""    
+    targetRoute = request.args.get('target')
+    print(targetRoute)
+    data = """
+    {
+        "routes":[     
+                    { "x": "200", "y": "290", "id": "r1" },
+                    { "x": "110", "y": "490", "id": "r2" },
+                    { "x": "230", "y": "490", "id": "r3" }
+                ]
+    }
+    """
+    return data    
 
 
 if __name__ == "__main__":
