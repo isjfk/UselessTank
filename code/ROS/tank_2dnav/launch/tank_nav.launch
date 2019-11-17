@@ -7,7 +7,7 @@
     </node>
 
     <!-- Run the map server -->
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find tank_2dnav)/map/sapnj.pgm 0.05" />
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find tank_2dnav)/map/map.yaml" />
 
     <!--
     <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" output="screen">
@@ -16,7 +16,7 @@
 
     <!--- Run AMCL -->
     <node name="amcl" pkg="amcl" type="amcl" output="screen">
-		<rosparam file="$(find tank_2dnav)/config/amcl_params.yaml" command="load" />
+        <rosparam file="$(find tank_2dnav)/config/amcl_params.yaml" command="load" />
     </node>
 
     <node name="move_base" pkg="move_base" type="move_base" respawn="false" output="screen">

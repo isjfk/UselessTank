@@ -2,11 +2,6 @@
 
 ## Install Ubuntu Mate in Raspberry Pi
 
-## Install 3rd packages
-  ```bash
-  sudo apt install gstreamer1.0-plugins-base-apps
-  ```
-
 ## Install ROS packages
   ```bash
   sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
@@ -51,6 +46,15 @@
   alias tanknav='roslaunch tank_2dnav tank_nav.launch'
   alias tank='roslaunch tank_2dnav tank.launch'
   alias tankds4='roslaunch tank_remote ds4.launch'
+  ```
+
+## Install 3rd packages
+  ```bash
+  sudo apt install gstreamer1.0-plugins-base-apps
+  sudo apt install python-pip
+  pip install Flask
+  pip install Flask-Cors
+  pip install rospkg
   ```
 
 # Configuration

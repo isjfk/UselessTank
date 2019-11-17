@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <main>
-      <img id="map" src="http://127.0.0.1:5000/map" alt="Vue.js PWA" />
+      <img id="map" :src="mapUrl" alt="Vue.js PWA" />
       <router-view></router-view>
     </main>
   </div>
@@ -9,7 +9,30 @@
 
 <script>
 export default {
-  name: 'app'
+  name: 'app',
+
+  data () {
+    return {
+      mapUrl: this.rosRestUrl() + '/map'
+    }
+  },
+
+  methods: {
+    rosRestUrl () {
+      let origin = window.location.origin
+      let portIndex = -1
+      if (window.location.port) {
+        portIndex = origin.indexOf(window.location.port)
+      }
+      if (portIndex > 0) {
+        return origin.substring(0, portIndex) + '5000'
+      } else {
+        return origin + ':5000'
+      }
+    }
+
+  }
+
 }
 </script>
 
