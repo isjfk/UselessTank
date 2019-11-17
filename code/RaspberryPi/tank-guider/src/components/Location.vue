@@ -113,6 +113,10 @@ export default {
       })
     })
     this.getTankPosition()
+    setInterval(() => {
+      this.getTankPosition()
+    }, 500
+    )
   }
 }
 </script>
