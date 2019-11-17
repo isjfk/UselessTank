@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-bind:style="{position: 'absolute',top: tank.x, left: tank.y}"> <img id="tank" src="../assets/tank.png" alt="Vue.js PWA" /></div>
+    <div v-bind:style="{position: 'absolute',top: tank.x + 'px', left: tank.y + 'px'}"> <img id="tank" src="../assets/tank.png" alt="Vue.js PWA" /></div>
     <div v-bind:style="{position: 'absolute',top: home.x + 'px', left: home.y + 'px'}" v-bind:id="home.id" @click="go(home)">
         <span class="location">{{home.name}}</span>
        </div>
@@ -18,13 +18,14 @@ export default {
   name: 'location',
   data () {
     return {
-      tank: {x: '190px', y: '330px'},
-      home: {x: '190px', y: '330px'},
+      proportion: 1,
+      tank: {x: '190', y: '330'},
+      home: {x: '190', y: '330'},
       rooms: [
-        {name: 'Home', x: '220px', y: '580px'},
-        { name: 'Meeting Room 3.04', x: '400px', y: '580px', id: 'r1' },
-        { name: 'Meeting Room 3.06', x: '220px', y: '980px', id: 'r2' },
-        { name: 'Meeting Room 3.05', x: '460px', y: '980px', id: 'r3' }
+        {name: 'Home', x: '220', y: '580'},
+        { name: 'Meeting Room 3.04', x: '400', y: '580', id: 'r1' },
+        { name: 'Meeting Room 3.06', x: '220', y: '980', id: 'r2' },
+        { name: 'Meeting Room 3.05', x: '460', y: '980', id: 'r3' }
       ]
     }
   },
@@ -55,7 +56,15 @@ export default {
         })
       })
     },
-    getTankPosition () {},
+    getTankPosition () {
+      var that = this
+      this.$axios.get('http://127.0.0.1:5000/tank').then(function (response) {
+        that.tank = response.data.tank
+        that.tank.x = that.tank.x * that.proportion
+        that.tank.y = that.tank.y * that.proportion
+      })
+    },
+
     getRoute (room) {}
   },
   created () {
@@ -68,10 +77,24 @@ export default {
 
   mounted () {
     var that = this
+    var img = document.getElementById('map')
+    var image = new Image()
+    image.src = img.src
+    this.proportion = img.width / image.width
+
     this.$axios.get('http://127.0.0.1:5000/locations').then(function (response) {
       that.home = response.data.home
       that.rooms = response.data.rooms
+
+      that.home.x = that.home.x * that.proportion
+      that.home.y = that.home.y * that.proportion
+
+      that.rooms.forEach(room => {
+        room.x = room.x * that.proportion
+        room.y = room.y * that.proportion
+      })
     })
+    this.getTankPosition()
   }
 }
 </script>

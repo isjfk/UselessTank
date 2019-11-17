@@ -19,11 +19,11 @@ def getMap():
 def getLocations():
     data = """
     {
-        "home":{"name":"Home", "x": "220", "y": "580"},
+        "home":{"name":"Home", "x": "110", "y": "290"},
         "rooms":[     
-                    { "name": "Meeting Room 3.04", "x": "400", "y": "580", "id": "r1" },
-                    { "name": "Meeting Room 3.06", "x": "220", "y": "980", "id": "r2" },
-                    { "name": "Meeting Room 3.05", "x": "460", "y": "980", "id": "r3" }
+                    { "name": "Meeting Room 3.04", "x": "200", "y": "290", "id": "r1" },
+                    { "name": "Meeting Room 3.06", "x": "110", "y": "490", "id": "r2" },
+                    { "name": "Meeting Room 3.05", "x": "230", "y": "490", "id": "r3" }
                 ]
     }
     """
@@ -33,7 +33,7 @@ def getLocations():
 def getTankLocation():
     data = """
     {
-        "tank":{"x":190,"y":330}
+        "tank":{"x":95,"y":165}
     }
     """
     return data
