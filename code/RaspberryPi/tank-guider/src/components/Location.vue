@@ -1,38 +1,27 @@
 <template>
-  <div>
-    <div v-bind:style="{position: 'absolute',top: tankPosition.x + 'px', left: tankPosition.y + 'px'}" v-bind:x="tankPosition.x" v-bind:y="tankPosition.y"> <img id="tank" src="../assets/tank.png" alt="Vue.js PWA" /></div>
-    <div v-bind:style="{position: 'absolute',top: home.x + 'px', left: home.y + 'px'}" v-bind:id="home.id" v-bind:x="home.x" v-bind:y="home.y" @click="go(home)">
-        <span class="location">{{home.name}}</span>
-       </div>
-    <div v-for="(room, $index) in rooms">
-       <div v-bind:style="{position: 'absolute',top: room.x + 'px', left: room.y + 'px'}" v-bind:id="room.id" v-bind:x="room.x" v-bind:y="room.y" @click="go(room)">
+  <div id="markLayer" :style="{ width: map.screenWidth+'px', height: map.screenHeight+'px' }">
+    <svg class="markSvg">
+      <line class="tankPath" v-for="tankPath in tankPathList" :x1="tankPath.x1+'%'" :y1="tankPath.y1+'%'" :x2="tankPath.x2+'%'" :y2="tankPath.y2+'%'" />
+      <image id="tank" xlink:href="../assets/leopard2.png" :x="tankPosition.x+tankImg.xOffset" :y="tankPosition.y+tankImg.yOffset" :transform="'rotate(' + tankPosition.yaw + ',' + tankPosition.x + ',' + tankPosition.y + ')'" width="10%" height="10%" preserveAspectRatio="xMidYMid meet" />
+    </svg>
+    <div v-for="(poi, $index) in poiList">
+      <div v-bind:style="{position: 'absolute', left: poi.x + '%', top: poi.y + '%'}" v-bind:id="room.id" v-bind:x="room.x" v-bind:y="room.y" @click="go(room)">
         <span class="location">{{room.name}}</span>
-       </div>
-    </div>
-   <div v-for="(route, $index) in tankPath">       
-       <div v-bind:style="{position: 'absolute',top: route.x + 'px', left: route.y + 'px'}" v-bind:id="route.id" v-bind:x="route.x" v-bind:y="route.y">
-        <span class="route">{{route.x}}</span>
-       </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import {jsPlumb} from 'jsplumb'
 export default {
   name: 'location',
   data () {
     return {
-      proportion: 1,
-      tankPosition: {x: '190', y: '330'},
-      home: {x: '190', y: '330'},
-      rooms: [
-        {name: 'Home', x: '220', y: '580'},
-        { name: 'Meeting Room 3.04', x: '400', y: '580', id: 'r1' },
-        { name: 'Meeting Room 3.06', x: '220', y: '980', id: 'r2' },
-        { name: 'Meeting Room 3.05', x: '460', y: '980', id: 'r3' }
-      ],
-      tankPath: []
+      map: { pixWidth: 1, pixHeight: 1, screenWidth: 1, screenHeight: 1, resolution: 0.05, scale: 1 },
+      tankImg: { screenWidth: 1, screenHeight: 1, xOffset: 0, yOffset: 0 },
+      tankPosition: { x: 0, y: 0, yaw: 0 },
+      tankPathList: [],
+      poiList: []
     }
   },
 
@@ -52,35 +41,9 @@ export default {
     },
 
     go (room) {
-      console.log('go to room', room.x)
-      var target = room.x / this.proportion + ',' + room.y / this.proportion
-      var that = this
-      this.$axios.get(this.rosRestUrl() + '/tank/action/goto?target=' + target).then(function (response) {
-        that.tankPath = response.data
-        that.tankPath.forEach(route => {
-          route.x = route.x * that.proportion
-          route.y = route.y * that.proportion
-        })
-      })
-    },
-
-    drawTankPath () {
-      console.log('draw route')
-      let plumbIns = jsPlumb.getInstance()
-      var that = this
-      plumbIns.ready(function () {
-        plumbIns.deleteEveryConnection()
-        for (let i = 0; i < that.tankPath.length - 1; i++) {
-          plumbIns.connect({
-            source: that.tankPath[i].id,
-            target: that.tankPath[i + 1].id,
-            anchor: ['Left', 'Right', 'Top', 'Bottom', [0.3, 0, 0, -1], [0.7, 0, 0, -1], [0.3, 1, 0, 1], [0.7, 1, 0, 1]],
-            connector: ['StateMachine'],
-            endpoint: 'Blank',
-            overlays: [ ['Arrow', { width: 8, length: 8, location: 1 }] ],
-            paintStyle: { stroke: '#909399', strokeWidth: 2 }
-          })
-        }
+      let x = null
+      let y = null
+      this.$axios.get(this.rosRestUrl() + '/tank/action/goto?x=' + x + '&y=' + y).then(function (response) {
       })
     },
 
@@ -88,64 +51,99 @@ export default {
       var that = this
       this.$axios.get(this.rosRestUrl() + '/tank/position').then(function (response) {
         let tankPos = response.data
-        that.tankPosition.x = tankPos.x * that.proportion
-        that.tankPosition.y = tankPos.y * that.proportion
+
+        tankPos.x = (tankPos.x / that.map.resolution) * that.map.scale
+        tankPos.y = (that.map.pixHeight - (tankPos.y / that.map.resolution)) * that.map.scale
+        tankPos.yaw = -tankPos.yaw
+
+        that.tankPosition = tankPos
+        that.refreshTankImgSize()
+
+        // console.log(that.tankPosition)
       })
     },
 
     getTankPath () {
       var that = this
       this.$axios.get(this.rosRestUrl() + '/tank/path').then(function (response) {
-        that.tankPath = response.data
-        that.drawTankPath()
+        let tankPathData = response.data
+        let tankPathList = []
+
+        if (tankPathData.length > 1) {
+          let prevX = tankPathData[0].x / that.map.resolution / that.map.pixWidth * 100.0
+          let prevY = (that.map.pixHeight - (tankPathData[0].y / that.map.resolution)) / that.map.pixHeight * 100.0
+
+          for (let i = 1; i < tankPathData.length; i++) {
+            let line = {}
+            line.x1 = prevX
+            line.y1 = prevY
+            line.x2 = tankPathData[i].x / that.map.resolution / that.map.pixWidth * 100.0
+            line.y2 = (that.map.pixHeight - (tankPathData[i].y / that.map.resolution)) / that.map.pixHeight * 100.0
+
+            prevX = line.x2
+            prevY = line.y2
+
+            tankPathList.push(line)
+          }
+
+          // console.log(tankPathList)
+        }
+
+        that.tankPathList = tankPathList
       })
     },
 
+    onWindowResize () {
+      // Temporary hidden the mark layer because of map scale changed.
+      document.getElementById('markLayer').style.visibility = 'hidden'
+    },
+
     refreshLoop () {
-      this.getTankPosition()
+      this.refreshMapImgSize()
+
       this.getTankPath()
-      this.drawTankPath()
+      this.getTankPosition()
+    },
+
+    refreshMapImgSize () {
+      let mapImg = document.getElementById('map')
+      // Sometimes image size is 1 pix large then actual float size in screen
+      this.map.screenWidth = mapImg.width - 1
+      this.map.screenHeight = mapImg.height - 1
+
+      let tmpImg = new Image()
+      tmpImg.src = mapImg.src
+      this.map.pixWidth = tmpImg.width
+      this.map.pixHeight = tmpImg.height
+      this.map.scale = mapImg.width / tmpImg.width
+    },
+
+    refreshTankImgSize () {
+      let tankImg = document.getElementById('tank')
+      this.tankImg.screenWidth = tankImg.width.baseVal.value
+      this.tankImg.screenHeight = tankImg.height.baseVal.value
+      this.tankImg.xOffset = -(tankImg.width.baseVal.value / 2)
+      this.tankImg.yOffset = -(tankImg.height.baseVal.value / 2)
+
+      if (this.tankImg.screenWidth > 1) {
+        document.getElementById('markLayer').style.visibility = 'visible'
+      }
     }
 
   },
 
   created () {
-
+    window.addEventListener('resize', this.onWindowResize)
   },
 
   destroyed () {
-
-  },
-
-  updated () {
-    this.drawTankPath()
+    window.removeEventListener('resize', this.onWindowResize)
   },
 
   mounted () {
-    var that = this
-    var img = document.getElementById('map')
-    var image = new Image()
-    image.src = img.src
-    this.proportion = img.width / image.width
-
-    this.$axios.get(this.rosRestUrl() + '/locations').then(function (response) {
-      that.home = response.data.home
-      that.rooms = response.data.rooms
-
-      that.home.x = that.home.x * that.proportion
-      that.home.y = that.home.y * that.proportion
-
-      that.rooms.forEach(room => {
-        room.x = room.x * that.proportion
-        room.y = room.y * that.proportion
-      })
-    })
-
-    this.refreshLoop()
     setInterval(() => {
       this.refreshLoop()
-    }, 500
-    )
+    }, 500)
   }
 
 }
@@ -153,20 +151,31 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped rel="stylesheet/less" lang="less">
-   .location{         
+  #markLayer {
+    position: absolute;
+    z-index: 1;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    visibility: hidden;
+  }
+
+  .markSvg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .tankPath {
+    stroke: rgb(0, 255, 0);
+    stroke-width: 2;
+  }
+
+  .location {
     border-color: chocolate;
-    background-color: orange;  
+    background-color: orange;
     border-style: solid;
     font-size: x-large;
     text-align: center;
-    font-weight: bold;      
-   }
-
-   .route{         
-    display: none;     
-   }
-
-   #tank{
-     width:15%
-   }
+    font-weight: bold;
+  }
 </style>

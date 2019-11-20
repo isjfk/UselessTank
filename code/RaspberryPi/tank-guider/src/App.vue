@@ -1,8 +1,9 @@
 <template>
   <div id="app">
     <main>
-      <img id="map" :src="mapUrl" alt="Vue.js PWA" />
       <router-view></router-view>
+      <!-- img tag must be placed after previous div, otherwise the div will not overlapping over img -->
+      <img id="map" :src="mapUrl" alt="Oops... Where is my map?" />
     </main>
   </div>
 </template>
@@ -37,51 +38,29 @@ export default {
 </script>
 
 <style>
-body {
-  margin: 0;
-}
+  body {
+    margin: 0;
+  }
 
-#app {
-  font-family: "Avenir", Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-}
+  #app {
+    font-family: "Avenir", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
 
-#map {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
+  main {
+    position: relative;
+    z-index: 0;
+    height: 100%;
+    width: fit-content;
+    overflow-y: hidden;
+  }
 
-  z-index: -10;
-  margin: auto;
-  overflow: auto;
-}
-
-main {
-  text-align: center;
-  margin-top: 40px;
-}
-
-header {
-  margin: 0;
-  height: 56px;
-  padding: 0 16px 0 24px;
-  background-color: #35495e;
-  color: #ffffff;
-}
-
-header span {
-  display: block;
-  position: relative;
-  font-size: 20px;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  font-weight: 400;
-  box-sizing: border-box;
-  padding-top: 16px;
-}
+  #map {
+    height: 100%;
+  }
 </style>
