@@ -124,9 +124,18 @@ export default {
       this.refreshTankImgSize()
     },
 
-    refreshLoop () {
+    tankRefreshLoop () {
+      this.refreshMapImgSize()
+      this.refreshTankImgSize()
+
       this.getTankPath()
       this.getTankPosition()
+    },
+
+    poiRefreshLoop () {
+      this.refreshMapImgSize()
+
+      this.getPoiList()
     },
 
     refreshMapImgSize () {
@@ -162,14 +171,16 @@ export default {
   },
 
   mounted () {
-    this.refreshMapImgSize()
-    this.refreshTankImgSize()
-
-    this.getPoiList()
-
     setInterval(() => {
-      this.refreshLoop()
+      this.tankRefreshLoop()
     }, 500)
+
+    setTimeout(() => {
+      this.poiRefreshLoop()
+    }, 500)
+    setInterval(() => {
+      this.poiRefreshLoop()
+    }, 5000)
   }
 
 }
@@ -206,12 +217,12 @@ export default {
   .poi {
     position: absolute;
     transform: translate(-50%, -50%);
-    padding: 5px;
+    padding: 0.5vh;
     background-color: orange;
     border-color: chocolate;
     border-style: solid;
     text-align: center;
-    font-size: x-large;
+    font-size: 2vh;
     font-weight: bold;
   }
 
