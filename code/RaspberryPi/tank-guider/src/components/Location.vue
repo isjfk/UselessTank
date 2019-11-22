@@ -1,14 +1,15 @@
 <template>
   <div id="markLayer" :style="{ width: map.screenWidth+'px', height: map.screenHeight+'px' }">
-    <svg class="markSvg">
+    <svg id="tankPathLayer">
       <line class="tankPath" v-for="tankPath in tankPathList" :x1="tankPath.x1+'%'" :y1="tankPath.y1+'%'" :x2="tankPath.x2+'%'" :y2="tankPath.y2+'%'" />
-      <image id="tank" xlink:href="../assets/leopard2.png" :x="tankPosition.x+tankImg.xOffset" :y="tankPosition.y+tankImg.yOffset" :transform="'rotate(' + tankPosition.yaw + ',' + tankPosition.x + ',' + tankPosition.y + ')'" width="10%" height="10%" preserveAspectRatio="xMidYMid meet" />
     </svg>
-    <div v-for="(poi, $index) in poiList">
-      <div v-bind:style="{position: 'absolute', left: poi.x + '%', top: poi.y + '%'}" v-bind:id="room.id" v-bind:x="room.x" v-bind:y="room.y" @click="go(room)">
-        <span class="location">{{room.name}}</span>
+    <div id="poiLayer">
+      <div class="poi" v-for="poi in poiList" :style="{ left: poi.x+'%', top: poi.y+'%' }">
+        <span>{{poi.name}}</span>
       </div>
     </div>
+    <img id="tank" src="../assets/leopard2.png" alt="Oops... The tank is gone." :style="{ left: tankPosition.x+'%', top: tankPosition.y+'%', transform: 'translate(-50%, -50%) rotate('+tankPosition.yaw+'deg)' }" />
+    <div id="gotoLayer" @click="tankGoto($event)" />
   </div>
 </template>
 
@@ -19,7 +20,7 @@ export default {
     return {
       map: { pixWidth: 1, pixHeight: 1, screenWidth: 1, screenHeight: 1, resolution: 0.05, scale: 1 },
       tankImg: { screenWidth: 1, screenHeight: 1, xOffset: 0, yOffset: 0 },
-      tankPosition: { x: 0, y: 0, yaw: 0 },
+      tankPosition: { x: -1, y: -1, yaw: 0 },
       tankPathList: [],
       poiList: []
     }
@@ -40,10 +41,33 @@ export default {
       }
     },
 
-    go (room) {
-      let x = null
-      let y = null
-      this.$axios.get(this.rosRestUrl() + '/tank/action/goto?x=' + x + '&y=' + y).then(function (response) {
+    tankGoto (event) {
+      let x = event.offsetX / this.map.screenWidth * this.map.pixWidth * this.map.resolution
+      let y = (this.map.screenHeight - event.offsetY) / this.map.screenHeight * this.map.pixHeight * this.map.resolution
+
+      let that = this
+      this.$axios.post(this.rosRestUrl() + '/tank/action/goto', {
+        x: x,
+        y: y
+      }).then(function (response) {
+        that.getTankPath()
+      })
+    },
+
+    getPoiList () {
+      var that = this
+      this.$axios.get(this.rosRestUrl() + '/poi').then(function (response) {
+        let poiList = response.data
+
+        for (let i = 0; i < poiList.length; i++) {
+          let poi = poiList[i]
+          poi.x = (poi.x / that.map.resolution) / that.map.pixWidth * 100.0
+          poi.y = (that.map.pixHeight - (poi.y / that.map.resolution)) / that.map.pixHeight * 100.0
+        }
+
+        that.poiList = poiList
+
+        console.log(that.poiList)
       })
     },
 
@@ -52,12 +76,14 @@ export default {
       this.$axios.get(this.rosRestUrl() + '/tank/position').then(function (response) {
         let tankPos = response.data
 
-        tankPos.x = (tankPos.x / that.map.resolution) * that.map.scale
-        tankPos.y = (that.map.pixHeight - (tankPos.y / that.map.resolution)) * that.map.scale
+        tankPos.x = (tankPos.x / that.map.resolution) / that.map.pixWidth * 100.0
+        tankPos.y = (that.map.pixHeight - (tankPos.y / that.map.resolution)) / that.map.pixHeight * 100.0
         tankPos.yaw = -tankPos.yaw
 
         that.tankPosition = tankPos
-        that.refreshTankImgSize()
+        if (that.tankPosition.x >= 0) {
+          document.getElementById('tank').style.visibility = 'visible'
+        }
 
         // console.log(that.tankPosition)
       })
@@ -94,20 +120,19 @@ export default {
     },
 
     onWindowResize () {
-      // Temporary hidden the mark layer because of map scale changed.
-      document.getElementById('markLayer').style.visibility = 'hidden'
+      this.refreshMapImgSize()
+      this.refreshTankImgSize()
     },
 
     refreshLoop () {
-      this.refreshMapImgSize()
-
       this.getTankPath()
       this.getTankPosition()
     },
 
     refreshMapImgSize () {
       let mapImg = document.getElementById('map')
-      // Sometimes image size is 1 pix large then actual float size in screen
+      // Sometimes image width/height is e.g. 640.7, which will become 641 when get from element.
+      // So we subtract 1 to prevent markLayer large then the map.
       this.map.screenWidth = mapImg.width - 1
       this.map.screenHeight = mapImg.height - 1
 
@@ -120,14 +145,10 @@ export default {
 
     refreshTankImgSize () {
       let tankImg = document.getElementById('tank')
-      this.tankImg.screenWidth = tankImg.width.baseVal.value
-      this.tankImg.screenHeight = tankImg.height.baseVal.value
-      this.tankImg.xOffset = -(tankImg.width.baseVal.value / 2)
-      this.tankImg.yOffset = -(tankImg.height.baseVal.value / 2)
-
-      if (this.tankImg.screenWidth > 1) {
-        document.getElementById('markLayer').style.visibility = 'visible'
-      }
+      this.tankImg.screenWidth = tankImg.width
+      this.tankImg.screenHeight = tankImg.height
+      this.tankImg.xOffset = -(tankImg.width / 2)
+      this.tankImg.yOffset = -(tankImg.height / 2)
     }
 
   },
@@ -141,6 +162,11 @@ export default {
   },
 
   mounted () {
+    this.refreshMapImgSize()
+    this.refreshTankImgSize()
+
+    this.getPoiList()
+
     setInterval(() => {
       this.refreshLoop()
     }, 500)
@@ -157,10 +183,9 @@ export default {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    visibility: hidden;
   }
 
-  .markSvg {
+  #tankPathLayer {
     width: 100%;
     height: 100%;
   }
@@ -170,12 +195,38 @@ export default {
     stroke-width: 2;
   }
 
-  .location {
-    border-color: chocolate;
+  #poiLayer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+  }
+
+  .poi {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    padding: 5px;
     background-color: orange;
+    border-color: chocolate;
     border-style: solid;
-    font-size: x-large;
     text-align: center;
+    font-size: x-large;
     font-weight: bold;
+  }
+
+  #tank {
+    position: absolute;
+    width: auto;
+    height: 6%;
+    visibility: hidden;
+  }
+
+  #gotoLayer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
   }
 </style>

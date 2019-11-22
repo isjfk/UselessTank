@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+import traceback
 import threading
 import json
 from flask import Flask
 from flask import request
-from flask_cors import CORS, cross_origin
 from flask import send_file
+from flask_cors import CORS, cross_origin
+from werkzeug.exceptions import HTTPException
 
 import rosbridge
 
@@ -15,43 +17,52 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 flaskThread = None
 
-@app.route("/")
+@app.errorhandler(Exception)
+def handle_exception(e):
+    traceback.print_exc(e)
+    return ('', 500)
+
+@app.route('/')
 def hello():
-    return "Hello World!"
+    return 'Tank WebService'
 
-@app.route("/map")
+@app.route('/map')
 def getMap():
-    fileName = "sapnj.png"
-    return send_file(fileName, attachment_filename='map.png')
+    fileName = 'sapnj.png'
+    return send_file(fileName, mimetype='image/png', attachment_filename='map.png')
 
-@app.route("/locations")
-def getLocations():
-    data = """
-    {
-        "home":{"name":"Home", "x": "110", "y": "290"},
-        "rooms":[     
-                    { "name": "Meeting Room 3.04", "x": "200", "y": "290", "id": "mr1" },
-                    { "name": "Meeting Room 3.06", "x": "110", "y": "490", "id": "mr2" },
-                    { "name": "Meeting Room 3.05", "x": "230", "y": "490", "id": "mr3" }
-                ]
-    }
-    """
-    return data 
+@app.route('/poi')
+def getPoiList():
+    fileName = getPoiListFilePath()
+    return send_file(fileName, mimetype='application/json', attachment_filename='poiList.json')
 
-@app.route("/tank/position")
+@app.route('/tank/position')
 def getTankPosition():
     location = rosbridge.getPosition()
     return location
 
-@app.route("/tank/path")
+@app.route('/tank/path')
 def getTankPath():
     path = rosbridge.getPath()
     return json.dumps(path)
 
-@app.route("/tank/action/goto")
-def setTankTarget():
-    targetRoute = request.args.get('point')
-    print(targetRoute)
+@app.route('/tank/action/goto', methods=['GET', 'POST'])
+def tankGoto():
+    pose = request.get_json()
+    if (pose is not None):
+        x = pose.get('x')
+        y = pose.get('y')
+        yaw = pose.get('yaw')
+    else:
+        x = float(request.args.get('x'))
+        y = float(request.args.get('y'))
+        yaw = float(request.args.get('yaw'))
+    if (x is not None) and (y is not None):
+        rosbridge.tankGoto(x, y, yaw)
+    return ('', 204)
+
+def getPoiListFilePath():
+    return '../resources/poiList.json'
 
 def flaskWorker():
     app.run(host='0.0.0.0')
