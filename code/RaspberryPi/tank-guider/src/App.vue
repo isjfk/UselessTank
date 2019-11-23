@@ -14,7 +14,7 @@ export default {
 
   data () {
     return {
-      mapUrl: this.rosRestUrl() + '/map'
+      mapUrl: this.rosRestUrl() + '/map/image'
     }
   },
 
@@ -49,8 +49,8 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 96vh;
-    padding: 2vh;
+    height: 98vh;
+    padding: 1vh;
   }
 
   main {

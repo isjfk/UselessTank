@@ -19,6 +19,7 @@ export default {
   data () {
     return {
       map: { pixWidth: 1, pixHeight: 1, screenWidth: 1, screenHeight: 1, resolution: 0.05, scale: 1 },
+      mapMeta: {},
       tankImg: { screenWidth: 1, screenHeight: 1, xOffset: 0, yOffset: 0 },
       tankPosition: { x: -1, y: -1, yaw: 0 },
       tankPathList: [],
@@ -50,72 +51,23 @@ export default {
         x: x,
         y: y
       }).then(function (response) {
-        that.getTankPath()
+        // Call refresh loop to get path ASAP
+        that.tankRefreshLoop()
       })
     },
 
     getPoiList () {
       var that = this
       this.$axios.get(this.rosRestUrl() + '/poi').then(function (response) {
-        let poiList = response.data
-
-        for (let i = 0; i < poiList.length; i++) {
-          let poi = poiList[i]
-          poi.x = (poi.x / that.map.resolution) / that.map.pixWidth * 100.0
-          poi.y = (that.map.pixHeight - (poi.y / that.map.resolution)) / that.map.pixHeight * 100.0
-        }
-
-        that.poiList = poiList
-
-        console.log(that.poiList)
+        that.updatePoiList(response.data)
       })
     },
 
-    getTankPosition () {
+    getTankAllData () {
       var that = this
-      this.$axios.get(this.rosRestUrl() + '/tank/position').then(function (response) {
-        let tankPos = response.data
-
-        tankPos.x = (tankPos.x / that.map.resolution) / that.map.pixWidth * 100.0
-        tankPos.y = (that.map.pixHeight - (tankPos.y / that.map.resolution)) / that.map.pixHeight * 100.0
-        tankPos.yaw = -tankPos.yaw
-
-        that.tankPosition = tankPos
-        if (that.tankPosition.x >= 0) {
-          document.getElementById('tank').style.visibility = 'visible'
-        }
-
-        // console.log(that.tankPosition)
-      })
-    },
-
-    getTankPath () {
-      var that = this
-      this.$axios.get(this.rosRestUrl() + '/tank/path').then(function (response) {
-        let tankPathData = response.data
-        let tankPathList = []
-
-        if (tankPathData.length > 1) {
-          let prevX = tankPathData[0].x / that.map.resolution / that.map.pixWidth * 100.0
-          let prevY = (that.map.pixHeight - (tankPathData[0].y / that.map.resolution)) / that.map.pixHeight * 100.0
-
-          for (let i = 1; i < tankPathData.length; i++) {
-            let line = {}
-            line.x1 = prevX
-            line.y1 = prevY
-            line.x2 = tankPathData[i].x / that.map.resolution / that.map.pixWidth * 100.0
-            line.y2 = (that.map.pixHeight - (tankPathData[i].y / that.map.resolution)) / that.map.pixHeight * 100.0
-
-            prevX = line.x2
-            prevY = line.y2
-
-            tankPathList.push(line)
-          }
-
-          // console.log(tankPathList)
-        }
-
-        that.tankPathList = tankPathList
+      this.$axios.get(this.rosRestUrl() + '/tank/all').then(function (response) {
+        that.udpateTankPosition(response.data['position'])
+        that.updateTankPath(response.data['path'])
       })
     },
 
@@ -128,8 +80,7 @@ export default {
       this.refreshMapImgSize()
       this.refreshTankImgSize()
 
-      this.getTankPath()
-      this.getTankPosition()
+      this.getTankAllData()
     },
 
     poiRefreshLoop () {
@@ -158,6 +109,52 @@ export default {
       this.tankImg.screenHeight = tankImg.height
       this.tankImg.xOffset = -(tankImg.width / 2)
       this.tankImg.yOffset = -(tankImg.height / 2)
+    },
+
+    updatePoiList (poiList) {
+      for (let i = 0; i < poiList.length; i++) {
+        let poi = poiList[i]
+        poi.x = (poi.x / this.map.resolution) / this.map.pixWidth * 100.0
+        poi.y = (this.map.pixHeight - (poi.y / this.map.resolution)) / this.map.pixHeight * 100.0
+      }
+
+      this.poiList = poiList
+    },
+
+    udpateTankPosition (tankPosition) {
+      tankPosition.x = (tankPosition.x / this.map.resolution) / this.map.pixWidth * 100.0
+      tankPosition.y = (this.map.pixHeight - (tankPosition.y / this.map.resolution)) / this.map.pixHeight * 100.0
+      tankPosition.yaw = -tankPosition.yaw
+
+      this.tankPosition = tankPosition
+      if (this.tankPosition.x >= 0) {
+        document.getElementById('tank').style.visibility = 'visible'
+      }
+    },
+
+    updateTankPath (tankPathData) {
+      if (tankPathData.length <= 1) {
+        return
+      }
+
+      let tankPathList = []
+      let prevX = tankPathData[0].x / this.map.resolution / this.map.pixWidth * 100.0
+      let prevY = (this.map.pixHeight - (tankPathData[0].y / this.map.resolution)) / this.map.pixHeight * 100.0
+
+      for (let i = 1; i < tankPathData.length; i++) {
+        let line = {}
+        line.x1 = prevX
+        line.y1 = prevY
+        line.x2 = tankPathData[i].x / this.map.resolution / this.map.pixWidth * 100.0
+        line.y2 = (this.map.pixHeight - (tankPathData[i].y / this.map.resolution)) / this.map.pixHeight * 100.0
+
+        prevX = line.x2
+        prevY = line.y2
+
+        tankPathList.push(line)
+      }
+
+      this.tankPathList = tankPathList
     }
 
   },
@@ -230,6 +227,7 @@ export default {
     position: absolute;
     width: auto;
     height: 6%;
+    filter: brightness(1.8) drop-shadow(0px 0px 4px black);
     visibility: hidden;
   }
 

@@ -109,7 +109,7 @@ void tankThrottleSlowSet() {
     float euler[3];
     devMpu9250GetEulerFloat(euler, NULL, NULL);
 
-    float level = euler[0];
+    float level = euler[1];
     float throttleMin = tankControlRange(rcCurveValue(&level2ThrottleMinCurve, level));
     float throttleMax = tankControlRange(rcCurveValue(&level2ThrottleMaxCurve, level));
 

@@ -52,6 +52,7 @@
   ```bash
   sudo apt install gstreamer1.0-plugins-base-apps
   sudo apt install python-pip
+  pip install pyyaml
   pip install Flask
   pip install Flask-Cors
   pip install rospkg

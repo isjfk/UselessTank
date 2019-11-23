@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-import threading
+import os
 import math
 import json
+import yaml
+import threading
 
 import rospy
 import tf
@@ -85,6 +87,12 @@ def calcDistance(point1, point2):
     y1 = point1['y']
     y2 = point2['y']
     return math.sqrt(math.pow(x2 - x1, 2) + math.pow(y2 - y1, 2))
+
+def getMapMeta():
+    metaPath = os.path.abspath('../../tank_2dnav/map/map.yaml')
+    meta = yaml.full_load(file(metaPath, 'r'))
+    meta['imagePath'] = '../../tank_2dnav/map/' + meta['image']
+    return meta
 
 def getPosition():
     global lock
