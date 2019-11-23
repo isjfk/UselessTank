@@ -33,8 +33,8 @@ def hello():
 
 @app.route('/map/image')
 def getMap():
-    fileName = getMapFilePath()
-    return send_file(fileName, mimetype='image/png', attachment_filename='map.png')
+    filePath = getMapFilePath()
+    return send_file(filePath, mimetype='image/png', attachment_filename='map.png', cache_timeout=0)
 
 def getMapFilePath():
     mapMeta = rosbridge.getMapMeta()
@@ -48,8 +48,8 @@ def getMapMeta():
 
 @app.route('/poi')
 def getPoiList():
-    fileName = getPoiListFilePath()
-    return send_file(fileName, mimetype='application/json', attachment_filename='poiList.json')
+    filePath = getPoiListFilePath()
+    return send_file(filePath, mimetype='application/json', attachment_filename='poiList.json', cache_timeout=0)
 
 def getPoiListFilePath():
     return '../resources/poiList.json'

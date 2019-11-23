@@ -1,4 +1,6 @@
 [
+    { "name": "Front Door", "x": 8.5, "y": 5.5 },
+    { "name": "Fridge", "x": 11, "y": 17 },
     { "name": "Meeting Room 3.04", "x": 11, "y": 13.5 },
     { "name": "Meeting Room 3.05", "x": 16, "y": 12.5 },
     { "name": "Meeting Room 3.06", "x": 27, "y": 10 }
