@@ -1,4 +1,7 @@
 <launch>
     <include file="$(find tank_2dnav)/launch/tank_setup.launch" />
     <include file="$(find tank_2dnav)/launch/tank_nav.launch" />
+    <node name="tank_webservice_node" pkg="tank_webservice" type="webservice.py" output="screen">
+        <param name="map_path" type="string" value="$(find tank_2dnav)/map" />
+    </node>
 </launch>

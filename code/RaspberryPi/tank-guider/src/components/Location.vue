@@ -95,12 +95,9 @@ export default {
       // So we subtract 1 to prevent markLayer large then the map.
       this.map.screenWidth = mapImg.width - 1
       this.map.screenHeight = mapImg.height - 1
-
-      let tmpImg = new Image()
-      tmpImg.src = mapImg.src
-      this.map.pixWidth = tmpImg.width
-      this.map.pixHeight = tmpImg.height
-      this.map.scale = mapImg.width / tmpImg.width
+      this.map.pixWidth = mapImg.naturalWidth
+      this.map.pixHeight = mapImg.naturalHeight
+      this.map.scale = this.map.screenWidth / this.map.pixWidth
     },
 
     refreshTankImgSize () {

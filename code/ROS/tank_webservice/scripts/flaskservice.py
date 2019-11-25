@@ -52,7 +52,7 @@ def getPoiList():
     return send_file(filePath, mimetype='application/json', attachment_filename='poiList.json', cache_timeout=0)
 
 def getPoiListFilePath():
-    return '../resources/poiList.json'
+    return getPackagePath() + '/resources/poiList.json'
 
 @app.route('/tank/position')
 def getTankPosition():
@@ -117,4 +117,7 @@ def startFlask():
 def waitFlaskExit():
     global flaskThread
     flaskThread.join()
+
+def getPackagePath():
+    return os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + '/..')
 

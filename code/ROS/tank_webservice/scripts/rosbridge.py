@@ -20,7 +20,7 @@ goalPub = None
 initPosePub = None
 
 def startListener():
-    rospy.init_node('tank_webservice')
+    rospy.init_node('tank_webservice_node')
     rospy.Subscriber('/move_base/global_costmap/footprint', PolygonStamped, footprintCallback)
     rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, planCallback)
 
@@ -89,10 +89,16 @@ def calcDistance(point1, point2):
     return math.sqrt(math.pow(x2 - x1, 2) + math.pow(y2 - y1, 2))
 
 def getMapMeta():
-    metaPath = os.path.abspath('../../tank_2dnav/map/map.yaml')
+    mapPath = getMapPath()
+    metaPath = os.path.abspath(mapPath + '/map.yaml')
     meta = yaml.full_load(file(metaPath, 'r'))
-    meta['imagePath'] = '../../tank_2dnav/map/' + meta['image']
+    meta['imagePath'] = mapPath + '/' + meta['image']
     return meta
+
+def getMapPath():
+    mapPath = rospy.get_param('~map_path', getPackagePath() + '../tank_2dnav/map')
+    print('map_path: ' + rospy.get_param('~map_path'))
+    return mapPath
 
 def getPosition():
     global lock
@@ -128,4 +134,7 @@ def tankGoto(x, y, yaw):
 
     global goalPub
     goalPub.publish(pose)
+
+def getPackagePath():
+    return os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + '/..')
 
