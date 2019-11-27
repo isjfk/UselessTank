@@ -1,18 +1,72 @@
 #include <stdio.h>
+#include <math.h>
 
 #include "Board.h"
+#include "common/CommonMath.c"
 #include "system/SysTick.h"
 #include "system/SysIrq.h"
 #include "system/SysDelay.h"
 
-float batteryHealthVoltage = 10.5;      // For 3S LiPo battery.
+float batteryLowVoltage = 10.7;         // For 3S LiPo battery.
+int batteryLowStatus = 0;
+float batteryVeryLowVoltage = 10.5;     // For 3S LiPo battery.
+int batteryVeryLowStatus = 0;
+
+int batteryAlarmStatus = 0;
+uint32_t batteryAlarmPrevSysTickMs = 0;
+
 float boardBatteryVoltage = 0;
 uint32_t boardBatteryVoltageSysTickMs = 0;
 
+void detectBatteryLowStatus(void);
+void batteryLowAlarmLoop(void);
+
 void boardLoop(void) {
     boardMeasureBatteryVoltage();
-    if (!boardIsBatteryHealth()) {
-        alarmBatteryLow();
+    detectBatteryLowStatus();
+    batteryLowAlarmLoop();
+}
+
+int calcAlarmIntervalTime() {
+    float batteryVoltage = boardGetBatteryVoltage();
+
+    float lowVoltageRange = fabs(batteryLowVoltage - batteryVeryLowVoltage);
+    if (lowVoltageRange == 0) {
+        // To avoid divide by zero.
+        lowVoltageRange = 0.2;
+    }
+
+    float voltageDiff = frange(batteryVoltage - batteryVeryLowVoltage, 0, lowVoltageRange);
+    int intervalTime = (voltageDiff / lowVoltageRange) * 400 + 100;
+
+    return irange(intervalTime, 100, 500);
+}
+
+void batteryLowAlarmLoop() {
+    if (boardIsBatteryLow()) {
+        uint32_t currentSysTickMs = sysTickCurrentMs();
+        int intervalTimeMs = boardIsBatteryVeryLow() ? 100 : calcAlarmIntervalTime();
+
+        if ((currentSysTickMs - batteryAlarmPrevSysTickMs) >= intervalTimeMs) {
+            batteryAlarmStatus = !batteryAlarmStatus;
+            batteryAlarmPrevSysTickMs = currentSysTickMs;
+        }
+
+        if (batteryAlarmStatus) {
+            boardBeepOn();
+            boardLedOn();
+        } else {
+            boardBeepOff();
+            boardLedOff();
+        }
+    } else {
+        if (batteryAlarmStatus) {
+            boardBeepOff();
+            boardLedOff();
+        }
+
+        batteryAlarmPrevSysTickMs = 0;
+        batteryAlarmStatus = 0;
     }
 }
 
@@ -30,10 +84,6 @@ void alarmSystemOk(void) {
     alarm(100, 100);
     alarm(100, 100);
     alarm(100, 100);
-}
-
-void alarmBatteryLow(void) {
-    alarm(500, 500);
 }
 
 void alarmSystemError(void) {
@@ -86,15 +136,40 @@ void boardMeasureBatteryVoltage(void) {
     boardBatteryVoltageSysTickMs = sysTickMsCurrent;
 }
 
-int8_t boardIsBatteryLow(void) {
+void detectBatteryLowStatus() {
     float batteryVoltage = boardGetBatteryVoltage();
 
-    // Don't consider battery low in case battery is not connected.
-    return (batteryVoltage > 0.5) && (batteryVoltage < batteryHealthVoltage);
+    if (batteryVoltage < 0.5) {
+        // Don't beep in case battery is not connected.
+        batteryVeryLowStatus = 0;
+        batteryLowStatus = 0;
+    } else if (batteryVoltage < batteryVeryLowVoltage) {
+        batteryVeryLowStatus = 1;
+        batteryLowStatus = 1;
+    } else if (batteryVoltage < batteryLowVoltage) {
+        batteryLowStatus = 1;
+    } else if (batteryVoltage == batteryLowVoltage) {
+        batteryVeryLowStatus = 0;
+    } else if (batteryVoltage > batteryLowVoltage) {
+        batteryVeryLowStatus = 0;
+        batteryLowStatus = 0;
+    }
 }
 
 int8_t boardIsBatteryHealth(void) {
     return !boardIsBatteryLow();
+}
+
+int8_t boardIsBatteryLow(void) {
+    return batteryLowStatus;
+}
+
+int8_t boardIsBatteryVeryLow(void) {
+    return batteryVeryLowStatus;
+}
+
+void alarmBatteryLow(void) {
+    alarm(500, 500);
 }
 
 void checkBatteryStatusOnInit(void) {

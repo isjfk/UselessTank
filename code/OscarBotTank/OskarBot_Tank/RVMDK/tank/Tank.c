@@ -186,7 +186,7 @@ void tankPidLoop(void) {
 }
 
 void tankMotorLoop(void) {
-    if (boardIsBatteryLow()) {
+    if (boardIsBatteryVeryLow()) {
         devMotorSetSpeed(0, 0);
         return;
     }
