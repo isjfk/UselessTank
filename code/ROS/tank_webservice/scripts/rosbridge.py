@@ -12,7 +12,7 @@ from nav_msgs.msg import Path
 from geometry_msgs.msg import PolygonStamped, PoseStamped, PoseWithCovarianceStamped, Quaternion
 
 position = { 'x': 0, 'y': 0 , 'yaw': 0 }
-path = {}
+path = []
 
 lock = threading.Lock()
 tl = None
@@ -96,8 +96,7 @@ def getMapMeta():
     return meta
 
 def getMapPath():
-    mapPath = rospy.get_param('~map_path', getPackagePath() + '../tank_2dnav/map')
-    print('map_path: ' + rospy.get_param('~map_path'))
+    mapPath = rospy.get_param('~map_path', getPackagePath() + '/../tank_2dnav/map')
     return mapPath
 
 def getPosition():
