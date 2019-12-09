@@ -53,16 +53,17 @@ void print_mpu9250_data() {
 }
 
 void print_tank_data() {
-    printf("throttle[%8.2f], throttleInput[%8.2f], yaw[%8.2f], yawInput[%8.2f]\r\n", tankThrottle, tankThrottleInput, tankYaw, tankYawInput);
+    int encoderLeft = boardEncoderLeftGet();
+    int encoderRight = boardEncoderRightGet();
+    //printf("throttle[%8.2f], throttleInput[%8.2f], yaw[%8.2f], yawInput[%8.2f]\r\n", tankThrottle, tankThrottleInput, tankYaw, tankYawInput);
     //printf("ps2thr[%8.2f], thr[%8.2f], ps2yaw[%8.2f], yaw[%8.2f]\r\n", ps2Throttle, tankThrottle, ps2Yaw, tankYaw);
+    printf("encoderLeft[%6d], encoderRight[%6d]\r\n", encoderLeft, encoderRight);
 }
 
 void AHRS(void)
 {
-	//printf("\r\n加速度： %8.2d%8.2f%8.2d%8.2d%8.2d%8.2d    ", Balance_Pwm, Gyro_Balance, Velocity_Pwm, Turn_Pwm, Encoder_Left, Encoder_Right);
-
     //print_mpu9250_data();
-    //print_tank_data();
+    print_tank_data();
 }
 
 void ReadEncoder(void)

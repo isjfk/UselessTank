@@ -47,7 +47,7 @@ void batteryLowAlarmLoop() {
         uint32_t currentSysTickMs = sysTickCurrentMs();
         int intervalTimeMs = boardIsBatteryVeryLow() ? 100 : calcAlarmIntervalTime();
 
-        if ((currentSysTickMs - batteryAlarmPrevSysTickMs) >= intervalTimeMs) {
+        if ((currentSysTickMs - batteryAlarmPrevSysTickMs) >= (batteryAlarmStatus ? 100 : intervalTimeMs)) {
             batteryAlarmStatus = !batteryAlarmStatus;
             batteryAlarmPrevSysTickMs = currentSysTickMs;
         }
@@ -87,24 +87,21 @@ void alarmSystemOk(void) {
 }
 
 void alarmSystemError(void) {
-    alarm(2000, 200);
-    alarm(200, 200);
-    alarm(200, 1000);
+    alarm(1000, 100);
+    alarm(100, 100);
+    alarm(100, 100);
+    alarm(100, 1000);
 }
 
 void alarmGyroInitError(void) {
-    alarm(2000, 200);
-    alarm(200, 200);
-    alarm(200, 200);
-    alarm(200, 1000);
+    alarm(1000, 100);
+    alarm(100, 100);
+    alarm(100, 1000);
 }
 
 void alarmGyroLoopError(void) {
-    alarm(2000, 200);
-    alarm(200, 200);
-    alarm(200, 200);
-    alarm(200, 200);
-    alarm(200, 1000);
+    alarm(100, 100);
+    alarm(100, 1000);
 }
 
 float boardGetBatteryVoltage(void) {
@@ -169,7 +166,7 @@ int8_t boardIsBatteryVeryLow(void) {
 }
 
 void alarmBatteryLow(void) {
-    alarm(500, 500);
+    alarm(100, 500);
 }
 
 void checkBatteryStatusOnInit(void) {
