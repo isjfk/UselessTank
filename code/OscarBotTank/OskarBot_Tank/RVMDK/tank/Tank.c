@@ -103,7 +103,7 @@ void tankThrottleSlowSetLoop(void) {
     float throttle = tankThrottle;
 
     // Tank throttle slow inc fast stop.
-    float fullSpeedTime = 0.5;    // Slow set time in seconds.
+    float fullSpeedTime = 0.5;      // Slow set time in seconds.
     float step = (TANK_CTRL_MAX - TANK_CTRL_MID) / MPU_FREQ_HZ_DEFAULT / fullSpeedTime;
     if (fabsf(throttleInput - throttle) <= step) {
         throttle = throttleInput;
@@ -152,12 +152,13 @@ void tankLoop(void) {
     devMpu9250Loop();
     if (devMpu9250GyroUpdated) {
         tankPidLoop();
+
+        tankThrottleSlowSetLoop();
+        tankThrottleLimitByLevelLoop();
+        tankThrottleLimitByLeashTensionLoop();
+
         tankMsgLoop();
     }
-
-    tankThrottleSlowSetLoop();
-    tankThrottleLimitByLevelLoop();
-    tankThrottleLimitByLeashTensionLoop();
 
     tankMotorLoop();
 }
