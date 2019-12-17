@@ -19,6 +19,9 @@ void devMotorInit(void);
  */
 void devMotorSetSpeed(float left, float right);
 
+uint32_t devMotorGetLeftEncoder(void);
+uint32_t devMotorGetRightEncoder(void);
+
 #ifdef __cplusplus
 }
 #endif

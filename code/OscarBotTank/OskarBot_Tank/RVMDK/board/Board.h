@@ -30,9 +30,6 @@ int8_t boardIsBatteryLow(void);
 int8_t boardIsBatteryVeryLow(void);
 void checkBatteryStatusOnInit(void);
 
-uint32_t boardEncoderLeftGet(void);
-uint32_t boardEncoderRightGet(void);
-
 #ifdef __cplusplus
 }
 #endif

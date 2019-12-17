@@ -5,9 +5,10 @@
 #include "usart.h"
 
 #include "system/SysTick.h"
-#include "device/DevMpu9250.h"
 #include "board/Board.h"
 #include "tank/Tank.h"
+#include "device/DevMpu9250.h"
+#include "device/DevMotor.h"
 
 // 电池电压
 extern float volatile bat_volt;
@@ -53,8 +54,8 @@ void print_mpu9250_data() {
 }
 
 void print_tank_data() {
-    int encoderLeft = boardEncoderLeftGet();
-    int encoderRight = boardEncoderRightGet();
+    int encoderLeft = devMotorGetLeftEncoder();
+    int encoderRight = devMotorGetRightEncoder();
     //printf("throttle[%8.2f], throttleInput[%8.2f], yaw[%8.2f], yawInput[%8.2f]\r\n", tankThrottle, tankThrottleInput, tankYaw, tankYawInput);
     //printf("ps2thr[%8.2f], thr[%8.2f], ps2yaw[%8.2f], yaw[%8.2f]\r\n", ps2Throttle, tankThrottle, ps2Yaw, tankYaw);
     printf("encoderLeft[%6d], encoderRight[%6d]\r\n", encoderLeft, encoderRight);
@@ -63,119 +64,5 @@ void print_tank_data() {
 void AHRS(void)
 {
     //print_mpu9250_data();
-    print_tank_data();
-}
-
-void ReadEncoder(void)
-{
-	Encoder_Left = (short)TIM2 -> CNT;
-	TIM2 -> CNT = 0;
-	
-	Encoder_Right = (short)TIM4 -> CNT;
-	TIM4 -> CNT = 0;
-}
-
-uint8_t Turn_Off(float angle, int voltage)
-{
-	u8 temp;
-	if(angle < -40 || angle > 40 || Voltage < 1110)  //电压低于11.1V 关闭电机
-	{	                                                                
-		temp=1;                                                         
-	}
-	else
-	{
-		temp = 0;
-	}
-	
-	return temp;			
-}
-
-
-
-int Balance(float Angle, float Gyro)
-{
-	static int i = 0;
-	static float last_angle = 0.001, angle_sum = 0.001, angle_adj = 0;
-	float Bias;
-	int balance;
-	
-	
-	Bias = Angle - angle_adj;           // 自动找出小车重心位置
-	
-	
-	
-	if(cmd_status > 0)
-	{
-		cmd_status--;
-	}
-	
-	
-	if(cmd_status == 0)
-	{
-		if( ((last_angle >= 0) && (Angle >= 0)) || ((last_angle <= 0) && (Angle <= 0)) )
-		{
-			i++;
-			angle_sum = angle_sum + Angle;
-			last_angle = Angle;
-		}
-		else
-		{
-			i = 0;
-			last_angle = 0.001;
-			angle_sum = 0.001;
-		}
-		
-		
-		if(i > 50)
-		{
-			angle_adj = angle_sum/50;
-			
-			i = 0;
-			last_angle = 0.01;
-			angle_sum = 0.01;
-		}
-		
-	}
-	
-	
-	
-	
-	
-	balance = 500 * Bias + Gyro * 0.20;  // 平衡控制电机PWM  PD控制：500是P系数 0.20是D系数 
-	return balance;
-}
-
-
-
-
-int velocity(int encoder_left,int encoder_right)
-{  
-	static int Velocity, Encoder_Least, Encoder, Movement;
-	static int Encoder_Integral;
-	
-	Movement=0;
-	Encoder_Least =(Encoder_Left+Encoder_Right)-0;  
-	Encoder *= 0.8;		                            
-	Encoder += Encoder_Least*0.2;	              
-
-	
-	if(Turn_Off(Angle_Balance, Voltage) == 0)   
-	{	
-		Encoder_Integral += Encoder;               
-		Encoder_Integral = Encoder_Integral - Movement; 
-	}
-	
-	if(Encoder_Integral > 360000)
-	{
-		Encoder_Integral = 360000;
-	}
-	
-	if(Encoder_Integral < -360000)
-	{
-		Encoder_Integral = -360000; 
-	}
-	
-	Velocity = Encoder * 130 + Encoder_Integral * 0.4;  
-	
-	return Velocity;
+    //print_tank_data();
 }

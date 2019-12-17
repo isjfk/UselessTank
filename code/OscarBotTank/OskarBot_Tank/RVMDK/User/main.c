@@ -24,7 +24,7 @@
 #ifdef ENABLE_PS2
 #include "ps2.h"
 #endif
-#include "servo.h"
+//#include "servo.h"
 #include "main.h"
 #include "string.h"
 #include "w25q64.h"

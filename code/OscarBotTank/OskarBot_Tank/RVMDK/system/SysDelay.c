@@ -3,17 +3,15 @@
 
 void sysDelayUs(uint32_t timeUs) {
     uint32_t tickValPrev = SysTick->VAL;
-    uint32_t tickValCurr = tickValPrev;
-    uint32_t tickVal = 0;
-    uint32_t delayUs = 0;
+    uint32_t tickValCurr;
+    uint32_t tick = 0;
 
-    while (delayUs < timeUs) {
+    timeUs = timeUs * sysTickValPerUs;
+    while (tick < timeUs) {
         tickValCurr = SysTick->VAL;
 
-        tickVal += (tickValPrev - tickValCurr) + ((tickValPrev < tickValCurr) ? sysTickValMax : 0);
-        delayUs += tickVal / sysTickValPerUs;
-        tickVal = tickVal % sysTickValPerUs;
-
+        // SysTick is counting down, so tickValPrev is great then tickValCurr.
+        tick += (tickValPrev - tickValCurr) + ((tickValPrev < tickValCurr) ? sysTickValMax : 0);
         tickValPrev = tickValCurr;
     }
 }

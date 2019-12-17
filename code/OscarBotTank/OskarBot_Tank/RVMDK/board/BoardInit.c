@@ -13,7 +13,6 @@ void boardBeepLedInit(void);
 void boardTimerInit(void);
 void boardUsartInit(void);
 void boardMonitorInit(void);
-void boardEncoderInit(void);
 
 void boardInit(void) {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
@@ -24,7 +23,6 @@ void boardInit(void) {
     //boardTimerInit();
     boardUsartInit();
     boardMonitorInit();
-    boardEncoderInit();
 
     devCrcInit();
     devMotorInit();
@@ -227,71 +225,4 @@ void boardAdcInit(void) {
 
 void boardMonitorInit(void) {
     boardAdcInit();
-}
-
-#define ENCODER_TIM_RELOAD  (0xFFFF)
-
-void boardEncoderLeftInit(void) {
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
-
-    GPIO_InitTypeDef gpio_InitStruct;
-    GPIO_StructInit(&gpio_InitStruct);
-	gpio_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
-	gpio_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(GPIOA, &gpio_InitStruct);
-
-    TIM_TimeBaseInitTypeDef tim_TimeBaseInitStruct;
-    TIM_TimeBaseStructInit(&tim_TimeBaseInitStruct);
-    tim_TimeBaseInitStruct.TIM_Prescaler = 0x0;
-    tim_TimeBaseInitStruct.TIM_Period = ENCODER_TIM_RELOAD;
-    tim_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
-    tim_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM2, &tim_TimeBaseInitStruct);
-
-    TIM_ARRPreloadConfig(TIM2, ENABLE);
-    TIM_EncoderInterfaceConfig(TIM2, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
-
-    TIM_ICInitTypeDef tim_ICInitStruct;
-    TIM_ICStructInit(&tim_ICInitStruct);
-    tim_ICInitStruct.TIM_ICFilter = 10;
-    TIM_ICInit(TIM2, &tim_ICInitStruct);
-
-    TIM_SetCounter(TIM2, 0);
-    TIM_Cmd(TIM2, ENABLE);
-}
-
-void boardEncoderRightInit(void) {
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_AFIO, ENABLE);
-
-    GPIO_InitTypeDef gpio_InitStruct;
-    GPIO_StructInit(&gpio_InitStruct);
-	gpio_InitStruct.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
-	gpio_InitStruct.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(GPIOC, &gpio_InitStruct);
-
-    TIM_TimeBaseInitTypeDef tim_TimeBaseInitStruct;
-    TIM_TimeBaseStructInit(&tim_TimeBaseInitStruct);
-    tim_TimeBaseInitStruct.TIM_Prescaler = 0x0;
-    tim_TimeBaseInitStruct.TIM_Period = ENCODER_TIM_RELOAD;
-    tim_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1;
-    tim_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM8, &tim_TimeBaseInitStruct);
-
-    TIM_ARRPreloadConfig(TIM8, ENABLE);
-    TIM_EncoderInterfaceConfig(TIM8, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
-
-    TIM_ICInitTypeDef tim_ICInitStruct;
-    TIM_ICStructInit(&tim_ICInitStruct);
-    tim_ICInitStruct.TIM_ICFilter = 10;
-    TIM_ICInit(TIM8, &tim_ICInitStruct);
-
-    TIM_SetCounter(TIM8, 0);
-    TIM_Cmd(TIM8, ENABLE);
-}
-
-void boardEncoderInit(void) {
-    boardEncoderLeftInit();
-    boardEncoderRightInit();
 }

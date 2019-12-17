@@ -178,12 +178,3 @@ void checkBatteryStatusOnInit(void) {
         alarmBatteryLow();
     }
 }
-
-uint32_t boardEncoderLeftGet(void) {
-    // Motor left is mounted in reverse direction.
-    return (-TIM_GetCounter(TIM2)) & 0xFFFF;
-}
-
-uint32_t boardEncoderRightGet(void) {
-    return TIM_GetCounter(TIM8);
-}

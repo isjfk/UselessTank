@@ -8,6 +8,7 @@
 #include "board/Board.h"
 #include "device/DevCrc.h"
 #include "device/DevMpu9250.h"
+#include "device/DevMotor.h"
 #include "device/DevUsart.h"
 
 uint8_t tankMsgTypeBinary = 1;      // 0: command output bcd string; 1: command output byte array;
@@ -62,8 +63,8 @@ void tankMsgLoop(void) {
     devMpu9250GetCompassFloat(tankMsg.data.compass, &accuracy, &timestamp);
     devMpu9250GetQuatFloat(tankMsg.data.quat, &accuracy, &timestamp);
 
-    tankMsg.data.motorEncoderLeft = boardEncoderLeftGet();
-    tankMsg.data.motorEncoderRight = boardEncoderRightGet();
+    tankMsg.data.motorEncoderLeft = devMotorGetLeftEncoder();
+    tankMsg.data.motorEncoderRight = devMotorGetRightEncoder();
 
     tankMsgSend();
 }
