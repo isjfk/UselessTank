@@ -29,6 +29,12 @@ void boardLoop(void) {
 
     // Update leash tension data from HX711.
     devHx711Loop();
+
+    boardWdgReload();
+}
+
+void boardWdgReload(void) {
+    IWDG_ReloadCounter();
 }
 
 int calcAlarmIntervalTime() {
@@ -169,16 +175,12 @@ int8_t boardIsBatteryVeryLow(void) {
     return batteryVeryLowStatus;
 }
 
-void alarmBatteryLow(void) {
-    alarm(100, 500);
-}
-
 void checkBatteryStatusOnInit(void) {
     // Alarm battery low in case battery is not connected only in initialize.
     boardMeasureBatteryVoltage();
     if (boardGetBatteryVoltage() < 0.5) {
-        alarmBatteryLow();
-        alarmBatteryLow();
-        alarmBatteryLow();
+        alarm(100, 500);
+        alarm(100, 500);
+        alarm(100, 500);
     }
 }

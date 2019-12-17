@@ -15,6 +15,7 @@
 #define boardBeepOff()  GPIO_ResetBits(GPIOB, GPIO_Pin_13)
 
 void boardLoop(void);
+void boardWdgReload(void);
 
 void alarm(uint16_t onTime, uint16_t offTime);
 

@@ -14,6 +14,7 @@ void boardBeepLedInit(void);
 void boardTimerInit(void);
 void boardUsartInit(void);
 void boardMonitorInit(void);
+void boardIwdgInit(void);
 
 void boardInit(void) {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
@@ -41,6 +42,7 @@ void boardInit(void) {
     }
 
     checkBatteryStatusOnInit();
+    boardIwdgInit();
 }
 
 void boardSwdInit(void) {
@@ -229,4 +231,16 @@ void boardAdcInit(void) {
 
 void boardMonitorInit(void) {
     boardAdcInit();
+}
+
+void boardIwdgInit(void) {
+    uint32_t timeout = 3000;        // In ms.
+    uint8_t prescaler = IWDG_Prescaler_64;
+    uint16_t reload = timeout * 40000 / 1000 / (1 << (prescaler + 2));
+
+    IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+    IWDG_SetPrescaler(prescaler);
+    IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+    IWDG_SetReload(reload);
+    IWDG_Enable();
 }
