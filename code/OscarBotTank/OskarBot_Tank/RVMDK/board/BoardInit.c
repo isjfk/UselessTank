@@ -39,6 +39,8 @@ void boardInit(void) {
         alarmGyroInitError();
         NVIC_SystemReset();
     }
+
+    checkBatteryStatusOnInit();
 }
 
 void boardSwdInit(void) {

@@ -63,8 +63,8 @@ void print_tank_data() {
 }
 
 void print_hx711_data() {
-    int data = devHx711Read();
-    printf("HX711 int[%11d] hex[%08X]\r\n", data, data);
+    int data = devHx711GetData();
+    printf("HX711 hex[%08X] int[%11d] gram[%11d]\r\n", data, data, data/1500);
 }
 
 void AHRS(void)

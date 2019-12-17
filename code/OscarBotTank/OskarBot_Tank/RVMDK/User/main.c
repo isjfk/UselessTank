@@ -56,7 +56,6 @@ int main(void)
 {
     tankInit();
     boardInit();
-    checkBatteryStatusOnInit();
 
 	// PS2手柄初始化 Handle initialization
 #ifdef ENABLE_PS2

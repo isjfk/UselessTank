@@ -8,8 +8,9 @@
 #include "system/SysIrq.h"
 #include "system/SysTick.h"
 #include "board/Board.h"
-#include "device/DevMotor.h"
 #include "device/DevMpu9250.h"
+#include "device/DevMotor.h"
+#include "device/DevHx711.h"
 #include "service/PID.h"
 #include "service/RcCurve.h"
 
@@ -69,6 +70,16 @@ float level2ThrottleMaxCurveData[][2] = {
     { -20, TANK_CTRL_MAX },
 };
 
+float hx711DataToGramScale = 1500;
+#define hx711DataToGram(data)       (data / hx711DataToGramScale)
+
+// Leash tension (in gram) to throttle limit curve.
+RcCurve leashTension2ThrottleMaxCurve;
+float leashTension2ThrottleMaxCurveData[][2] = {
+    { 500, TANK_CTRL_MAX },
+    { 1500, 0 },
+};
+
 PID tankPid[1];
 PidController tankPidCtrl;
 uint8_t tankPidEnabled = 1;
@@ -81,10 +92,13 @@ void tankControlInit(void);
 void tankPidInit(void);
 
 void tankPidLoop(void);
+void tankThrottleSlowSetLoop(void);
+void tankThrottleLimitByLevelLoop(void);
+void tankThrottleLimitByLeashTensionLoop(void);
 void tankMotorLoop(void);
 
 // FIXME: temp solution
-void tankThrottleSlowSet() {
+void tankThrottleSlowSetLoop(void) {
     float throttleInput = tankThrottleGet();
     float throttle = tankThrottle;
 
@@ -103,17 +117,8 @@ void tankThrottleSlowSet() {
             throttle += (throttleInput > throttle) ? step : -step;
         }
     }
-    throttle = tankControlRange(throttle);
 
-    // Limit throttle by tank level.
-    float euler[3];
-    devMpu9250GetEulerFloat(euler, NULL, NULL);
-
-    float level = euler[1];
-    float throttleMin = tankControlRange(rcCurveValue(&level2ThrottleMinCurve, level));
-    float throttleMax = tankControlRange(rcCurveValue(&level2ThrottleMaxCurve, level));
-
-    tankThrottle = frange(throttle, throttleMin, throttleMax);
+    tankThrottle = tankControlRange(throttle);
 }
 
 void tankInit(void) {
@@ -150,6 +155,10 @@ void tankLoop(void) {
         tankMsgLoop();
     }
 
+    tankThrottleSlowSetLoop();
+    tankThrottleLimitByLevelLoop();
+    tankThrottleLimitByLeashTensionLoop();
+
     tankMotorLoop();
 }
 
@@ -181,8 +190,30 @@ void tankPidLoop(void) {
     if (tankPidCtrl.updated) {
         tankYaw = tankControlRange(yawInput + tankPidCtrl.pid[0].sum);
     }
+}
 
-    tankThrottleSlowSet();
+void tankThrottleLimitByLevelLoop(void) {
+    float throttle = tankThrottle;
+
+    // Limit throttle by tank level.
+    float euler[3];
+    devMpu9250GetEulerFloat(euler, NULL, NULL);
+
+    float level = euler[1];
+    float throttleMin = frange(rcCurveValue(&level2ThrottleMinCurve, level), TANK_CTRL_MIN, 0);
+    float throttleMax = frange(rcCurveValue(&level2ThrottleMaxCurve, level), 0, TANK_CTRL_MAX);
+
+    tankThrottle = frange(throttle, throttleMin, throttleMax);
+}
+
+void tankThrottleLimitByLeashTensionLoop(void) {
+    float throttle = tankThrottle;
+
+    int32_t hx711Data = devHx711GetData();
+    float tension = hx711DataToGram(hx711Data);
+    float throttleMax = frange(rcCurveValue(&leashTension2ThrottleMaxCurve, tension), 0, TANK_CTRL_MAX);
+
+    tankThrottle = frange(throttle, TANK_CTRL_MIN, throttleMax);
 }
 
 void tankMotorLoop(void) {
@@ -226,6 +257,8 @@ void tankControlInit(void) {
 
     rcCurveInitHelper(level2ThrottleMinCurve, level2ThrottleMinCurveData);
     rcCurveInitHelper(level2ThrottleMaxCurve, level2ThrottleMaxCurveData);
+
+    rcCurveInitHelper(leashTension2ThrottleMaxCurve, leashTension2ThrottleMaxCurveData);
 }
 
 void tankControlSet(float throttle, float yaw) {

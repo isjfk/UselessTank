@@ -6,6 +6,7 @@
 #include "system/SysTick.h"
 #include "system/SysIrq.h"
 #include "system/SysDelay.h"
+#include "device/DevHx711.h"
 
 float batteryLowVoltage = 10.7;         // For 3S LiPo battery.
 int batteryLowStatus = 0;
@@ -25,6 +26,9 @@ void boardLoop(void) {
     boardMeasureBatteryVoltage();
     detectBatteryLowStatus();
     batteryLowAlarmLoop();
+
+    // Update leash tension data from HX711.
+    devHx711Loop();
 }
 
 int calcAlarmIntervalTime() {

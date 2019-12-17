@@ -3,7 +3,10 @@
 
 #define hx711SetSckHigh()       GPIO_SetBits(GPIOC, GPIO_Pin_9)
 #define hx711SetSckLow()        GPIO_ResetBits(GPIOC, GPIO_Pin_9)
+#define hx711GetSck()           GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_9)
 #define hx711GetDout()          GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_8)
+
+#define hx711IsDataReady()      ((hx711GetSck() == 0) && (hx711GetDout() == 0))
 
 #define HX711_CHANNEL_A_128     1
 #define HX711_CHANNEL_B_32      2
@@ -11,6 +14,7 @@
 
 int32_t currChannel = HX711_CHANNEL_A_128;
 int32_t nextChannel = HX711_CHANNEL_A_128;
+int32_t channelData = 0;
 
 void devHx711Init(void) {
     // Initialize HX711 IO
@@ -27,17 +31,21 @@ void devHx711Init(void) {
     gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOC, &gpio_InitStruct);
 
-    devHx711On();
+    devHx711Reset();
 }
 
 void devHx711On(void) {
     // Set SCK low to start HX711.
     hx711SetSckLow();
+
+    channelData = 0;
 }
 
 void devHx711Off(void) {
     // Set SCK high to power off HX711.
     hx711SetSckHigh();
+
+    channelData = 0;
 }
 
 void devHx711Reset(void) {
@@ -56,20 +64,11 @@ static inline uint8_t devHx711ReadBit(void) {
     return bit;
 }
 
-int32_t devHx711GetCurrentChannel(void) {
-    return currChannel;
-}
-
-int32_t devHx711SelectChannel(int32_t channel) {
-    nextChannel = channel;
-    return currChannel;
-}
-
 /**
  * Return 0 stands for data is not ready.
  */
-int32_t devHx711Read(void) {
-    if (hx711GetDout()) {
+int32_t devHx711Loop(void) {
+    if (!hx711IsDataReady()) {
         return 0;
     }
 
@@ -98,12 +97,31 @@ int32_t devHx711Read(void) {
     }
 
     if (currChannel != nextChannel) {
-        data = 0;
+        // User request switch channel, data of the new channel will be read in next loop.
         currChannel = nextChannel;
-    } else {
-        data = data << 8;
-        data = data >> 8;
+        return 0;
     }
 
+    // Fix sign of the data.
+    data = data << 8;
+    data = data >> 8;
+    channelData = data;
+
     return data;
+}
+
+int32_t devHx711GetChannel(void) {
+    return currChannel;
+}
+
+int32_t devHx711SetChannel(int32_t channel) {
+    if (nextChannel != channel) {
+        nextChannel = channel;
+        channelData = 0;
+    }
+    return currChannel;
+}
+
+int32_t devHx711GetData(void) {
+    return channelData;
 }

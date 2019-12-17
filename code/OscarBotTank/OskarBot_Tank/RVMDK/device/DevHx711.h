@@ -18,21 +18,29 @@ void devHx711Off(void);
 void devHx711Reset(void);
 
 /**
- * Get current channel of previous read.
+ * Update data from HX711 on data ready.
+ *
+ * @return 0: data not ready loop; other: success loop, return data readed from HX711
  */
-int32_t devHx711GetCurrentChannel(void);
+int32_t devHx711Loop(void);
+
+/**
+ * Get current selected channel.
+ */
+int32_t devHx711GetChannel(void);
 
 /**
  * Select channel for following reads.
- * Please expect an "data not ready" read after channel changed.
+ * Data of the new channel will be ready in next data readed loop.
  */
-int32_t devHx711SelectChannel(int32_t channel);
+int32_t devHx711SetChannel(int32_t channel);
 
 /**
- * Read data of current selected channel.
- * Return 0 stands for data not ready.
+ * Get data of current selected channel.
+ *
+ * @return 0: data not ready; other: data readed from HX711 in previous success loop
  */
-int32_t devHx711Read(void);
+int32_t devHx711GetData(void);
 
 #ifdef __cplusplus
 }
