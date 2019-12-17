@@ -242,14 +242,7 @@ inv_error_t devMpu9250Loop(void) {
 int devMpu9250GetGyroFloat(float *data, int8_t *accuracy, inv_time_t *timestamp) {
     long q16Data[3];
 
-    uint8_t irqEnabled = isEi();
-    if (irqEnabled) {
-        di();
-    }
     int status = inv_get_sensor_type_gyro(q16Data, accuracy, timestamp);
-    if (irqEnabled) {
-        ei();
-    }
 
     data[0] = inv_q16_to_float(q16Data[0]);
     data[1] = inv_q16_to_float(q16Data[1]);
@@ -261,14 +254,7 @@ int devMpu9250GetGyroFloat(float *data, int8_t *accuracy, inv_time_t *timestamp)
 int devMpu9250GetAccelFloat(float *data, int8_t *accuracy, inv_time_t *timestamp) {
     long q16Data[3];
 
-    uint8_t irqEnabled = isEi();
-    if (irqEnabled) {
-        di();
-    }
     int status = inv_get_sensor_type_accel(q16Data, accuracy, timestamp);
-    if (irqEnabled) {
-        ei();
-    }
 
     data[0] = inv_q16_to_float(q16Data[0]);
     data[1] = inv_q16_to_float(q16Data[1]);
@@ -280,14 +266,7 @@ int devMpu9250GetAccelFloat(float *data, int8_t *accuracy, inv_time_t *timestamp
 int devMpu9250GetCompassFloat(float *data, int8_t *accuracy, inv_time_t *timestamp) {
     long q16Data[3];
 
-    uint8_t irqEnabled = isEi();
-    if (irqEnabled) {
-        di();
-    }
     int status = inv_get_sensor_type_compass(q16Data, accuracy, timestamp);
-    if (irqEnabled) {
-        ei();
-    }
 
     data[0] = inv_q16_to_float(q16Data[0]);
     data[1] = inv_q16_to_float(q16Data[1]);
@@ -309,14 +288,7 @@ int devMpu9250GetQuatFloat(float *data, int8_t *accuracy, inv_time_t *timestamp)
         timestamp = &tmp_ts;
     }
 
-    uint8_t irqEnabled = isEi();
-    if (irqEnabled) {
-        di();
-    }
     int status = inv_get_sensor_type_quat(q30Data, accuracy, timestamp);
-    if (irqEnabled) {
-        ei();
-    }
 
     data[0] = inv_q30_to_float(q30Data[0]);
     data[1] = inv_q30_to_float(q30Data[1]);
@@ -339,14 +311,7 @@ int devMpu9250GetEulerFloat(float *data, int8_t *accuracy, inv_time_t *timestamp
         timestamp = &tmp_ts;
     }
 
-    uint8_t irqEnabled = isEi();
-    if (irqEnabled) {
-        di();
-    }
     int status = inv_get_sensor_type_euler(q16Data, accuracy, timestamp);
-    if (irqEnabled) {
-        ei();
-    }
 
     data[0] = inv_q16_to_float(q16Data[0]);
     data[1] = inv_q16_to_float(q16Data[1]);
@@ -368,14 +333,7 @@ int devMpu9250GetRotMatFloat(float *data, int8_t *accuracy, inv_time_t *timestam
         timestamp = &tmp_ts;
     }
 
-    uint8_t irqEnabled = isEi();
-    if (irqEnabled) {
-        di();
-    }
     int status = inv_get_sensor_type_rot_mat(q30Data, accuracy, timestamp);
-    if (irqEnabled) {
-        ei();
-    }
 
     data[0] = inv_q30_to_float(q30Data[0]);
     data[1] = inv_q30_to_float(q30Data[1]);
@@ -403,14 +361,7 @@ int devMpu9250GetHeadingFloat(float *data, int8_t *accuracy, inv_time_t *timesta
         timestamp = &tmp_ts;
     }
 
-    uint8_t irqEnabled = isEi();
-    if (irqEnabled) {
-        di();
-    }
     int status = inv_get_sensor_type_heading(q16Data, accuracy, timestamp);
-    if (irqEnabled) {
-        ei();
-    }
 
     data[0] = inv_q16_to_float(q16Data[0]);
 
