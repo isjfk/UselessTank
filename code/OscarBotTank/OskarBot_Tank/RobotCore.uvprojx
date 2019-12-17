@@ -502,6 +502,11 @@
               <FileType>1</FileType>
               <FilePath>.\RVMDK\device\DevMotor.c</FilePath>
             </File>
+            <File>
+              <FileName>DevHx711.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\device\DevHx711.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -7,6 +7,7 @@
 #include "device/DevMpu9250.h"
 #include "device/DevUsart.h"
 #include "device/DevMotor.h"
+#include "device/DevHx711.h"
 
 void boardSwdInit(void);
 void boardBeepLedInit(void);
@@ -26,6 +27,7 @@ void boardInit(void) {
 
     devCrcInit();
     devMotorInit();
+    devHx711Init();
 
     // Enable IRQ so SysTick can get correct value.
     // MPU9250 requires SysTick to initialize.

@@ -9,6 +9,7 @@
 #include "tank/Tank.h"
 #include "device/DevMpu9250.h"
 #include "device/DevMotor.h"
+#include "device/DevHx711.h"
 
 // 电池电压
 extern float volatile bat_volt;
@@ -61,8 +62,14 @@ void print_tank_data() {
     printf("encoderLeft[%6d], encoderRight[%6d]\r\n", encoderLeft, encoderRight);
 }
 
+void print_hx711_data() {
+    int data = devHx711Read();
+    printf("HX711 int[%11d] hex[%08X]\r\n", data, data);
+}
+
 void AHRS(void)
 {
     //print_mpu9250_data();
     //print_tank_data();
+    //print_hx711_data();
 }
