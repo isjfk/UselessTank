@@ -48,9 +48,26 @@
   alias tankds4='roslaunch tank_remote ds4.launch'
   ```
 
-## Install 3rd packages
+## Install audio packages
   ```bash
   sudo apt install gstreamer1.0-plugins-base-apps
+  sudo apt install sox
+  sudo apt install libsox-fmt-all
+  ```
+  For tank-prototype-v2, the default sound playback & record device need to be changed by edit file /etc/pulse/default.pa, append following lines:
+  ```bash
+  set-default-sink alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo
+  set-default-source alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo.monitor
+  ```
+  For other setups, please get available playback & record devices by following command:
+  ```bash
+  pactl list short sinks
+  pactl list short sources
+  ```
+  Then edit /etc/pulse/default.pa according to your setup.
+
+## Install Python & Flask
+  ```bash
   sudo apt install python-pip
   pip install pyyaml
   pip install Flask
