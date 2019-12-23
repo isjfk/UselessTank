@@ -10,16 +10,16 @@
 #define ENCODER_TIM_RELOAD          (0xFFFF)
 
 #ifdef DEV_MOTOR_ESC_EXT
-    #define motorLeftIn1Low()       GPIO_ResetBits(GPIOA, GPIO_Pin_15)
-    #define motorLeftIn1High()      GPIO_SetBits(GPIOA, GPIO_Pin_15)
-    #define motorLeftIn2Low()       GPIO_ResetBits(GPIOB, GPIO_Pin_3)
-    #define motorLeftIn2High()      GPIO_SetBits(GPIOB, GPIO_Pin_3)
+    #define motorLeftIn1Low()       GPIO_ResetBits(GPIOA, GPIO_Pin_8)
+    #define motorLeftIn1High()      GPIO_SetBits(GPIOA, GPIO_Pin_8)
+    #define motorLeftIn2Low()       GPIO_ResetBits(GPIOB, GPIO_Pin_15)
+    #define motorLeftIn2High()      GPIO_SetBits(GPIOB, GPIO_Pin_15)
     #define motorLeftPwm(pwmValue)  TIM_SetCompare1(TIM3, pwmValue)
 
-    #define motorRightIn1Low()      GPIO_ResetBits(GPIOA, GPIO_Pin_8)
-    #define motorRightIn1High()     GPIO_SetBits(GPIOA, GPIO_Pin_8)
-    #define motorRightIn2Low()      GPIO_ResetBits(GPIOB, GPIO_Pin_15)
-    #define motorRightIn2High()     GPIO_SetBits(GPIOB, GPIO_Pin_15)
+    #define motorRightIn1Low()      GPIO_ResetBits(GPIOC, GPIO_Pin_5)
+    #define motorRightIn1High()     GPIO_SetBits(GPIOC, GPIO_Pin_5)
+    #define motorRightIn2Low()      GPIO_ResetBits(GPIOB, GPIO_Pin_12)
+    #define motorRightIn2High()     GPIO_SetBits(GPIOB, GPIO_Pin_12)
     #define motorRightPwm(pwmValue) TIM_SetCompare2(TIM3, pwmValue)
 #else
     #define motorLeftIn1Low()       GPIO_ResetBits(GPIOC, GPIO_Pin_0)
@@ -91,17 +91,19 @@ void devMotorCtrlInit(void) {
     TIM_Cmd(TIM3, ENABLE);
 
     // Initialize motor direction IO
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC, ENABLE);
 
-    gpio_InitStruct.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_15;
     gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
     gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_8;
     GPIO_Init(GPIOA, &gpio_InitStruct);
 
-    gpio_InitStruct.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_15;
-    gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-    gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_15;
     GPIO_Init(GPIOB, &gpio_InitStruct);
+
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_5;
+    GPIO_Init(GPIOC, &gpio_InitStruct);
 
     // Set initial motor state to stop
     motorLeftStop();
@@ -219,13 +221,13 @@ void devMotorEncoderInit(void) {
 }
 
 void motorLeftForward() {
-	motorLeftIn1High();
-    motorLeftIn2Low();
+	motorLeftIn1Low();
+    motorLeftIn2High();
 }
 
 void motorLeftBackward() {
-	motorLeftIn1Low();
-    motorLeftIn2High();
+	motorLeftIn1High();
+    motorLeftIn2Low();
 }
 
 void motorLeftStop() {
