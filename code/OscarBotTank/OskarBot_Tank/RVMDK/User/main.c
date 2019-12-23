@@ -18,7 +18,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
 #include <stdio.h>
-#include "usart.h"
 #include "ahrs.h"
 #include "stdbool.h"
 #ifdef ENABLE_PS2
@@ -29,11 +28,11 @@
 #include "string.h"
 #include "w25q64.h"
 #include "sys.h"
-#include "usart.h"
 
 #include "system/SysTick.h"
 #include "system/SysIrq.h"
 #include "device/DevMpu9250.h"
+#include "device/DevUsart.h"
 #include "board/BoardInit.h"
 #include "board/Board.h"
 #include "tank/Tank.h"
@@ -44,7 +43,6 @@
 /* Extern define ------------------------------------------------------------*/
 extern u8 psx_buf[];
 extern int Moto1,Moto2;
-extern u8 uart_receive_buf[UART_BUF_SIZE], uart1_get_ok, uart1_mode;
 extern float volatile bat_volt;
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/

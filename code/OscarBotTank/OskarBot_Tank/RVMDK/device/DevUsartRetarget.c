@@ -9,13 +9,15 @@ struct __FILE { int handle; /* Add whatever you need here */ };
 FILE __stdout;
 FILE __stdin;
 
+USART_TypeDef* retargetUsartPort = USART1;
+
 
 int fputc(int ch, FILE *f) {
-    return devUsartSendData(USART1, ch);
+    return devUsartSendData(retargetUsartPort, ch);
 }
 
 int fgetc(FILE *f) {
-    return devUsartRecvData(USART1);
+    return devUsartRecvData(retargetUsartPort);
 }
 
 
@@ -26,7 +28,7 @@ int ferror(FILE *f) {
 
 
 void _ttywrch(int ch) {
-    devUsartSendData(USART1, ch);
+    devUsartSendData(retargetUsartPort, ch);
 }
 
 

@@ -1,8 +1,8 @@
+#include <stdio.h>
 #include <math.h>
 
 #include "ahrs.h"
 #include "stdbool.h"
-#include "usart.h"
 
 #include "system/SysTick.h"
 #include "board/Board.h"

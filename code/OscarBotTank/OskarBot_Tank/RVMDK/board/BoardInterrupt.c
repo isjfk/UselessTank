@@ -163,37 +163,43 @@ void TIM5_IRQHandler(void) {
 }
 
 void USART1_IRQHandler(void) {
-    if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET) {
-        USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+    USART_TypeDef* usartPort = USART1;
 
-        uint8_t b = USART_ReceiveData(USART1);
+    if (USART_GetITStatus(usartPort, USART_IT_RXNE) == SET) {
+        USART_ClearITPendingBit(usartPort, USART_IT_RXNE);
+
+        uint8_t b = USART_ReceiveData(usartPort);
         tankCmdAppendByte(b);
     }
 }
 
 void USART2_IRQHandler(void) {
-    if (USART_GetITStatus(USART2, USART_IT_RXNE) == SET) {
-        USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+    USART_TypeDef* usartPort = USART2;
 
-        uint8_t b = USART_ReceiveData(USART2);
+    if (USART_GetITStatus(usartPort, USART_IT_RXNE) == SET) {
+        USART_ClearITPendingBit(usartPort, USART_IT_RXNE);
+
+        uint8_t b = USART_ReceiveData(usartPort);
         tankCmdAppendByte(b);
     }
 
-    if (USART_GetITStatus(USART2, USART_IT_TXE) == SET) {
+    if (USART_GetITStatus(usartPort, USART_IT_TXE) == SET) {
         uint8_t b;
         if (tankMsgReadByte(&b) == COMMON_DATABUF_OK) {
-            USART_SendData(USART2, b);
+            USART_SendData(usartPort, b);
         } else {
-            USART_ITConfig(USART2, USART_IT_TXE, DISABLE);
+            USART_ITConfig(usartPort, USART_IT_TXE, DISABLE);
         }
     }
 }
 
 void USART3_IRQHandler(void) {
-    if (USART_GetITStatus(USART3, USART_IT_RXNE) == SET) {
-        USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+    USART_TypeDef* usartPort = USART3;
 
-        uint8_t b = USART_ReceiveData(USART3);
+    if (USART_GetITStatus(usartPort, USART_IT_RXNE) == SET) {
+        USART_ClearITPendingBit(usartPort, USART_IT_RXNE);
+
+        uint8_t b = USART_ReceiveData(usartPort);
     }
 }
 

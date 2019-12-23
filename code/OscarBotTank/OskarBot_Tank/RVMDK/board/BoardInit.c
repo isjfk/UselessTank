@@ -9,7 +9,6 @@
 #include "device/DevMotor.h"
 #include "device/DevHx711.h"
 
-void boardSwdInit(void);
 void boardBeepLedInit(void);
 void boardTimerInit(void);
 void boardUsartInit(void);
@@ -43,19 +42,6 @@ void boardInit(void) {
 
     checkBatteryStatusOnInit();
     boardIwdgInit();
-}
-
-void boardSwdInit(void) {
-    GPIO_InitTypeDef gpio_InitStruct;
-    GPIO_StructInit(&gpio_InitStruct);
-
-    gpio_InitStruct.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
-	gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-	gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA, &gpio_InitStruct);
-
-    GPIO_SetBits(GPIOA, GPIO_Pin_13);
-    GPIO_SetBits(GPIOA, GPIO_Pin_14);
 }
 
 void boardBeepLedInit(void) {
@@ -191,14 +177,14 @@ void usartInit(USART_TypeDef* USARTx, uint32_t baudRate) {
 
 void boardUsartInit(void) {
     boardUsart1GpioInit();
-    usartInit(USART1, 38400);
+    usartInit(USART1, 115200);
 
     boardUsart2GpioInit();
     usartInit(USART2, 115200);
 
-    boardUsart3GpioInit();
-    usartInit(USART3, 115200);
-    USART_HalfDuplexCmd(USART3, ENABLE);
+//    boardUsart3GpioInit();
+//    usartInit(USART3, 115200);
+//    USART_HalfDuplexCmd(USART3, ENABLE);
 }
 
 void boardAdcInit(void) {

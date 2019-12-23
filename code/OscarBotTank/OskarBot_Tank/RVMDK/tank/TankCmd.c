@@ -4,7 +4,6 @@
 
 #include "TankCmd.h"
 #include "Tank.h"
-#include "device/DevUsart.h"
 
 uint8_t tankCmdEcho = 0;
 
@@ -45,9 +44,9 @@ void tankCmdLoop(void) {
     tankCmdParse(data);
 
     if (tankCmdEcho) {
-        devUsartSendData(USART1, data);
+        putchar(data);
         if (data == tankCmdSuffix) {
-            devUsartSendStr(USART1, "\r\n");
+            puts("\r\n");
         }
     }
 }
