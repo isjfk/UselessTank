@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -20,9 +21,14 @@
 #include "geometry_msgs/TransformStamped.h"
 #include "geometry_msgs/Twist.h"
 
+#define MSG_DATA_LENGTH_MAX     100
+
 char serialPort[2048];
 char serialBaudrateStr[16];
 speed_t serialBaudrate;
+
+uint8_t logTankMsgConfig;
+uint8_t logTankCmdConfig;
 
 int serialFd = -1;
 struct termios orgTty;
@@ -32,6 +38,8 @@ ros::Publisher *imuMsgPub;
 ros::Publisher *magMsgPub;
 ros::Publisher *odomMsgPub;
 tf::TransformBroadcaster *odomBroadcaster;
+
+uint32_t tankMsgCount = 0;
 
 void loadParams();
 void openSerialPort();
@@ -119,11 +127,10 @@ error_t readTankMsgHeader(uint32_t *header) {
     }
 
     *header = *((uint32_t *) buf);
+    tankMsgCount++;
 
     return 0;
 }
-
-#define MSG_DATA_LENGTH_MAX     512
 
 error_t readTankMsg(TankMsg *tankMsg) {
     uint8_t extraBuf[MSG_DATA_LENGTH_MAX];
@@ -136,7 +143,7 @@ error_t readTankMsg(TankMsg *tankMsg) {
 
     tankMsg->startTag = 0xAA55AA55;
     if (tankMsg->header != 0x00000001) {
-        ROS_WARN("[TankAgent] Unsupported TankMsg header[%08X]!", tankMsg->header);
+        ROS_WARN("[TankAgent] TankMsg[%d] Unsupported TankMsg header[%08X]!", tankMsgCount, tankMsg->header);
         return -1;
     }
 
@@ -148,7 +155,7 @@ error_t readTankMsg(TankMsg *tankMsg) {
         return -1;
     }
     if (tankMsg->dataLength > MSG_DATA_LENGTH_MAX) {
-        ROS_WARN("[TankAgent] Unsupported TankMsg dataLength[%d], max allowed[%d]!", tankMsg->dataLength, MSG_DATA_LENGTH_MAX);
+        ROS_WARN("[TankAgent] TankMsg[%d] Unsupported TankMsg dataLength[%d], max allowed[%d]!", tankMsgCount, tankMsg->dataLength, MSG_DATA_LENGTH_MAX);
         return -1;
     }
 
@@ -178,7 +185,7 @@ error_t readTankMsg(TankMsg *tankMsg) {
     uint32_t crc = stdCrc32Get(&crc32);
 
     if (crc != tankMsg->crc) {
-        ROS_WARN("[TankAgent] Error validate TankMsg crc32 checksum, skip to next! Received crc32[%08X] expected crc32[%08X]", tankMsg->crc, crc);
+        ROS_WARN("[TankAgent] TankMsg[%d] Error validate TankMsg crc32 checksum, skip to next! Received crc32[%08X] expected crc32[%08X]", tankMsgCount, tankMsg->crc, crc);
         return -1;
     }
 
@@ -186,9 +193,7 @@ error_t readTankMsg(TankMsg *tankMsg) {
 }
 
 void logTankMsg(TankMsg *tankMsg) {
-    uint8_t logType = 0b00000000;
-
-    if (logType & 0b00000001) {
+    if (logTankMsgConfig & 0b00000001) {
         uint8_t *buf = (uint8_t *) tankMsg;
         for (size_t i = 0; i < sizeof(TankMsg); i++) {
             printf("%02X", (int) buf[i]);
@@ -196,8 +201,9 @@ void logTankMsg(TankMsg *tankMsg) {
         printf("\r\n");
     }
 
-    if (logType & 0b00000010) {
-        printf("ts[%08d] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%6.2f %6.2f %6.2f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%08u %08u]\r\n",
+    if (logTankMsgConfig & 0b00000010) {
+        printf("TankMsg[%08d] ts[%08d] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%6.2f %6.2f %6.2f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%08u %08u]\r\n",
+                tankMsgCount,
                 tankMsg->timestamp,
                 tankMsg->data.gyro[0], tankMsg->data.gyro[1], tankMsg->data.gyro[2],
                 tankMsg->data.accel[0], tankMsg->data.accel[1], tankMsg->data.accel[2],
@@ -220,7 +226,7 @@ void tankMsgThreadFunc() {
         ros::Time currentTime = ros::Time::now();
 
         if (readTankMsg(&tankMsg)) {
-            ROS_WARN("[TankAgent] Read TankMsg from serial error!");
+            //ROS_WARN("[TankAgent] Read TankMsg from serial error!");
             continue;
         }
         logTankMsg(&tankMsg);
@@ -263,8 +269,8 @@ void tankMsgThreadFunc() {
             int16_t encoderLeftDiff = ((int16_t) tankMsg.data.motorEncoderLeft) - prevEncoderLeft;
             int16_t encoderRightDiff = ((int16_t) tankMsg.data.motorEncoderRight) - prevEncoderRight;
             double encoderDiff = (encoderLeftDiff + encoderRightDiff) / 2;
-            double distance = encoderDiff * 0.1364;     // millimeter
-            double distanceMeter = distance / 1000;     // millimeter
+            double distance = encoderDiff * 0.057876;   // millimeter
+            double distanceMeter = distance / 1000;
             double speed = distance / deltaTimeMs;      // millimeter/millisecond (same to meter/second)
             float *quat = tankMsg.data.quat;
 
@@ -354,20 +360,18 @@ void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
 
     writeSize(buf, size);
 
-    uint8_t logType = 0x00000000;
-    if (logType & 0x00000001) {
+    if (logTankCmdConfig & 0x00000001) {
         printf("Write TankCmd[%s] to serial.\r\n", buf);
     }
 }
 
 void loadParams() {
     std::string portStr;
-    std::string baudStr;
-
-    nodeHandle->param<std::string>("serialPort", portStr, "/dev/ttyS0");
+    ros::param::param<std::string>("~serialPort", portStr, "/dev/ttyS0");
     strncpy(serialPort, portStr.c_str(), sizeof(serialPort));
 
-    nodeHandle->param<std::string>("serialBaudrate", baudStr, "115200");
+    std::string baudStr;
+    ros::param::param<std::string>("~serialBaudrate", baudStr, "115200");
     strncpy(serialBaudrateStr, baudStr.c_str(), sizeof(serialBaudrateStr));
 
     if (baudStr == "9600") {
@@ -436,6 +440,14 @@ void loadParams() {
         ROS_ERROR("[TankAgent] Node Exit - unsupported serial baudrate[%s]!", baudStr.c_str());
         exit(-1);
     }
+
+    std::string logTankMsgStr;
+    ros::param::param<std::string>("~logTankMsg", logTankMsgStr, "0");
+    logTankMsgConfig = strtoul(logTankMsgStr.c_str(), NULL, 2);
+
+    std::string logTankCmdStr;
+    ros::param::param<std::string>("~logTankCmd", logTankCmdStr, "0");
+    logTankCmdConfig = strtoul(logTankCmdStr.c_str(), NULL, 2);
 }
 
 void openSerialPort() {

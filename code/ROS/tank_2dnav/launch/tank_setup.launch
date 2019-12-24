@@ -1,5 +1,12 @@
 <launch>
-    <node name="tank_agent_node" pkg="tank_agent" type="tank_agent_node" output="screen" />
+    <node name="tank_agent_node" pkg="tank_agent" type="tank_agent_node" output="screen">
+        <param name="serialPort" type="string" value="/dev/ttyS0" />
+        <param name="serialBaudrate" type="string" value="115200" />
+<!--
+        <param name="logTankMsg" type="string" value="00000010" />
+        <param name="logTankCmd" type="string" value="00000001" />
+-->
+    </node>
     <node name="tank_setup_tf" pkg="tank_setup_tf" type="tank_setup_tf_node" output="screen" />
     <node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
         <param name="serial_port" type="string" value="/dev/ttyUSB0" />

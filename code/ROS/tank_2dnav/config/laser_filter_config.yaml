@@ -1,6 +1,13 @@
 scan_filter_chain:
-- name: angle
-  type: laser_filters/LaserScanAngularBoundsFilterInPlace
+#- name: angle
+#  type: laser_filters/LaserScanAngularBoundsFilterInPlace
+#  params:
+#    lower_angle: -1.57
+#    upper_angle: 1.57
+- name: shadows
+  type: laser_filters/ScanShadowsFilter
   params:
-    lower_angle: -1.57
-    upper_angle: 1.57
+    min_angle: 10
+    max_angle: 170
+    neighbors: 20
+    window: 1

@@ -1,5 +1,7 @@
 <launch>
 
+    <include file="$(find tank_2dnav)/launch/tank_setup.launch" />
+
     <!-- Run the map server -->
     <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" output="screen">
         <param name="xmin" value="30"/>

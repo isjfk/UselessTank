@@ -10,7 +10,8 @@ int main(int argc, char** argv) {
     ros::Rate rate(100);
     tf::TransformBroadcaster broadcaster;
     tf::Quaternion quat;
-    tf::Vector3 vect(0.07, 0.0, 0.09);
+    tf::Vector3 vect(0.12, 0.0, 0.16);
+    //tf::Vector3 vect(0.08, 0.0, 0.20);
 
     ROS_INFO("[TankSetupTf] Start Tank TF node.");
 
