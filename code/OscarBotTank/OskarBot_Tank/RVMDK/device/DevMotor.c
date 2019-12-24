@@ -61,6 +61,8 @@ void devMotorCtrlInit(void) {
     // Timer 3 partial remap, Channel1->PB4, Channel2->PB5
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
     GPIO_PinRemapConfig(GPIO_PartialRemap_TIM3, ENABLE);
+    // Configure JTAG/SWD in Full SWJ (JTAG-DP + SW-DP) but without NJTRST mode to release PB4(NJTRST) pin
+    GPIO_PinRemapConfig(GPIO_Remap_SWJ_NoJTRST, ENABLE);
 
     // Initialize Timer & PWM
     GPIO_InitTypeDef gpio_InitStruct;
@@ -278,10 +280,10 @@ void devMotorSetSpeed(float left, float right) {
 }
 
 uint32_t devMotorGetLeftEncoder(void) {
-    // Motor left is mounted in reverse direction.
-    return (-TIM_GetCounter(TIM2)) & 0xFFFF;
+    return TIM_GetCounter(TIM2);
 }
 
 uint32_t devMotorGetRightEncoder(void) {
-    return TIM_GetCounter(TIM8);
+    // Motor right is mounted in reverse direction.
+    return (-TIM_GetCounter(TIM8)) & 0xFFFF;
 }
