@@ -14,6 +14,7 @@
 </template>
 
 <script>
+import { serverBus } from '../main'
 export default {
   name: 'location',
   data () {
@@ -43,6 +44,7 @@ export default {
     },
 
     tankGoto (event) {
+      // TODO: CHECK setPositionDisabled flag
       let x = event.offsetX / this.map.screenWidth * this.map.pixWidth * this.map.resolution
       let y = (this.map.screenHeight - event.offsetY) / this.map.screenHeight * this.map.pixHeight * this.map.resolution
 
@@ -54,6 +56,7 @@ export default {
         // Call refresh loop to get path ASAP
         that.tankRefreshLoop()
       })
+      serverBus.$emit('resetSetPosition')
     },
 
     getPoiList () {
@@ -158,6 +161,11 @@ export default {
 
   created () {
     window.addEventListener('resize', this.onWindowResize)
+    // Using the server bus
+    serverBus.$on('setPositionDisabled', (disabled) => {
+      console.log('receivePositionDisabled:', disabled)
+      this.setPositionDisabled = disabled
+    })
   },
 
   destroyed () {

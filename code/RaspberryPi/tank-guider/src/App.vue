@@ -12,6 +12,8 @@
 </template>
 
 <script>
+import { serverBus } from './main'
+
 export default {
   name: 'app',
 
@@ -45,14 +47,22 @@ export default {
         this.admin.setPosition.background = 'darkseagreen'
         this.admin.setPosition.disabled = true
       }
+      // Using the server bus
+      console.log('setPositionDisabled:', this.admin.setPosition.disabled)
+      serverBus.$emit('setPositionDisabled', this.admin.setPosition.disabled)
     }
   },
 
   created () {
-    console.log('created')
     if (window.location.pathname.includes('admin')) {
       this.admin.display = 'flex'
     }
+
+    serverBus.$on('resetSetPosition', () => {
+      console.log('receiveResetSetPosition')
+      this.admin.setPosition.background = 'indianred'
+      this.admin.setPosition.disabled = false
+    })
   }
 
 }
