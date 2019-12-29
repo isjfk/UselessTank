@@ -27,6 +27,8 @@ char serialPort[2048];
 char serialBaudrateStr[16];
 speed_t serialBaudrate;
 
+bool encoderInverted = false;
+
 uint8_t logTankMsgConfig;
 uint8_t logTankCmdConfig;
 
@@ -229,6 +231,18 @@ void tankMsgThreadFunc() {
             //ROS_WARN("[TankAgent] Read TankMsg from serial error!");
             continue;
         }
+
+        if (encoderInverted) {
+            uint16_t encoderLeft = (uint16_t) tankMsg.data.motorEncoderLeft;
+            uint16_t encoderRight = (uint16_t) tankMsg.data.motorEncoderRight;
+
+            encoderLeft = UINT16_MAX - encoderLeft + 1;
+            encoderRight = UINT16_MAX - encoderRight + 1;
+
+            tankMsg.data.motorEncoderLeft = encoderLeft;
+            tankMsg.data.motorEncoderRight = encoderRight;
+        }
+
         logTankMsg(&tankMsg);
 
         sensor_msgs::Imu imuMsg;
@@ -263,13 +277,16 @@ void tankMsgThreadFunc() {
 
 
         uint32_t timestamp = tankMsg.timestamp;
+        int16_t encoderLeft = (int16_t) tankMsg.data.motorEncoderLeft;
+        int16_t encoderRight = (int16_t) tankMsg.data.motorEncoderRight;
         if ((prevMsgTimestamp != 0) && (prevMsgTimestamp != timestamp)) {
             double deltaTimeMs = timestamp - prevMsgTimestamp;
             double deltaTimeSecond = deltaTimeMs / 1000.0;
-            int16_t encoderLeftDiff = ((int16_t) tankMsg.data.motorEncoderLeft) - prevEncoderLeft;
-            int16_t encoderRightDiff = ((int16_t) tankMsg.data.motorEncoderRight) - prevEncoderRight;
+            int16_t encoderLeftDiff = encoderLeft - prevEncoderLeft;
+            int16_t encoderRightDiff = encoderRight - prevEncoderRight;
             double encoderDiff = (encoderLeftDiff + encoderRightDiff) / 2;
-            double distance = encoderDiff * 0.057876;   // millimeter
+            //double distance = encoderDiff * 0.057876;   // millimeter
+            double distance = encoderDiff * 0.095191;   // millimeter
             double distanceMeter = distance / 1000;
             double speed = distance / deltaTimeMs;      // millimeter/millisecond (same to meter/second)
             float *quat = tankMsg.data.quat;
@@ -288,8 +305,8 @@ void tankMsgThreadFunc() {
             prevTheta = theta;
         }
         prevMsgTimestamp = tankMsg.timestamp;
-        prevEncoderLeft = tankMsg.data.motorEncoderLeft;
-        prevEncoderRight = tankMsg.data.motorEncoderRight;
+        prevEncoderLeft = encoderLeft;
+        prevEncoderRight = encoderRight;
 
 
         nav_msgs::Odometry odomMsg;
@@ -448,6 +465,8 @@ void loadParams() {
     std::string logTankCmdStr;
     ros::param::param<std::string>("~logTankCmd", logTankCmdStr, "0");
     logTankCmdConfig = strtoul(logTankCmdStr.c_str(), NULL, 2);
+
+    ros::param::param<bool>("~encoderInverted", encoderInverted, false);
 }
 
 void openSerialPort() {
