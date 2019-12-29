@@ -1,58 +1,53 @@
-# Installtion
+# Install Ubuntu Mate in Raspberry Pi
 
-## Install Ubuntu Mate in Raspberry Pi
+## Prepare the TF card with Ubuntu Mate image
+Flash image "ubuntu-mate-18.04.2-beta1-desktop-armhf+raspi-ext4.img" into TF card by balenaEtcher.  
+Boot Raspberry Pi with the TF card.
 
-## Install ROS packages
+## Configure WIFI
+  Login into Ubuntu Mate desktop.  
+  Select "Protected EAP (PEAP)" in Authentication.  
+  Select "No CA certificate is required".  
+  Input you domain account in Username & Password.  
+  Click "Connect".  
+
+## Enable SSH remote login
+  The SSH server is installed but not enabled by default. To enabled the SSH server, open Ubuntu Mate bash shell (Ctrl+Alt+T in desktop):
   ```bash
-  sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-  sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-  sudo apt update
-
-  sudo apt install ros-melodic-desktop
-  sudo apt install python-rosinstall python-rosinstall-generator python-wstool build-essential
-  sudo apt install ros-melodic-tf
-  sudo apt install ros-melodic-navigation
-  sudo apt install ros-melodic-slam-gmapping
-  sudo apt install ros-melodic-rviz
-  sudo apt install ros-melodic-joy
-  sudo apt install ros-melodic-teleop-twist-joy
-  sudo apt install ros-melodic-teleop-twist-keyboard
-
-  sudo rosdep init
-  rosdep update
+  sudo dpkg-reconfigure openssh-server
+  sudo systemctl enable ssh
+  sudo systemctl start ssh
   ```
 
-## Initialize ROS workspace
+# Setup ROS automatically by script
+  Transfer directory /code/UbuntuMate/setup to Ubuntu Mate ~/ directory by SFTP.  
+  Login into Ubuntu Mate bash shell.
   ```bash
-  source /opt/ros/melodic/setup.bash
-  mkdir -p ~/catkin_ws/src
-  cd ~/catkin_ws/
-  catkin_make
-  source devel/setup.bash
-  ```
-  Then add following lines into ~/.bashrc file:
-  ```bash
-  source ~/catkin_ws/devel/setup.bash
-
-  export ROS_IP=`ifconfig wlan0 | grep "inet " | awk '{ print $2 }'`
-  export ROS_MASTER_URI="http://${ROS_IP}:11311"
-
-  alias ws='cd ~/catkin_ws'
-  alias wssrc='cd ~/catkin_ws/src'
-  alias wsmake='cd ~/catkin_ws && catkin_make && cd -'
-  alias ta='cd ~/catkin_ws/src/tank_agent/src'
-  alias tarun='rosrun tank_agent tank_agent_node'
-  alias tanksetup='roslaunch tank_2dnav tank_setup.launch'
-  alias tanknav='roslaunch tank_2dnav tank_nav.launch'
-  alias tank='roslaunch tank_2dnav tank.launch'
-  alias tankds4='roslaunch tank_remote ds4.launch'
+  cd ~/setup
+  chmod a+x *.sh
+  sudo ./init-setup.sh
   ```
 
-## Install audio packages
+# Setup ROS manually
+  In case you prefer the manual way.  
+  If you do the automatic way then you should omit this section.
+
+## Config serial port
+  ```bash
+  sudo sed -r -i --follow-symlinks 's/(.*)console=serial[0-9]+,[0-9]+[[:blank:]](.*)/\1\2/' /boot/cmdline.txt
+  sudo sed -r -i --follow-symlinks 's/(.*)console=ttyS[0-9]+,[0-9]+[[:blank:]](.*)/\1\2/' /boot/cmdline.txt
+  sudo usermod -a -G dialout `whoami`
+  ```
+
+## Install common packages
+  ```bash
+  sudo apt install vim
+  ```
+
+## Install & configure audio
   ```bash
   sudo apt install gstreamer1.0-plugins-base-apps
-  sudo apt install sox
-  sudo apt install libsox-fmt-all
+  sudo apt install sox libsox-fmt-all
   ```
   For tank-prototype-v2, the default sound playback & record device need to be changed by edit file /etc/pulse/default.pa, append following lines:
   ```bash
@@ -66,22 +61,44 @@
   ```
   Then edit /etc/pulse/default.pa according to your setup.
 
+## Install ROS packages
+  ```bash
+  sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+  sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+  sudo apt update
+
+  sudo apt install ros-melodic-desktop
+  sudo apt install python-rosinstall python-rosinstall-generator python-wstool build-essential
+  sudo rosdep init
+  rosdep update
+
+  sudo apt install ros-melodic-navigation ros-melodic-slam-gmapping ros-melodic-tf
+  sudo apt install ros-melodic-joy ros-melodic-teleop-twist-joy ros-melodic-teleop-twist-keyboard joystick
+  ```
+
+## Initialize ROS workspace
+  ```bash
+  source /opt/ros/melodic/setup.bash
+  mkdir -p ~/catkin_ws/src
+  cd ~/catkin_ws/
+  catkin_make
+  source devel/setup.bash
+  ```
+  Then copy all files in project /conf/UbuntuMate directory into Ubuntu ~ directory.
+
 ## Install Python & Flask
   ```bash
   sudo apt install python-pip
-  pip install pyyaml
-  pip install Flask
-  pip install Flask-Cors
-  pip install rospkg
+  pip install rospkg pyyaml
+  pip install Flask Flask-Cors
   ```
 
-# Configuration
+# Device Configuration
 
 ## Pairing PS4 joystick to Ubuntu Mate
   Pair with Ubuntu desktop tool "Bluetooth Manager".  
-  To start, hold "SHARE" and "PS" button in PS4 joystick until indicator flashes.  
+  To start pairing, hold "SHARE" and "PS" button in PS4 joystick until indicator flashes.  
   To test the joystick, run:
   ```bash
-  sudo apt install joystick
   jstest /dev/input/js0
   ```
