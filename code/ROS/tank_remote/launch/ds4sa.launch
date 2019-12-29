@@ -1,5 +1,5 @@
 <launch>
-  <arg name="joy_config" default="ds4" />
+  <arg name="joy_config" default="ds4_sepaxes" />
   <arg name="joy_dev" default="/dev/input/js0" />
   <arg name="config_filepath" default="$(find tank_remote)/config/$(arg joy_config).config.yaml" />
 
