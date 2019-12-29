@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(tank_setup_tf)
+project(tank_setup)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -104,7 +104,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES tank_setup_tf
+#  LIBRARIES tank_setup
 #  CATKIN_DEPENDS geometry_msgs roscpp tf
 #  DEPENDS system_lib
   CATKIN_DEPENDS geometry_msgs roscpp tf
@@ -124,7 +124,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/tank_setup_tf.cpp
+#   src/${PROJECT_NAME}/tank_setup.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -135,8 +135,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/tank_setup_tf_node.cpp)
-add_executable(${PROJECT_NAME}_node src/TankSetupTf.cpp)
+# add_executable(${PROJECT_NAME}_node src/tank_setup_node.cpp)
+add_executable(${PROJECT_NAME}_tf_node src/TankSetupTf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -147,13 +147,13 @@ add_executable(${PROJECT_NAME}_node src/TankSetupTf.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_tf_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(${PROJECT_NAME}_tf_node
   ${catkin_LIBRARIES}
 )
 
@@ -197,7 +197,7 @@ target_link_libraries(${PROJECT_NAME}_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_tank_setup_tf.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_tank_setup.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

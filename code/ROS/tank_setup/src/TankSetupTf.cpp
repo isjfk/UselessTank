@@ -4,7 +4,7 @@
 #include <tf/transform_broadcaster.h>
 
 int main(int argc, char** argv) {
-    ros::init(argc, argv, "tank_setup_tf");
+    ros::init(argc, argv, "tank_setup_tf_node");
 
     ros::NodeHandle nh;
     ros::Rate rate(100);

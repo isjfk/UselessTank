@@ -51,16 +51,16 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>move_base</build_depend>
   <build_depend>rplidar_ros</build_depend>
+  <build_depend>tank_setup</build_depend>
   <build_depend>tank_agent</build_depend>
-  <build_depend>tank_setup_tf</build_depend>
   <build_export_depend>move_base</build_export_depend>
   <build_export_depend>rplidar_ros</build_export_depend>
+  <build_export_depend>tank_setup</build_export_depend>
   <build_export_depend>tank_agent</build_export_depend>
-  <build_export_depend>tank_setup_tf</build_export_depend>
   <exec_depend>move_base</exec_depend>
   <exec_depend>rplidar_ros</exec_depend>
+  <exec_depend>tank_setup</exec_depend>
   <exec_depend>tank_agent</exec_depend>
-  <exec_depend>tank_setup_tf</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

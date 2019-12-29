@@ -10,8 +10,8 @@ project(tank_2dnav)
 find_package(catkin REQUIRED COMPONENTS
   move_base
   rplidar_ros
+  tank_setup
   tank_agent
-  tank_setup_tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -106,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES tank_2dnav
-#  CATKIN_DEPENDS move_base rplidar_ros tank_agent tank_setup_tf
+#  CATKIN_DEPENDS move_base rplidar_ros tank_setup tank_agent
 #  DEPENDS system_lib
 )
 
