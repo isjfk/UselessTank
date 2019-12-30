@@ -1,0 +1,4 @@
+tank_agent_node:
+    encoderInverted: true
+    encoderCountXPerMeter: 10505.15
+    encoderDiffYawFullTurn: 14793.1

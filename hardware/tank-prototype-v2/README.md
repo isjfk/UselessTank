@@ -3,19 +3,33 @@ The second prototype of UselessTank.
 
 # 实测参数
 
-## HM-GM37-3429_12V_1:50_ENCODER
-Encoder data of run 10 meters:
+## HM-GM37-3429-12V-50-ENCODER
+Encoder count of run 10 meters:
 Left   : 40924 + (65536 * 2) = 171996
 Right  : 42496 + (65536 * 2) = 173568
 Average: 172782
+Average per meter: 17278.2
 Distance per encoder count: 0.057876mm
 
-## HM-GM37-3429_12V_1:30_ENCODER
-Encoder data of run 10 meters:
+Encoder diff of 10 full left turn:
+Left : -134712
+Right: 141688
+Total(-Left+Right): 276400
+Diff per full turn: 27640
+
+## CHR-GM37-3429-12V-30-ENCODER
+Encoder count of run 10 meters:
 Left   : 39541 + (65536 * 1) = 105077
 Right  : 39490 + (65536 * 1) = 105026
 Average: 105051.5
+Average per meter: 10505.15
 Distance per encoder count: 0.095191mm
+
+Encoder diff of 10 full left turn:
+Left : -69265
+Right: 78666
+Total(-Left+Right): 147931
+Diff per full turn: 14793.1
 
 # 组装参数
 

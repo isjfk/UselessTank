@@ -1,0 +1,9 @@
+tank_setup_tf_node:
+    tfRate: 10
+    laserTfX: 0.12
+    laserTfY: 0
+    laserTfZ: 0.16
+    laserTfRoll: 0
+    laserTfPitch: 0
+    # Rotate laser data 180 degree to correct laser rader angle
+    laserTfYaw: 3.14159265358979323846264338327950288

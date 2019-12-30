@@ -137,7 +137,14 @@ alias tanksetup='roslaunch tank_2dnav tank_setup.launch'
 alias tanknav='roslaunch tank_2dnav tank_nav.launch'
 alias tank='roslaunch tank_2dnav tank.launch'
 alias tankds4='roslaunch tank_remote ds4.launch'
+alias tankds4sa='roslaunch tank_remote ds4sa.launch'
 
 alias tg='cd ~/package/tank-guider'
 alias tgstart='tg && npm start'
 
+#export TANK_MODEL=prototype-v2-basic
+#export TANK_MODEL=prototype-v2-deepth
+#export TANK_MOTOR_MODEL=HM-GM37-3429-12V-50-ENCODER
+#export TANK_MOTOR_MODEL=CHR-GM37-3429-12V-30-ENCODER
+[[ -z "$TANK_MODEL" ]] && echo 'WARN: Please set env TANK_MODEL according to tank setup before start!'
+[[ -z "$TANK_MOTOR_MODEL" ]] && echo 'WARN: Please set env TANK_MOTOR_MODEL according to tank setup before start!'

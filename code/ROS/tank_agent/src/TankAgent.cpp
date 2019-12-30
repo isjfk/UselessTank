@@ -28,6 +28,15 @@ char serialBaudrateStr[16];
 speed_t serialBaudrate;
 
 bool encoderInverted = false;
+double encoderCountXPerMeter = 0;
+double encoderDiffYawFullTurn = 0;
+
+bool imuMsgPublishEnabled = true;
+bool magMsgPublishEnabled = true;
+bool odomMsgPublishEnabled = true;
+bool odomImuMsgPublishEnabled = true;
+bool odomEncoderMsgPublishEnabled = true;
+bool odomTfBroadcastEnabled = true;
 
 uint8_t logTankMsgConfig;
 uint8_t logTankCmdConfig;
@@ -36,21 +45,48 @@ int serialFd = -1;
 struct termios orgTty;
 
 ros::NodeHandle *nodeHandle;
+
+void loadParams(void);
+void openSerialPort(void);
+void closeSerialPort(void);
+
+
 ros::Publisher *imuMsgPub;
 ros::Publisher *magMsgPub;
 ros::Publisher *odomMsgPub;
-tf::TransformBroadcaster *odomBroadcaster;
+ros::Publisher *odomImuMsgPub;
+ros::Publisher *odomEncoderMsgPub;
+tf::TransformBroadcaster *tfBroadcaster;
 
 uint32_t tankMsgCount = 0;
 
-void loadParams();
-void openSerialPort();
-void closeSerialPort();
+ros::Time currentTime;
+uint32_t prevMsgTimestamp = 0;
+int16_t prevEncoderLeft = 0;
+int16_t prevEncoderRight = 0;
+double imuTheta = 0;
+double prevImuTheta = 0;
+double imuOdomPose[3] = { 0, 0, 0 };
+double imuOdomTwist[3] = { 0, 0, 0 };
+double encoderOdomPose[3] = { 0, 0, 0 };
+double encoderOdomTwist[3] = { 0, 0, 0 };
+double odomPose[3] = { 0, 0, 0 };
+double odomTwist[3] = { 0, 0, 0 };
 
-void tankMsgThreadFunc();
+void tankMsgThreadFunc(void);
 error_t readTankMsg(TankMsg *tankMsg);
+void tankMsgEncoderFix(TankMsg *tankMsg);
+void publishImuMsg(TankMsg& tankMsg);
+void publishMagMsg(TankMsg& tankMsg);
+void updateOdomData(TankMsg& tankMsg);
+void publishOdomImuMsg(TankMsg& tankMsg);
+void publishOdomEncoderMsg(TankMsg& tankMsg);
+void publishOdomMsg(TankMsg& tankMsg);
+void broadcastOdomTf(TankMsg& tankMsg);
+
 
 void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel);
+
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "tank_agent");
@@ -65,13 +101,17 @@ int main(int argc, char **argv) {
     ros::Publisher ip = nh.advertise<sensor_msgs::Imu>("imu", 10);
     ros::Publisher mp = nh.advertise<sensor_msgs::MagneticField>("mag", 10);
     ros::Publisher op = nh.advertise<nav_msgs::Odometry>("odom", 10);
+    ros::Publisher oip = nh.advertise<nav_msgs::Odometry>("odom_imu", 10);
+    ros::Publisher oep = nh.advertise<nav_msgs::Odometry>("odom_encoder", 10);
     ros::Subscriber cmdVelSub = nh.subscribe("cmd_vel", 10, tankCmdCallback);
-    tf::TransformBroadcaster ob;
+    tf::TransformBroadcaster tb;
 
     imuMsgPub = &ip;
     magMsgPub = &mp;
     odomMsgPub = &op;
-    odomBroadcaster = &ob;
+    odomImuMsgPub = &oip;
+    odomEncoderMsgPub = &oep;
+    tfBroadcaster = &tb;
 
     openSerialPort();
 
@@ -83,6 +123,7 @@ int main(int argc, char **argv) {
     tankMsgThread.join();
     closeSerialPort();
 }
+
 
 error_t readSize(void *buf, size_t size) {
     while (size > 0) {
@@ -217,132 +258,240 @@ void logTankMsg(TankMsg *tankMsg) {
 
 void tankMsgThreadFunc() {
     TankMsg tankMsg;
-    uint32_t prevMsgTimestamp = 0;
-    int16_t prevEncoderLeft = 0;
-    int16_t prevEncoderRight = 0;
-    double prevTheta = 0;
-    double odomPose[3] = { 0, 0, 0 };
-    double odomTwist[3] = { 0, 0, 0 };
 
     while (ros::ok()) {
-        ros::Time currentTime = ros::Time::now();
+        currentTime = ros::Time::now();
 
         if (readTankMsg(&tankMsg)) {
             //ROS_WARN("[TankAgent] Read TankMsg from serial error!");
             continue;
         }
 
-        if (encoderInverted) {
-            uint16_t encoderLeft = (uint16_t) tankMsg.data.motorEncoderLeft;
-            uint16_t encoderRight = (uint16_t) tankMsg.data.motorEncoderRight;
-
-            encoderLeft = UINT16_MAX - encoderLeft + 1;
-            encoderRight = UINT16_MAX - encoderRight + 1;
-
-            tankMsg.data.motorEncoderLeft = encoderLeft;
-            tankMsg.data.motorEncoderRight = encoderRight;
-        }
-
+        tankMsgEncoderFix(&tankMsg);
         logTankMsg(&tankMsg);
 
-        sensor_msgs::Imu imuMsg;
-        imuMsg.header.stamp = currentTime;
-        imuMsg.header.frame_id = "imu_link";
+        publishImuMsg(tankMsg);
+        publishMagMsg(tankMsg);
 
-        imuMsg.orientation.w = tankMsg.data.quat[0];
-        imuMsg.orientation.x = tankMsg.data.quat[1];
-        imuMsg.orientation.y = tankMsg.data.quat[2];
-        imuMsg.orientation.z = tankMsg.data.quat[3];
+        updateOdomData(tankMsg);
+        publishOdomImuMsg(tankMsg);
+        publishOdomEncoderMsg(tankMsg);
+        publishOdomMsg(tankMsg);
 
-        imuMsg.angular_velocity.x = tankMsg.data.gyro[0];
-        imuMsg.angular_velocity.y = tankMsg.data.gyro[1];
-        imuMsg.angular_velocity.z = tankMsg.data.gyro[2];
+        broadcastOdomTf(tankMsg);
 
-        imuMsg.linear_acceleration.x = tankMsg.data.accel[0];
-        imuMsg.linear_acceleration.y = tankMsg.data.accel[1];
-        imuMsg.linear_acceleration.z = tankMsg.data.accel[2];
-
-        imuMsgPub->publish(imuMsg);
-
-
-        sensor_msgs::MagneticField magMsg;
-        magMsg.header.stamp = currentTime;
-        magMsg.header.frame_id = "mag_link";
-
-        magMsg.magnetic_field.x = tankMsg.data.compass[0];
-        magMsg.magnetic_field.y = tankMsg.data.compass[1];
-        magMsg.magnetic_field.z = tankMsg.data.compass[2];
-
-        magMsgPub->publish(magMsg);
-
-
-        uint32_t timestamp = tankMsg.timestamp;
-        int16_t encoderLeft = (int16_t) tankMsg.data.motorEncoderLeft;
-        int16_t encoderRight = (int16_t) tankMsg.data.motorEncoderRight;
-        if ((prevMsgTimestamp != 0) && (prevMsgTimestamp != timestamp)) {
-            double deltaTimeMs = timestamp - prevMsgTimestamp;
-            double deltaTimeSecond = deltaTimeMs / 1000.0;
-            int16_t encoderLeftDiff = encoderLeft - prevEncoderLeft;
-            int16_t encoderRightDiff = encoderRight - prevEncoderRight;
-            double encoderDiff = (encoderLeftDiff + encoderRightDiff) / 2;
-            //double distance = encoderDiff * 0.057876;   // millimeter
-            double distance = encoderDiff * 0.095191;   // millimeter
-            double distanceMeter = distance / 1000;
-            double speed = distance / deltaTimeMs;      // millimeter/millisecond (same to meter/second)
-            float *quat = tankMsg.data.quat;
-
-            double theta = atan2f(quat[1] * quat[2] + quat[0] * quat[3], 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
-            double deltaTheta = theta - prevTheta;
-
-            odomPose[0] += distanceMeter * cos(odomPose[2] + (deltaTheta / 2.0));
-            odomPose[1] += distanceMeter * sin(odomPose[2] + (deltaTheta / 2.0));
-            odomPose[2] += deltaTheta;
-
-            odomTwist[0] = speed;
-            odomTwist[1] = 0;
-            odomTwist[2] = deltaTheta / deltaTimeSecond;
-
-            prevTheta = theta;
-        }
         prevMsgTimestamp = tankMsg.timestamp;
-        prevEncoderLeft = encoderLeft;
-        prevEncoderRight = encoderRight;
-
-
-        nav_msgs::Odometry odomMsg;
-        odomMsg.header.stamp = currentTime;
-        odomMsg.header.frame_id = "odom";
-        odomMsg.child_frame_id = "base_link";
-
-        odomMsg.pose.pose.position.x = odomPose[0];
-        odomMsg.pose.pose.position.y = odomPose[1];
-        odomMsg.pose.pose.position.z = 0;
-        odomMsg.pose.pose.orientation = tf::createQuaternionMsgFromYaw(odomPose[2]);
-
-        odomMsg.twist.twist.linear.x = odomTwist[0];
-        odomMsg.twist.twist.linear.y = 0;
-        odomMsg.twist.twist.linear.z = 0;
-
-        odomMsg.twist.twist.angular.x = 0;
-        odomMsg.twist.twist.angular.y = 0;
-        odomMsg.twist.twist.angular.z = odomTwist[2];
-
-        odomMsgPub->publish(odomMsg);
-
-
-        geometry_msgs::TransformStamped odomTrans;
-        odomTrans.header.stamp = odomMsg.header.stamp;
-        odomTrans.header.frame_id = odomMsg.header.frame_id;
-        odomTrans.child_frame_id = odomMsg.child_frame_id;
-
-        odomTrans.transform.translation.x = odomMsg.pose.pose.position.x;
-        odomTrans.transform.translation.y = odomMsg.pose.pose.position.y;
-        odomTrans.transform.translation.z = odomMsg.pose.pose.position.z;
-        odomTrans.transform.rotation = odomMsg.pose.pose.orientation;
-
-        odomBroadcaster->sendTransform(odomTrans);
+        prevEncoderLeft = (int16_t) tankMsg.data.motorEncoderLeft;
+        prevEncoderRight = (int16_t) tankMsg.data.motorEncoderRight;
+        prevImuTheta = imuTheta;
     }
 }
+
+void tankMsgEncoderFix(TankMsg *tankMsg) {
+    if (!encoderInverted) {
+        return;
+    }
+
+    uint16_t encoderLeft = (uint16_t) tankMsg->data.motorEncoderLeft;
+    uint16_t encoderRight = (uint16_t) tankMsg->data.motorEncoderRight;
+
+    encoderLeft = UINT16_MAX - encoderLeft + 1;
+    encoderRight = UINT16_MAX - encoderRight + 1;
+
+    tankMsg->data.motorEncoderLeft = encoderLeft;
+    tankMsg->data.motorEncoderRight = encoderRight;
+}
+
+void publishImuMsg(TankMsg& tankMsg) {
+    if (!imuMsgPublishEnabled) {
+        return;
+    }
+
+    sensor_msgs::Imu imuMsg;
+    imuMsg.header.stamp = currentTime;
+    imuMsg.header.frame_id = "imu_link";
+
+    imuMsg.orientation.w = tankMsg.data.quat[0];
+    imuMsg.orientation.x = tankMsg.data.quat[1];
+    imuMsg.orientation.y = tankMsg.data.quat[2];
+    imuMsg.orientation.z = tankMsg.data.quat[3];
+
+    imuMsg.angular_velocity.x = tankMsg.data.gyro[0];
+    imuMsg.angular_velocity.y = tankMsg.data.gyro[1];
+    imuMsg.angular_velocity.z = tankMsg.data.gyro[2];
+
+    imuMsg.linear_acceleration.x = tankMsg.data.accel[0];
+    imuMsg.linear_acceleration.y = tankMsg.data.accel[1];
+    imuMsg.linear_acceleration.z = tankMsg.data.accel[2];
+
+    imuMsgPub->publish(imuMsg);
+}
+
+void publishMagMsg(TankMsg& tankMsg) {
+    if (!magMsgPublishEnabled) {
+        return;
+    }
+
+    sensor_msgs::MagneticField magMsg;
+    magMsg.header.stamp = currentTime;
+    magMsg.header.frame_id = "mag_link";
+
+    magMsg.magnetic_field.x = tankMsg.data.compass[0];
+    magMsg.magnetic_field.y = tankMsg.data.compass[1];
+    magMsg.magnetic_field.z = tankMsg.data.compass[2];
+
+    magMsgPub->publish(magMsg);
+}
+
+void updateOdomData(TankMsg& tankMsg) {
+    uint32_t timestamp = tankMsg.timestamp;
+    if ((prevMsgTimestamp == 0) || (prevMsgTimestamp >= timestamp)) {
+        // Tank control board reset, clear cached theta
+        imuTheta = 0;
+        return;
+    }
+
+    double timeDiffMs = timestamp - prevMsgTimestamp;
+    double timeDiff = timeDiffMs / 1000.0;
+
+    int16_t encoderLeft = (int16_t) tankMsg.data.motorEncoderLeft;
+    int16_t encoderRight = (int16_t) tankMsg.data.motorEncoderRight;
+    int16_t encoderLeftDiff = encoderLeft - prevEncoderLeft;
+    int16_t encoderRightDiff = encoderRight - prevEncoderRight;
+    double encoderDiff = (encoderLeftDiff + encoderRightDiff) / 2;
+
+    double encoderDistanceDiff = encoderDiff / encoderCountXPerMeter;
+    double encoderSpeed = encoderDistanceDiff / timeDiff;
+    double encoderThetaDiff = (-encoderLeftDiff + encoderRightDiff) / (encoderDiffYawFullTurn / 2) * M_PI;
+
+    // Limit encoderTheta range in [-M_PI, +M_PI]
+    double encoderTheta = encoderOdomPose[2] + encoderThetaDiff;
+    if (encoderTheta > M_PI) {
+        encoderTheta -= M_PI * 2;
+    } else if (encoderTheta < (-M_PI)) {
+        encoderTheta += M_PI * 2;
+    }
+
+    float *quat = tankMsg.data.quat;
+    imuTheta = atan2f(quat[1] * quat[2] + quat[0] * quat[3], 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
+    double imuThetaDiff = imuTheta - prevImuTheta;
+
+    imuOdomPose[2] += imuThetaDiff;
+    imuOdomTwist[2] = imuThetaDiff / timeDiff;
+
+    encoderOdomPose[0] += encoderDistanceDiff * cos(encoderOdomPose[2] + (encoderThetaDiff / 2.0));
+    encoderOdomPose[1] += encoderDistanceDiff * sin(encoderOdomPose[2] + (encoderThetaDiff / 2.0));
+    encoderOdomPose[2] = encoderTheta;
+
+    encoderOdomTwist[0] = encoderSpeed;
+    encoderOdomTwist[1] = 0;
+    encoderOdomTwist[2] = encoderThetaDiff / timeDiff;
+
+    odomPose[0] += encoderDistanceDiff * cos(odomPose[2] + (imuThetaDiff / 2.0));
+    odomPose[1] += encoderDistanceDiff * sin(odomPose[2] + (imuThetaDiff / 2.0));
+    odomPose[2] += imuThetaDiff;
+
+    odomTwist[0] = encoderSpeed;
+    odomTwist[1] = 0;
+    odomTwist[2] = imuThetaDiff / timeDiff;
+}
+
+void publishOdomImuMsg(TankMsg& tankMsg) {
+    if (!odomImuMsgPublishEnabled) {
+        return;
+    }
+
+    nav_msgs::Odometry odomMsg;
+    odomMsg.header.stamp = currentTime;
+    odomMsg.header.frame_id = "odom";
+    odomMsg.child_frame_id = "base_link";
+
+    odomMsg.pose.pose.position.x = 0;
+    odomMsg.pose.pose.position.y = 0;
+    odomMsg.pose.pose.position.z = 0;
+    odomMsg.pose.pose.orientation = tf::createQuaternionMsgFromYaw(imuOdomPose[2]);
+
+    odomMsg.twist.twist.linear.x = 0;
+    odomMsg.twist.twist.linear.y = 0;
+    odomMsg.twist.twist.linear.z = 0;
+
+    odomMsg.twist.twist.angular.x = 0;
+    odomMsg.twist.twist.angular.y = 0;
+    odomMsg.twist.twist.angular.z = imuOdomTwist[2];
+
+    odomImuMsgPub->publish(odomMsg);
+}
+
+void publishOdomEncoderMsg(TankMsg& tankMsg) {
+    if (!odomEncoderMsgPublishEnabled) {
+        return;
+    }
+
+    nav_msgs::Odometry odomMsg;
+    odomMsg.header.stamp = currentTime;
+    odomMsg.header.frame_id = "odom";
+    odomMsg.child_frame_id = "base_link";
+
+    odomMsg.pose.pose.position.x = encoderOdomPose[0];
+    odomMsg.pose.pose.position.y = encoderOdomPose[1];
+    odomMsg.pose.pose.position.z = 0;
+    odomMsg.pose.pose.orientation = tf::createQuaternionMsgFromYaw(encoderOdomPose[2]);
+
+    odomMsg.twist.twist.linear.x = encoderOdomTwist[0];
+    odomMsg.twist.twist.linear.y = 0;
+    odomMsg.twist.twist.linear.z = 0;
+
+    odomMsg.twist.twist.angular.x = 0;
+    odomMsg.twist.twist.angular.y = 0;
+    odomMsg.twist.twist.angular.z = encoderOdomTwist[2];
+
+    odomEncoderMsgPub->publish(odomMsg);
+}
+
+void publishOdomMsg(TankMsg& tankMsg) {
+    if (!odomMsgPublishEnabled) {
+        return;
+    }
+
+    nav_msgs::Odometry odomMsg;
+    odomMsg.header.stamp = currentTime;
+    odomMsg.header.frame_id = "odom";
+    odomMsg.child_frame_id = "base_link";
+
+    odomMsg.pose.pose.position.x = odomPose[0];
+    odomMsg.pose.pose.position.y = odomPose[1];
+    odomMsg.pose.pose.position.z = 0;
+    odomMsg.pose.pose.orientation = tf::createQuaternionMsgFromYaw(odomPose[2]);
+
+    odomMsg.twist.twist.linear.x = odomTwist[0];
+    odomMsg.twist.twist.linear.y = 0;
+    odomMsg.twist.twist.linear.z = 0;
+
+    odomMsg.twist.twist.angular.x = 0;
+    odomMsg.twist.twist.angular.y = 0;
+    odomMsg.twist.twist.angular.z = odomTwist[2];
+
+    odomMsgPub->publish(odomMsg);
+}
+
+void broadcastOdomTf(TankMsg& tankMsg) {
+    if (!odomTfBroadcastEnabled) {
+        return;
+    }
+
+    geometry_msgs::TransformStamped odomTrans;
+    odomTrans.header.stamp = currentTime;
+    odomTrans.header.frame_id = "odom";
+    odomTrans.child_frame_id = "base_link";
+
+    odomTrans.transform.translation.x = odomPose[0];
+    odomTrans.transform.translation.y = odomPose[1];
+    odomTrans.transform.translation.z = 0;
+    odomTrans.transform.rotation = tf::createQuaternionMsgFromYaw(odomPose[2]);
+
+    tfBroadcaster->sendTransform(odomTrans);
+}
+
 
 error_t writeSize(void *buf, size_t size) {
     while (size > 0) {
@@ -382,7 +531,8 @@ void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
     }
 }
 
-void loadParams() {
+
+void loadParams(void) {
     std::string portStr;
     ros::param::param<std::string>("~serialPort", portStr, "/dev/ttyS0");
     strncpy(serialPort, portStr.c_str(), sizeof(serialPort));
@@ -454,9 +604,30 @@ void loadParams() {
         serialBaudrate = B4000000;
 #endif
     } else {
-        ROS_ERROR("[TankAgent] Node Exit - unsupported serial baudrate[%s]!", baudStr.c_str());
+        ROS_ERROR("[TankAgent] Node Exit - Unsupported serial baudrate[%s]!", baudStr.c_str());
         exit(-1);
     }
+
+    ros::param::param<bool>("~encoderInverted", encoderInverted, false);
+    ros::param::param<double>("~encoderCountXPerMeter", encoderCountXPerMeter, 0);
+    ros::param::param<double>("~encoderDiffYawFullTurn", encoderDiffYawFullTurn, 0);
+
+    if (encoderCountXPerMeter == 0) {
+        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderCountXPerMeter[%f]! Check your env: TANK_MOTOR_MODEL", encoderCountXPerMeter);
+        exit(-1);
+    }
+
+    if (encoderDiffYawFullTurn == 0) {
+        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderDiffYawFullTurn[%f]! Check your env: TANK_MOTOR_MODEL", encoderDiffYawFullTurn);
+        exit(-1);
+    }
+
+    ros::param::param<bool>("~imuMsgPublishEnabled", imuMsgPublishEnabled, true);
+    ros::param::param<bool>("~magMsgPublishEnabled", magMsgPublishEnabled, true);
+    ros::param::param<bool>("~odomMsgPublishEnabled", odomMsgPublishEnabled, true);
+    ros::param::param<bool>("~odomImuMsgPublishEnabled", odomImuMsgPublishEnabled, true);
+    ros::param::param<bool>("~odomEncoderMsgPublishEnabled", odomEncoderMsgPublishEnabled, true);
+    ros::param::param<bool>("~odomTfBroadcastEnabled", odomTfBroadcastEnabled, true);
 
     std::string logTankMsgStr;
     ros::param::param<std::string>("~logTankMsg", logTankMsgStr, "0");
@@ -465,8 +636,6 @@ void loadParams() {
     std::string logTankCmdStr;
     ros::param::param<std::string>("~logTankCmd", logTankCmdStr, "0");
     logTankCmdConfig = strtoul(logTankCmdStr.c_str(), NULL, 2);
-
-    ros::param::param<bool>("~encoderInverted", encoderInverted, false);
 }
 
 void openSerialPort() {
