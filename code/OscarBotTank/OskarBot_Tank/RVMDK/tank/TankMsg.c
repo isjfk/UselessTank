@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "TankMsg.h"
 #include "Tank.h"
@@ -10,6 +11,10 @@
 #include "device/DevMpu9250.h"
 #include "device/DevMotor.h"
 #include "device/DevUsart.h"
+
+#define gyroDegree2Radian(d)        (d * M_PI / 180)
+#define accelG2Ms2(g)               (g * 9.80665)
+#define microTesla2Tesla(mt)        (mt * 1000000.0)
 
 uint8_t tankMsgTypeBinary = 1;      // 0: command output bcd string; 1: command output byte array;
 
@@ -62,6 +67,16 @@ void tankMsgLoop(void) {
     devMpu9250GetAccelFloat(tankMsg.data.accel, &accuracy, &timestamp);
     devMpu9250GetCompassFloat(tankMsg.data.compass, &accuracy, &timestamp);
     devMpu9250GetQuatFloat(tankMsg.data.quat, &accuracy, &timestamp);
+
+    tankMsg.data.gyro[0] = gyroDegree2Radian(tankMsg.data.gyro[0]);
+    tankMsg.data.gyro[1] = gyroDegree2Radian(tankMsg.data.gyro[1]);
+    tankMsg.data.gyro[2] = gyroDegree2Radian(tankMsg.data.gyro[2]);
+    tankMsg.data.accel[0] = accelG2Ms2(tankMsg.data.accel[0]);
+    tankMsg.data.accel[1] = accelG2Ms2(tankMsg.data.accel[1]);
+    tankMsg.data.accel[2] = accelG2Ms2(tankMsg.data.accel[2]);
+    tankMsg.data.compass[0] = microTesla2Tesla(tankMsg.data.compass[0]);
+    tankMsg.data.compass[1] = microTesla2Tesla(tankMsg.data.compass[1]);
+    tankMsg.data.compass[2] = microTesla2Tesla(tankMsg.data.compass[2]);
 
     tankMsg.data.motorEncoderLeft = devMotorGetLeftEncoder();
     tankMsg.data.motorEncoderRight = devMotorGetRightEncoder();
