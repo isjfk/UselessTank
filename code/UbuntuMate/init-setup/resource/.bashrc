@@ -132,8 +132,8 @@ alias ckmake='cd ~/catkin_ws && catkin_make && cd -'
 alias wsmake='ckmake && pymod'
 alias ta='cd ~/catkin_ws/src/tank_agent/src'
 alias tarun='rosrun tank_agent tank_agent_node'
+alias tanksetup='roslaunch tank_setup tank_setup.launch'
 alias tankgmapping='roslaunch tank_2dnav gmapping.launch'
-alias tanksetup='roslaunch tank_2dnav tank_setup.launch'
 alias tanknav='roslaunch tank_2dnav tank_nav.launch'
 alias tank='roslaunch tank_2dnav tank.launch'
 alias tankds4='roslaunch tank_remote ds4.launch'
@@ -146,5 +146,6 @@ alias tgstart='tg && npm start'
 #export TANK_MODEL=prototype-v2-deepth
 #export TANK_MOTOR_MODEL=HM-GM37-3429-12V-50-ENCODER
 #export TANK_MOTOR_MODEL=CHR-GM37-3429-12V-30-ENCODER
-[[ -z "$TANK_MODEL" ]] && echo 'WARN: Please set env TANK_MODEL according to tank setup before start!'
-[[ -z "$TANK_MOTOR_MODEL" ]] && echo 'WARN: Please set env TANK_MOTOR_MODEL according to tank setup before start!'
+[[ -z "$TANK_MODEL" ]] && echo "WARN: Please set env TANK_MODEL according to tank setup before start!"
+[[ -z "$TANK_MOTOR_MODEL" ]] && echo "WARN: Please set env TANK_MOTOR_MODEL according to tank setup before start!"
+[[ ! -z "$TANK_MODEL" ]] && [[ ! -z "$TANK_MOTOR_MODEL" ]] && echo "##### UselessTank: model[$TANK_MODEL] motor[$TANK_MOTOR_MODEL] #####"
