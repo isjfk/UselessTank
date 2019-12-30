@@ -2,7 +2,6 @@ footprint: [[-0.22, -0.12], [-0.22, 0.12], [0.18, 0.12], [0.18, -0.12]]
 footprint_padding: 0.02
 
 max_obstacle_height: 0.50
-map_type: voxel
 
 inflation_layer:
     enabled: true

@@ -30,7 +30,7 @@ apt-get install -y python-rosinstall python-rosinstall-generator python-wstool b
 rosdep init
 rosdep update
 
-apt-get install -y ros-melodic-navigation ros-melodic-slam-gmapping ros-melodic-tf ros-melodic-laser-filters
+apt-get install -y ros-melodic-navigation ros-melodic-slam-gmapping ros-melodic-tf ros-melodic-laser-filters ros-melodic-robot-localization
 apt-get install -y ros-melodic-joy ros-melodic-teleop-twist-joy ros-melodic-teleop-twist-keyboard joystick
 
 # Create ROS workspace

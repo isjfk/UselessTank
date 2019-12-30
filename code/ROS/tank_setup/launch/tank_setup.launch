@@ -6,10 +6,21 @@
     <node name="tank_agent_node" pkg="tank_agent" type="tank_agent_node" output="screen">
         <param name="serialPort" type="string" value="/dev/ttyS0" />
         <param name="serialBaudrate" type="string" value="115200" />
+        <param name="imuMsgPublishEnabled" type="bool" value="true" />
+        <param name="magMsgPublishEnabled" type="bool" value="true" />
+        <param name="odomImuMsgPublishEnabled" type="bool" value="true" />
+        <param name="odomEncoderMsgPublishEnabled" type="bool" value="true" />
+        <param name="odomMsgPublishEnabled" type="bool" value="false" />
+        <param name="odomTfBroadcastEnabled" type="bool" value="false" />
 <!--
         <param name="logTankMsg" type="string" value="00000010" />
         <param name="logTankCmd" type="string" value="00000001" />
 -->
+    </node>
+
+    <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true" output="screen">
+        <rosparam command="load" file="$(find tank_setup)/config/robot_localization_ekf.yaml" />
+        <remap from="odometry/filtered" to="odom" />
     </node>
 
     <node name="tank_setup_tf_node" pkg="tank_setup" type="tank_setup_tf_node" output="screen" />

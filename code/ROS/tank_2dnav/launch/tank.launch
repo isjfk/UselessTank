@@ -1,4 +1,6 @@
 <launch>
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find tank_2dnav)/config/rosconsole.config" />
+
     <include file="$(find tank_setup)/launch/tank_setup.launch" />
     <include file="$(find tank_2dnav)/launch/tank_nav.launch" />
     <node name="tank_webservice_node" pkg="tank_webservice" type="webservice.py" output="screen">

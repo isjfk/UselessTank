@@ -33,9 +33,9 @@ double encoderDiffYawFullTurn = 0;
 
 bool imuMsgPublishEnabled = true;
 bool magMsgPublishEnabled = true;
-bool odomMsgPublishEnabled = true;
 bool odomImuMsgPublishEnabled = true;
 bool odomEncoderMsgPublishEnabled = true;
+bool odomMsgPublishEnabled = true;
 bool odomTfBroadcastEnabled = true;
 
 uint8_t logTankMsgConfig;
@@ -78,7 +78,7 @@ error_t readTankMsg(TankMsg *tankMsg);
 void tankMsgEncoderFix(TankMsg *tankMsg);
 void publishImuMsg(TankMsg& tankMsg);
 void publishMagMsg(TankMsg& tankMsg);
-void updateOdomData(TankMsg& tankMsg);
+bool updateOdomData(TankMsg& tankMsg);
 void publishOdomImuMsg(TankMsg& tankMsg);
 void publishOdomEncoderMsg(TankMsg& tankMsg);
 void publishOdomMsg(TankMsg& tankMsg);
@@ -270,15 +270,15 @@ void tankMsgThreadFunc() {
         tankMsgEncoderFix(&tankMsg);
         logTankMsg(&tankMsg);
 
-        publishImuMsg(tankMsg);
-        publishMagMsg(tankMsg);
+        if (updateOdomData(tankMsg)) {
+            publishImuMsg(tankMsg);
+            publishMagMsg(tankMsg);
+            publishOdomImuMsg(tankMsg);
+            publishOdomEncoderMsg(tankMsg);
+            publishOdomMsg(tankMsg);
 
-        updateOdomData(tankMsg);
-        publishOdomImuMsg(tankMsg);
-        publishOdomEncoderMsg(tankMsg);
-        publishOdomMsg(tankMsg);
-
-        broadcastOdomTf(tankMsg);
+            broadcastOdomTf(tankMsg);
+        }
 
         prevMsgTimestamp = tankMsg.timestamp;
         prevEncoderLeft = (int16_t) tankMsg.data.motorEncoderLeft;
@@ -315,14 +315,41 @@ void publishImuMsg(TankMsg& tankMsg) {
     imuMsg.orientation.x = tankMsg.data.quat[1];
     imuMsg.orientation.y = tankMsg.data.quat[2];
     imuMsg.orientation.z = tankMsg.data.quat[3];
+    imuMsg.orientation_covariance[0] = 0.0025;
+    imuMsg.orientation_covariance[1] = 0;
+    imuMsg.orientation_covariance[2] = 0;
+    imuMsg.orientation_covariance[3] = 0;
+    imuMsg.orientation_covariance[4] = 0.0025;
+    imuMsg.orientation_covariance[5] = 0;
+    imuMsg.orientation_covariance[6] = 0;
+    imuMsg.orientation_covariance[7] = 0;
+    imuMsg.orientation_covariance[8] = 0.0025;
 
     imuMsg.angular_velocity.x = tankMsg.data.gyro[0];
     imuMsg.angular_velocity.y = tankMsg.data.gyro[1];
     imuMsg.angular_velocity.z = tankMsg.data.gyro[2];
+    imuMsg.angular_velocity_covariance[0] = 0.02;
+    imuMsg.angular_velocity_covariance[1] = 0;
+    imuMsg.angular_velocity_covariance[2] = 0;
+    imuMsg.angular_velocity_covariance[3] = 0;
+    imuMsg.angular_velocity_covariance[4] = 0.02;
+    imuMsg.angular_velocity_covariance[5] = 0;
+    imuMsg.angular_velocity_covariance[6] = 0;
+    imuMsg.angular_velocity_covariance[7] = 0;
+    imuMsg.angular_velocity_covariance[8] = 0.02;
 
     imuMsg.linear_acceleration.x = tankMsg.data.accel[0];
     imuMsg.linear_acceleration.y = tankMsg.data.accel[1];
     imuMsg.linear_acceleration.z = tankMsg.data.accel[2];
+    imuMsg.linear_acceleration_covariance[0] = 0.04;
+    imuMsg.linear_acceleration_covariance[1] = 0;
+    imuMsg.linear_acceleration_covariance[2] = 0;
+    imuMsg.linear_acceleration_covariance[3] = 0;
+    imuMsg.linear_acceleration_covariance[4] = 0.04;
+    imuMsg.linear_acceleration_covariance[5] = 0;
+    imuMsg.linear_acceleration_covariance[6] = 0;
+    imuMsg.linear_acceleration_covariance[7] = 0;
+    imuMsg.linear_acceleration_covariance[8] = 0.04;
 
     imuMsgPub->publish(imuMsg);
 }
@@ -343,12 +370,13 @@ void publishMagMsg(TankMsg& tankMsg) {
     magMsgPub->publish(magMsg);
 }
 
-void updateOdomData(TankMsg& tankMsg) {
+bool updateOdomData(TankMsg& tankMsg) {
     uint32_t timestamp = tankMsg.timestamp;
     if ((prevMsgTimestamp == 0) || (prevMsgTimestamp >= timestamp)) {
-        // Tank control board reset, clear cached theta
-        imuTheta = 0;
-        return;
+        // Tank control board reset, calculate imuTheta so it will not jump in next cycle
+        float *quat = tankMsg.data.quat;
+        imuTheta = atan2f(quat[1] * quat[2] + quat[0] * quat[3], 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
+        return false;
     }
 
     double timeDiffMs = timestamp - prevMsgTimestamp;
@@ -394,6 +422,8 @@ void updateOdomData(TankMsg& tankMsg) {
     odomTwist[0] = encoderSpeed;
     odomTwist[1] = 0;
     odomTwist[2] = imuThetaDiff / timeDiff;
+
+    return true;
 }
 
 void publishOdomImuMsg(TankMsg& tankMsg) {
@@ -624,9 +654,9 @@ void loadParams(void) {
 
     ros::param::param<bool>("~imuMsgPublishEnabled", imuMsgPublishEnabled, true);
     ros::param::param<bool>("~magMsgPublishEnabled", magMsgPublishEnabled, true);
-    ros::param::param<bool>("~odomMsgPublishEnabled", odomMsgPublishEnabled, true);
     ros::param::param<bool>("~odomImuMsgPublishEnabled", odomImuMsgPublishEnabled, true);
     ros::param::param<bool>("~odomEncoderMsgPublishEnabled", odomEncoderMsgPublishEnabled, true);
+    ros::param::param<bool>("~odomMsgPublishEnabled", odomMsgPublishEnabled, true);
     ros::param::param<bool>("~odomTfBroadcastEnabled", odomTfBroadcastEnabled, true);
 
     std::string logTankMsgStr;
