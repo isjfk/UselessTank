@@ -144,11 +144,23 @@ namespace dwa_local_planner {
       ROS_ERROR("This planner has not been initialized, please call initialize() before using this planner");
       return false;
     }
-    //when we get a new plan, we also want to clear any latch we may have on goal tolerances
-    latchedStopRotateController_.resetLatching();
 
     ROS_INFO("Got new plan");
-    return dp_->setPlan(orig_global_plan);
+    bool planSet = dp_->setPlan(orig_global_plan);
+
+    if (costmap_ros_->getRobotPose(current_pose_)) {
+      // Don't clear latch if the position is reached and in place rotation is already on going,
+      // otherwise the robot's rotating will continuously been interrupted if the plan frequency is
+      // high and new plan was received before in place rotation complete.
+      if (!latchedStopRotateController_.isPositionReached(&planner_util_, current_pose_)) {
+        // When we get a new plan, we also want to clear any latch we may have on goal tolerances.
+        latchedStopRotateController_.resetLatching();
+      }
+    } else {
+      ROS_ERROR("Could not get robot pose");
+    }
+
+    return planSet;
   }
 
   bool DWAPlannerROS::isGoalReached() {
