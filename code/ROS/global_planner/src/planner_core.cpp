@@ -208,12 +208,87 @@ bool GlobalPlanner::worldToMap(double wx, double wy, double& mx, double& my) {
 }
 
 bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
-                           std::vector<geometry_msgs::PoseStamped>& plan) {
+                             std::vector<geometry_msgs::PoseStamped>& plan) {
     return makePlan(start, goal, default_tolerance_, plan);
 }
 
 bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
-                           double tolerance, std::vector<geometry_msgs::PoseStamped>& plan) {
+                             double tolerance, std::vector<geometry_msgs::PoseStamped>& plan) {
+    bool found_legal = true;
+    if ((!makePlanOneShot(start, goal, plan) || plan.empty()) && (tolerance > 0)) {
+        found_legal = false;
+        ROS_DEBUG("Failed to find a plan to exact goal of (%.2f, %.2f), searching for a feasible goal within tolerance",
+                goal.pose.position.x,
+                goal.pose.position.y);
+
+        //search outwards for a feasible goal within the specified tolerance
+        geometry_msgs::PoseStamped p;
+        p = goal;
+        float resolution = costmap_->getResolution();
+        float search_increment = resolution*3.0;
+
+        if (tolerance > 0.0 && tolerance < search_increment) {
+            search_increment = tolerance;
+        }
+
+        for (float max_offset = search_increment; max_offset <= tolerance && !found_legal; max_offset += search_increment) {
+            for (float y_offset = 0; y_offset <= max_offset && !found_legal; y_offset += search_increment) {
+                for (float x_offset = 0; x_offset <= max_offset && !found_legal; x_offset += search_increment) {
+                    //don't search again inside the current outer layer
+                    if (x_offset < max_offset-1e-9 && y_offset < max_offset-1e-9) {
+                        continue;
+                    }
+
+                    //search to both sides of the desired goal
+                    for (float y_mult = -1.0; y_mult <= 1.0 + 1e-9 && !found_legal; y_mult += 2.0) {
+                        //if one of the offsets is 0, -1*0 is still 0 (so get rid of one of the two)
+                        if (y_offset < 1e-9 && y_mult < -1.0 + 1e-9) {
+                            continue;
+                        }
+
+                        for (float x_mult = -1.0; x_mult <= 1.0 + 1e-9 && !found_legal; x_mult += 2.0) {
+                            if (x_offset < 1e-9 && x_mult < -1.0 + 1e-9) {
+                                continue;
+                            }
+
+                            p.pose.position.y = goal.pose.position.y + y_offset * y_mult;
+                            p.pose.position.x = goal.pose.position.x + x_offset * x_mult;
+
+                            if (makePlanOneShot(start, p, plan) && !plan.empty()) {
+                                //adding the (unreachable) original goal to the end of the global plan, in case the local planner can get you there
+                                //(the reachable goal should have been added by the global planner)
+                                //plan.push_back(goal);
+
+                                found_legal = true;
+                                ROS_DEBUG("Found a plan to point (%.2f, %.2f)", p.pose.position.x, p.pose.position.y);
+                                break;
+                            } else {
+                                ROS_DEBUG("Failed to find a plan to point (%.2f, %.2f)", p.pose.position.x, p.pose.position.y);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // add orientations if needed
+    orientation_filter_->processPath(start, plan);
+
+    //publish the plan for visualization purposes
+    publishPlan(plan);
+
+    if (!found_legal) {
+        ROS_ERROR("Failed to find a plan to goal of (%.2f, %.2f) within tolerance (%.2f)",
+                goal.pose.position.x,
+                goal.pose.position.y,
+                tolerance);
+    }
+
+    return found_legal;
+}
+
+bool GlobalPlanner::makePlanOneShot(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan) {
     boost::mutex::scoped_lock lock(mutex_);
     if (!initialized_) {
         ROS_ERROR(
@@ -305,14 +380,10 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
             ROS_ERROR("Failed to get a plan from potential when a legal potential was found. This shouldn't happen.");
         }
     }else{
-        ROS_ERROR("Failed to get a plan.");
+        // we will log error after all retry in tolerance failed
+        ROS_DEBUG("Failed to get a plan.");
     }
 
-    // add orientations if needed
-    orientation_filter_->processPath(start, plan);
-
-    //publish the plan for visualization purposes
-    publishPlan(plan);
     delete potential_array_;
     return !plan.empty();
 }

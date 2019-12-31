@@ -177,6 +177,7 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
         void mapToWorld(double mx, double my, double& wx, double& wy);
         bool worldToMap(double wx, double wy, double& mx, double& my);
         void clearRobotCell(const geometry_msgs::PoseStamped& global_pose, unsigned int mx, unsigned int my);
+        bool makePlanOneShot(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
         void publishPotential(float* potential);
 
         double planner_window_x_, planner_window_y_, default_tolerance_;
