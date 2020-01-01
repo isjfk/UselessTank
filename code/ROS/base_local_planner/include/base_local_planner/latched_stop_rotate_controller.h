@@ -29,6 +29,10 @@ public:
       OdometryHelperRos& odom_helper,
       const geometry_msgs::PoseStamped& global_pose);
 
+  bool isResetLatchingOnNewPlan() {
+    return reset_latch_on_new_plan_;
+  }
+
   void resetLatching() {
     xy_tolerance_latch_ = false;
   }
@@ -85,7 +89,7 @@ private:
 
 
   // whether to latch at all, and whether in this turn we have already been in goal area
-  bool latch_xy_goal_tolerance_, xy_tolerance_latch_;
+  bool latch_xy_goal_tolerance_, reset_latch_on_new_plan_, xy_tolerance_latch_;
   bool rotating_to_goal_;
 };
 

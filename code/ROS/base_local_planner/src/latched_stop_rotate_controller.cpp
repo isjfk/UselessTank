@@ -24,6 +24,7 @@ namespace base_local_planner {
 LatchedStopRotateController::LatchedStopRotateController(const std::string& name) {
   ros::NodeHandle private_nh("~/" + name);
   private_nh.param("latch_xy_goal_tolerance", latch_xy_goal_tolerance_, false);
+  private_nh.param("reset_latch_on_new_plan", reset_latch_on_new_plan_, true);
 
   rotating_to_goal_ = false;
 }
