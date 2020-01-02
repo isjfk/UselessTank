@@ -141,6 +141,7 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
         private_nh.param("planner_window_x", planner_window_x_, 0.0);
         private_nh.param("planner_window_y", planner_window_y_, 0.0);
         private_nh.param("default_tolerance", default_tolerance_, 0.0);
+        private_nh.param("default_tolerance_timeout", default_tolerance_timeout_, 3.0);
         private_nh.param("publish_scale", publish_scale_, 100);
 
         make_plan_srv_ = private_nh.advertiseService("make_plan", &GlobalPlanner::makePlanService, this);
@@ -215,7 +216,9 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
 bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
                              double tolerance, std::vector<geometry_msgs::PoseStamped>& plan) {
     bool found_legal = true;
+    ros::Time startTime = ros::Time::now();
     if ((!makePlanOneShot(start, goal, plan) || plan.empty()) && (tolerance > 0)) {
+        bool search_end = false;
         found_legal = false;
         ROS_DEBUG("Failed to find a plan to exact goal of (%.2f, %.2f), searching for a feasible goal within tolerance",
                 goal.pose.position.x,
@@ -231,22 +234,22 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
             search_increment = tolerance;
         }
 
-        for (float max_offset = search_increment; max_offset <= tolerance && !found_legal; max_offset += search_increment) {
-            for (float y_offset = 0; y_offset <= max_offset && !found_legal; y_offset += search_increment) {
-                for (float x_offset = 0; x_offset <= max_offset && !found_legal; x_offset += search_increment) {
+        for (float max_offset = search_increment; max_offset <= tolerance && !search_end; max_offset += search_increment) {
+            for (float y_offset = 0; y_offset <= max_offset && !search_end; y_offset += search_increment) {
+                for (float x_offset = 0; x_offset <= max_offset && !search_end; x_offset += search_increment) {
                     //don't search again inside the current outer layer
                     if (x_offset < max_offset-1e-9 && y_offset < max_offset-1e-9) {
                         continue;
                     }
 
                     //search to both sides of the desired goal
-                    for (float y_mult = -1.0; y_mult <= 1.0 + 1e-9 && !found_legal; y_mult += 2.0) {
+                    for (float y_mult = -1.0; y_mult <= 1.0 + 1e-9 && !search_end; y_mult += 2.0) {
                         //if one of the offsets is 0, -1*0 is still 0 (so get rid of one of the two)
                         if (y_offset < 1e-9 && y_mult < -1.0 + 1e-9) {
                             continue;
                         }
 
-                        for (float x_mult = -1.0; x_mult <= 1.0 + 1e-9 && !found_legal; x_mult += 2.0) {
+                        for (float x_mult = -1.0; x_mult <= 1.0 + 1e-9 && !search_end; x_mult += 2.0) {
                             if (x_offset < 1e-9 && x_mult < -1.0 + 1e-9) {
                                 continue;
                             }
@@ -260,10 +263,17 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
                                 //plan.push_back(goal);
 
                                 found_legal = true;
+                                search_end = true;
                                 ROS_DEBUG("Found a plan to point (%.2f, %.2f)", p.pose.position.x, p.pose.position.y);
                                 break;
                             } else {
                                 ROS_DEBUG("Failed to find a plan to point (%.2f, %.2f)", p.pose.position.x, p.pose.position.y);
+
+                                if ((ros::Time::now() - startTime).toSec() > default_tolerance_timeout_) {
+                                    search_end = true;
+                                    ROS_ERROR("Failed to find a plan to goal because of timeout (%.2f) reached", default_tolerance_timeout_);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -279,10 +289,11 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
     publishPlan(plan);
 
     if (!found_legal) {
-        ROS_ERROR("Failed to find a plan to goal of (%.2f, %.2f) within tolerance (%.2f)",
+        ROS_ERROR("Failed to find a plan to goal of (%.2f, %.2f) within tolerance (%.2f) and timeout (%.2f)",
                 goal.pose.position.x,
                 goal.pose.position.y,
-                tolerance);
+                tolerance,
+                default_tolerance_timeout_);
     }
 
     return found_legal;

@@ -180,7 +180,7 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
         bool makePlanOneShot(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
         void publishPotential(float* potential);
 
-        double planner_window_x_, planner_window_y_, default_tolerance_;
+        double planner_window_x_, planner_window_y_, default_tolerance_, default_tolerance_timeout_;
         boost::mutex mutex_;
         ros::ServiceServer make_plan_srv_;
 
