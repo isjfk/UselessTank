@@ -138,6 +138,7 @@ alias tanknav='roslaunch tank_2dnav tank_nav.launch'
 alias tank='roslaunch tank_2dnav tank.launch'
 alias tankds4='roslaunch tank_remote ds4.launch'
 alias tankds4sa='roslaunch tank_remote ds4sa.launch'
+alias tankkeyboard='roslaunch tank_remote keyboard.launch'
 
 alias tg='cd ~/package/tank-guider'
 alias tgstart='tg && npm start'
