@@ -125,7 +125,7 @@ alias supass='echo "Initial0" | sudo -S ls >&/dev/null'
 alias sushutdown='echo "Initial0" | sudo -S shutdown now >&/dev/null'
 alias sureboot='echo "Initial0" | sudo -S reboot >&/dev/null'
 
-alias pymod='find ~/catkin_ws/src -name "*.py" -o -name "*.cfg" -exec chmod a+x {} \;'
+alias pymod='find ~/catkin_ws/src \( -name "*.py" -o -name "*.cfg" \) -exec chmod a+x {} \;'
 alias ws='cd ~/catkin_ws'
 alias wssrc='cd ~/catkin_ws/src'
 alias ckmake='cd ~/catkin_ws && catkin_make -j1 -l1 && cd -'

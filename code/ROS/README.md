@@ -20,17 +20,19 @@ Boot Raspberry Pi with the TF card.
   ```
 
 # Setup ROS automatically by script
-  Transfer directory /code/UbuntuMate/setup to Ubuntu Mate ~/ directory by SFTP.  
+  Transfer directory /code/UbuntuMate/init-setup to Ubuntu Mate ~/ directory by SFTP.  
   Login into Ubuntu Mate bash shell.
   ```bash
-  cd ~/setup
+  cd ~/init-setup
   chmod a+x *.sh
   sudo ./init-setup.sh
   ```
+  After script finshed in success, it will reboot automatically.  
+  If you got any errors occur during execute init-setup.sh, please execute rest of the steps manually. Otherwise there may redundance lines writen into some configuration files.
 
 # Setup ROS manually
   In case you prefer the manual way.  
-  If you do the automatic way then you should omit this section.
+  If you execute init-setup.sh already then you should omit this section.
 
 ## Config serial port
   ```bash

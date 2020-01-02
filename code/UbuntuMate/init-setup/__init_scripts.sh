@@ -1,24 +1,25 @@
 #!/bin/bash
 
-apt-get update
-
 # Configure permissions for ttyS*
 sed -r -i --follow-symlinks 's/(.*)console=serial[0-9]+,[0-9]+[[:blank:]](.*)/\1\2/' /boot/cmdline.txt
 sed -r -i --follow-symlinks 's/(.*)console=ttyS[0-9]+,[0-9]+[[:blank:]](.*)/\1\2/' /boot/cmdline.txt
 echo 'enable_uart=1' >> /boot/config.txt
 usermod -a -G dialout tank
 
+# Update apt packages library
+apt-get update
+
 # Don't promot for restart service while apt-install
 echo '* libraries/restart-without-asking boolean true' | sudo debconf-set-selections
-
-# Install common packages
-apt-get install -y vim
 
 # Install sound packages & configure sound system
 apt-get install -y gstreamer1.0-plugins-base-apps
 apt-get install -y sox libsox-fmt-all
 echo 'set-default-sink alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo' >> /etc/pulse/default.pa
 echo 'set-default-source alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo.monitor' >> /etc/pulse/default.pa
+
+# Install common packages
+apt-get install -y vim
 
 # Install ROS
 sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
