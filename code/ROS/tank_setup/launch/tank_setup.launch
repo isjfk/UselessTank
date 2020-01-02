@@ -26,6 +26,8 @@
     <node name="tank_setup_tf_node" pkg="tank_setup" type="tank_setup_tf_node" output="screen" />
 
     <node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
+        <remap from="scan" to="rplidar_scan" />
+
         <param name="serial_port" type="string" value="/dev/ttyUSB0" />
         <param name="serial_baudrate" type="int" value="115200" />
         <param name="frame_id" type="string" value="base_laser" />
@@ -36,6 +38,9 @@
     </node>
 
     <node name="laser_filter" pkg="laser_filters" type="scan_to_scan_filter_chain" output="screen">
+        <remap from="scan" to="rplidar_scan" />
+        <remap from="scan_filtered" to="scan" />
+
         <rosparam command="load" file="$(find tank_setup)/config/laser_filter_config.yaml" />
     </node>
 

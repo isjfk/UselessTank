@@ -9,7 +9,7 @@
     -->
 
     <!--- Run AMCL -->
-    <node name="amcl" pkg="amcl" type="amcl" output="screen">
+    <node name="amcl" pkg="amcl" type="amcl" args="scan:=scan" output="screen">
         <rosparam file="$(find tank_2dnav)/config/amcl_params.yaml" command="load" />
     </node>
 
