@@ -245,7 +245,7 @@ void logTankMsg(TankMsg *tankMsg) {
     }
 
     if (logTankMsgConfig & 0b00000010) {
-        printf("TankMsg[%08d] ts[%08d] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%6.2f %6.2f %6.2f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%08u %08u]\r\n",
+        printf("TankMsg[%08d] ts[%08d] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%9.0f %9.0f %9.0f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\r\n",
                 tankMsgCount,
                 tankMsg->timestamp,
                 tankMsg->data.gyro[0], tankMsg->data.gyro[1], tankMsg->data.gyro[2],
