@@ -228,7 +228,7 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
         geometry_msgs::PoseStamped p;
         p = goal;
         float resolution = costmap_->getResolution();
-        float search_increment = resolution*3.0;
+        float search_increment = 0.3;
 
         if (tolerance > 0.0 && tolerance < search_increment) {
             search_increment = tolerance;
