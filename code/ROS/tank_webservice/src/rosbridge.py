@@ -8,15 +8,24 @@ import threading
 
 import rospy
 import tf
+import actionlib
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from nav_msgs.msg import Path
 from sensor_msgs.msg import MagneticField
 from geometry_msgs.msg import PolygonStamped, PoseStamped, PoseWithCovarianceStamped, Quaternion
+
+import gi
+from gi.repository import Gst
+from urllib import pathname2url
+gstlock = threading.Lock()
+playbin = None
 
 position = { 'x': 0, 'y': 0 , 'yaw': 0 }
 path = []
 mag = None
 
-lock = threading.Lock()
+navLock = threading.Lock()
+moveBaseClient = None
 tl = None
 goalPub = None
 initPosePub = None
@@ -27,6 +36,10 @@ def startListener():
     rospy.Subscriber('/move_base/global_costmap/footprint', PolygonStamped, footprintCallback)
     rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, planCallback)
 
+    global moveBaseClient
+    moveBaseClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+    moveBaseClient.wait_for_server()
+
     global goalPub
     goalPub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
 
@@ -36,13 +49,15 @@ def startListener():
     global tl
     tl = tf.TransformListener()
 
+    playsoundInit()
+
     rospy.loginfo('[TankWebService] ROS Bridge start...')
     rospy.spin()
 
 def magCallback(data):
     global mag
-    global lock
-    with lock:
+    global navLock
+    with navLock:
         mag = data
 
 def footprintCallback(data):
@@ -59,9 +74,9 @@ def footprintCallback(data):
         tankPos['y'] = pos[1]
         tankPos['yaw'] = math.degrees(euler[2])
 
-        global lock
+        global navLock
         global position
-        with lock:
+        with navLock:
             position = tankPos
     except:
         rospy.loginfo('Transform lookup failed, defer to next loop. It happens on startup.')
@@ -85,9 +100,9 @@ def planCallback(data):
             point['y'] = lastPose.pose.position.y
             p.append(point)
 
-    global lock
+    global navLock
     global path
-    with lock:
+    with navLock:
         path = p
 
 def calcDistance(point1, point2):
@@ -109,19 +124,19 @@ def getMapPath():
     return mapPath
 
 def getPosition():
-    global lock
+    global navLock
     global position
 
-    with lock:
+    with navLock:
         currPosition = position
 
     return currPosition
 
 def getPath():
-    global lock
+    global navLock
     global path
 
-    with lock:
+    with navLock:
         currPath = path
 
     return currPath
@@ -132,24 +147,50 @@ def tankGoto(x, y, yaw):
 
     quat = tf.transformations.quaternion_from_euler(0, 0, yaw)
 
-    pose = PoseStamped()
-    pose.header.stamp = rospy.Time.now()
-    pose.header.frame_id = 'map'
-    pose.pose.position.x = x
-    pose.pose.position.y = y
-    pose.pose.position.z = 0
-    pose.pose.orientation = Quaternion(*quat)
+    #pose = PoseStamped()
+    #pose.header.stamp = rospy.Time.now()
+    #pose.header.frame_id = 'map'
+    #pose.pose.position.x = x
+    #pose.pose.position.y = y
+    #pose.pose.position.z = 0
+    #pose.pose.orientation = Quaternion(*quat)
 
-    global goalPub
-    goalPub.publish(pose)
+    #global goalPub
+    #goalPub.publish(pose)
+
+    goal = MoveBaseGoal()
+    goal.target_pose.header.stamp = rospy.Time.now()
+    goal.target_pose.header.frame_id = 'map'
+    goal.target_pose.pose.position.x = x
+    goal.target_pose.pose.position.y = y
+    goal.target_pose.pose.position.z = 0
+    goal.target_pose.pose.orientation = Quaternion(*quat)
+
+    global moveBaseClient
+    moveBaseClient.send_goal(goal,
+            active_cb = tankGotoActiveCallback,
+            feedback_cb = tankGotoFeedbackCallback,
+            done_cb = tankGotoDoneCallback)
     rospy.loginfo('[tank_webservice] Tank goto x[' + str(x) + '] y[' + str(y) + '] yaw[' + str(yaw) + ']')
 
+def tankGotoActiveCallback():
+    rospy.loginfo('[tank_webservice] Tank navigation started')
+    playsound(getPackagePath() + '/resources/sound/transformers-autobots-roll-out.mp3')
+
+def tankGotoFeedbackCallback(feedback):
+    #rospy.loginfo('[tank_webservice] Tank navigation feedback: ' + str(feedback))
+    pass
+
+def tankGotoDoneCallback(state, result):
+    rospy.loginfo('[tank_webservice] Tank navigation done: ' + str(state) + ' ' + str(result))
+    playsound(getPackagePath() + '/resources/sound/transformers-stand.mp3')
+
 def tankInitPose(x, y, yaw):
-    global lock
+    global navLock
     global mag
 
     if (yaw is None):
-        with lock:
+        with navLock:
             if (mag is None):
                 yaw = 0
             else:
@@ -175,6 +216,27 @@ def tankInitPose(x, y, yaw):
     global initPosePub
     initPosePub.publish(pose)
     rospy.loginfo('[tank_webservice] Set tank initial position to x[' + str(x) + '] y[' + str(y) + '] yaw[' + str(yaw) + ']')
+
+def playsoundInit():
+    gi.require_version('Gst', '1.0')
+    Gst.init(None)
+    global playbin
+    playbin = Gst.ElementFactory.make('playbin', 'playbin')
+
+def playsound(path):
+    with gstlock:
+        global playbin
+        if path.startswith(('http://', 'https://')):
+            playbin.props.uri = path
+        else:
+            playbin.props.uri = 'file://' + pathname2url(os.path.abspath(path))
+
+        set_result = playbin.set_state(Gst.State.PLAYING)
+        if set_result != Gst.StateChangeReturn.ASYNC:
+            raise Exception("playbin.set_state returned " + repr(set_result))
+        bus = playbin.get_bus()
+        bus.poll(Gst.MessageType.EOS, Gst.CLOCK_TIME_NONE)
+        playbin.set_state(Gst.State.NULL)
 
 def getPackagePath():
     return os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + '/..')
