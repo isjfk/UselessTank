@@ -54,6 +54,16 @@ void print_mpu9250_data() {
     }
 }
 
+void print_compass_data() {
+    int8_t accuracy;
+    inv_time_t timestamp;
+    float compass[3];
+    devMpu9250GetCompassFloat(compass, &accuracy, &timestamp);
+    //float heading = atan2(compass[1], compass[0]);
+    float heading = atan2(compass[1], compass[0]) * 180 / M_PI;
+    printf("compass[%8.2f %8.2f %8.2f], heading[%8.2f] accuracy[%d]\r\n", compass[0], compass[1], compass[2], heading, (int) accuracy);
+}
+
 void print_tank_data() {
     int encoderLeft = devMotorGetLeftEncoder();
     int encoderRight = devMotorGetRightEncoder();
@@ -70,6 +80,7 @@ void print_hx711_data() {
 void AHRS(void)
 {
     //print_mpu9250_data();
+    //print_compass_data();
     //print_tank_data();
     //print_hx711_data();
 }

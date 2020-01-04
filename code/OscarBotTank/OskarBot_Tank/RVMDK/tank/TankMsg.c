@@ -14,7 +14,7 @@
 
 #define gyroDegree2Radian(d)        (d * M_PI / 180)
 #define accelG2Ms2(g)               (g * 9.80665)
-#define microTesla2Tesla(mt)        (mt * 1000000.0)
+#define microTesla2Tesla(mt)        (mt / 1000000.0)
 
 uint8_t tankMsgTypeBinary = 1;      // 0: command output bcd string; 1: command output byte array;
 

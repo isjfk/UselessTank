@@ -23,6 +23,7 @@ playbin = None
 position = { 'x': 0, 'y': 0 , 'yaw': 0 }
 path = []
 mag = None
+magScale = 0.05
 
 navLock = threading.Lock()
 moveBaseClient = None
@@ -58,7 +59,12 @@ def magCallback(data):
     global mag
     global navLock
     with navLock:
-        mag = data
+        if (mag is None):
+            mag = data
+        else:
+            mag.magnetic_field.x = mag.magnetic_field.x * (1 - magScale) + data.magnetic_field.x * magScale
+            mag.magnetic_field.y = mag.magnetic_field.y * (1 - magScale) + data.magnetic_field.y * magScale
+            mag.magnetic_field.z = mag.magnetic_field.z * (1 - magScale) + data.magnetic_field.z * magScale
 
 def footprintCallback(data):
     global tl
@@ -128,6 +134,7 @@ def getPosition():
     global position
 
     with navLock:
+        global mag
         currPosition = position
 
     return currPosition
@@ -194,10 +201,8 @@ def tankInitPose(x, y, yaw):
             if (mag is None):
                 yaw = 0
             else:
-                # FIXME:
-                # Calculated yaw is 0 = north, need to add (math.pi / 2) to fix to east.
-                # Not sure what goes wrong? Maybe the orientation of compass is not correct.
-                yaw = math.atan2(mag.magnetic_field.y, mag.magnetic_field.x) + (math.pi / 2)
+                # Calculated yaw from compass is 0 = north, need to add (math.pi / 2) to convert to ROS north.
+                yaw = -math.atan2(mag.magnetic_field.y, mag.magnetic_field.x) + (math.pi / 2)
                 if (yaw < -math.pi):
                     yaw = yaw + math.pi*2
                 elif (yaw > math.pi):
