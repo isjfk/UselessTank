@@ -149,4 +149,9 @@ alias tgstart='tg && npm start'
 #export TANK_MOTOR_MODEL=CHR-GM37-3429-12V-30-ENCODER
 [[ -z "$TANK_MODEL" ]] && echo "WARN: Please set env TANK_MODEL according to tank setup before start!"
 [[ -z "$TANK_MOTOR_MODEL" ]] && echo "WARN: Please set env TANK_MOTOR_MODEL according to tank setup before start!"
-[[ ! -z "$TANK_MODEL" ]] && [[ ! -z "$TANK_MOTOR_MODEL" ]] && echo "##### UselessTank: model[$TANK_MODEL] motor[$TANK_MOTOR_MODEL] #####"
+[[ ! -z "$TANK_MODEL" ]] && [[ ! -z "$TANK_MOTOR_MODEL" ]] && cat <<EOL
+############ UselessTank ############
+Model: $TANK_MODEL
+Motor: $TANK_MOTOR_MODEL
+#####################################
+EOL
