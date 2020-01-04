@@ -91,6 +91,21 @@ def tankGoto():
         rosbridge.tankGoto(x, y, yaw)
     return ('', 204)
 
+@app.route('/tank/action/initPose', methods=['GET', 'POST'])
+def tankInitPose():
+    pose = request.get_json()
+    if (pose is not None):
+        x = pose.get('x')
+        y = pose.get('y')
+        yaw = pose.get('yaw')
+    else:
+        x = float(request.args.get('x'))
+        y = float(request.args.get('y'))
+        yaw = float(request.args.get('yaw'))
+    if (x is not None) and (y is not None):
+        rosbridge.tankInitPose(x, y, yaw)
+    return ('', 204)
+
 def calcYawToClosestPoi(x, y):
     poiListPath = os.path.abspath(getPoiListFilePath())
     poiList = json.load(file(poiListPath, 'r'))

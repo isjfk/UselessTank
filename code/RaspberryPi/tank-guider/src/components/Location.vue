@@ -14,11 +14,12 @@
 </template>
 
 <script>
-import { serverBus } from '../main'
+import { EventBus } from '../main'
 export default {
   name: 'location',
   data () {
     return {
+      admin: { isSetPositionState: false },
       map: { pixWidth: 1, pixHeight: 1, screenWidth: 1, screenHeight: 1, resolution: 0.05, scale: 1 },
       mapMeta: {},
       tankImg: { screenWidth: 1, screenHeight: 1, xOffset: 0, yOffset: 0 },
@@ -44,19 +45,21 @@ export default {
     },
 
     tankGoto (event) {
-      // TODO: CHECK setPositionDisabled flag
       let x = event.offsetX / this.map.screenWidth * this.map.pixWidth * this.map.resolution
       let y = (this.map.screenHeight - event.offsetY) / this.map.screenHeight * this.map.pixHeight * this.map.resolution
+      let action = this.admin.isSetPositionState ? 'initPose' : 'goto'
 
       let that = this
-      this.$axios.post(this.rosRestUrl() + '/tank/action/goto', {
+      this.$axios.post(this.rosRestUrl() + '/tank/action/' + action, {
         x: x,
         y: y
       }).then(function (response) {
         // Call refresh loop to get path ASAP
         that.tankRefreshLoop()
       })
-      serverBus.$emit('resetSetPosition')
+
+      // Clear pressed state of Set Position button
+      EventBus.$emit('admin.clearSetPositionState')
     },
 
     getPoiList () {
@@ -161,10 +164,9 @@ export default {
 
   created () {
     window.addEventListener('resize', this.onWindowResize)
-    // Using the server bus
-    serverBus.$on('setPositionDisabled', (disabled) => {
-      console.log('receivePositionDisabled:', disabled)
-      this.setPositionDisabled = disabled
+
+    EventBus.$on('admin.isSetPositionState', (isSetPositionState) => {
+      this.admin.isSetPositionState = isSetPositionState
     })
   },
 

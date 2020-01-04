@@ -5,14 +5,14 @@
       <!-- img tag must be placed after previous div, otherwise the div will not overlapping over img -->
       <img id="map" :src="mapUrl" alt="Oops... Where is my map?" />  
     </main>
-    <div id="admin" :style="{ display:admin.display }">
-      <button id="setPostion" class="adminButton" @click="tankSetPosition($event)" :style="{ background:admin.setPosition.background }">Set Position</button>
+    <div id="admin" :class="{ adminEnabled: admin.isEnabled, adminDisabled: !admin.isEnabled }">
+      <button id="setPosition" class="adminButton" :class="{ adminButtonPressed: admin.isSetPositionState }" @click="setPositionClicked($event)">Set Position</button>
     </div>
   </div>
 </template>
 
 <script>
-import { serverBus } from './main'
+import { EventBus } from './main'
 
 export default {
   name: 'app',
@@ -20,7 +20,7 @@ export default {
   data () {
     return {
       mapUrl: this.rosRestUrl() + '/map/image',
-      admin: {display: 'none', setPosition: {disabled: true, background: 'indianred'}}
+      admin: {isEnabled: false, isSetPositionState: false}
     }
   },
 
@@ -36,35 +36,24 @@ export default {
       } else {
         return origin + ':5000'
       }
-
-      // return 'http://10.207.99.135:5000'
     },
-    tankSetPosition (event) {
-      if (this.admin.setPosition.background === 'darkseagreen') {
-        this.admin.setPosition.background = 'indianred'
-        this.admin.setPosition.disabled = false
-      } else if (this.admin.setPosition.background === 'indianred') {
-        this.admin.setPosition.background = 'darkseagreen'
-        this.admin.setPosition.disabled = true
-      }
-      // Using the server bus
-      console.log('setPositionDisabled:', this.admin.setPosition.disabled)
-      serverBus.$emit('setPositionDisabled', this.admin.setPosition.disabled)
+
+    setPositionClicked (event) {
+      this.admin.isSetPositionState = !this.admin.isSetPositionState
+      EventBus.$emit('admin.isSetPositionState', this.admin.isSetPositionState)
     }
   },
 
   created () {
     if (window.location.pathname.includes('admin')) {
-      this.admin.display = 'flex'
+      this.admin.isEnabled = true
     }
 
-    serverBus.$on('resetSetPosition', () => {
-      console.log('receiveResetSetPosition')
-      this.admin.setPosition.background = 'indianred'
-      this.admin.setPosition.disabled = false
+    EventBus.$on('admin.clearSetPositionState', () => {
+      this.admin.isSetPositionState = false
+      EventBus.$emit('admin.isSetPositionState', this.admin.isSetPositionState)
     })
   }
-
 }
 </script>
 
@@ -96,23 +85,36 @@ export default {
     height: 100%;  
   }
 
-  #admin{
+  #admin {
     position: absolute;
     width: 250px;
-    height: 98%;
-    right: 0px;
+    height: 94%;
+    right: 1%;
     align-items: center;
     justify-content: center;
-    background: rgba(255,228,196,0.4);
+    padding: 1%;
+    background: #69696950;
   }
 
-  .adminButton{
+  .adminDisabled {
+    display: none;
+  }
+
+  .adminEnabled {
+    display: flex;
+  }
+
+  .adminButton {
     height: 40px;
     width: 100%;
-    background: indianred;
+    background: darkseagreen;
     font-size: x-large;
     font-weight: bold;
     color: ghostwhite;
     text-align: center;
+  }
+
+  .adminButtonPressed {
+    background: indianred;
   }
 </style>

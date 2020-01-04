@@ -8,7 +8,7 @@ Vue.prototype.$axios = axios
 
 Vue.config.productionTip = false
 
-export const serverBus = new Vue()
+export const EventBus = new Vue()
 
 /* eslint-disable no-new */
 new Vue({

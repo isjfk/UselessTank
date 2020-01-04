@@ -9,10 +9,12 @@ import threading
 import rospy
 import tf
 from nav_msgs.msg import Path
+from sensor_msgs.msg import MagneticField
 from geometry_msgs.msg import PolygonStamped, PoseStamped, PoseWithCovarianceStamped, Quaternion
 
 position = { 'x': 0, 'y': 0 , 'yaw': 0 }
 path = []
+mag = None
 
 lock = threading.Lock()
 tl = None
@@ -21,6 +23,7 @@ initPosePub = None
 
 def startListener():
     rospy.init_node('tank_webservice_node')
+    rospy.Subscriber('/mag', MagneticField, magCallback)
     rospy.Subscriber('/move_base/global_costmap/footprint', PolygonStamped, footprintCallback)
     rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, planCallback)
 
@@ -35,6 +38,12 @@ def startListener():
 
     rospy.loginfo('[TankWebService] ROS Bridge start...')
     rospy.spin()
+
+def magCallback(data):
+    global mag
+    global lock
+    with lock:
+        mag = data
 
 def footprintCallback(data):
     global tl
@@ -133,6 +142,39 @@ def tankGoto(x, y, yaw):
 
     global goalPub
     goalPub.publish(pose)
+    rospy.loginfo('[tank_webservice] Tank goto x[' + str(x) + '] y[' + str(y) + '] yaw[' + str(yaw) + ']')
+
+def tankInitPose(x, y, yaw):
+    global lock
+    global mag
+
+    if (yaw is None):
+        with lock:
+            if (mag is None):
+                yaw = 0
+            else:
+                # FIXME:
+                # Calculated yaw is 0 = north, need to add (math.pi / 2) to fix to east.
+                # Not sure what goes wrong? Maybe the orientation of compass is not correct.
+                yaw = math.atan2(mag.magnetic_field.y, mag.magnetic_field.x) + (math.pi / 2)
+                if (yaw < -math.pi):
+                    yaw = yaw + math.pi*2
+                elif (yaw > math.pi):
+                    yaw = yaw - math.pi*2
+
+    quat = tf.transformations.quaternion_from_euler(0, 0, yaw)
+
+    pose = PoseWithCovarianceStamped()
+    pose.header.stamp = rospy.Time.now()
+    pose.header.frame_id = 'map'
+    pose.pose.pose.position.x = x
+    pose.pose.pose.position.y = y
+    pose.pose.pose.position.z = 0
+    pose.pose.pose.orientation = Quaternion(*quat)
+
+    global initPosePub
+    initPosePub.publish(pose)
+    rospy.loginfo('[tank_webservice] Set tank initial position to x[' + str(x) + '] y[' + str(y) + '] yaw[' + str(yaw) + ']')
 
 def getPackagePath():
     return os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + '/..')
