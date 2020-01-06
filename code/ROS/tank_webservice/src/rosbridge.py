@@ -15,6 +15,7 @@ from sensor_msgs.msg import MagneticField
 from geometry_msgs.msg import PolygonStamped, PoseStamped, PoseWithCovarianceStamped, Quaternion
 
 import gi
+gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 from urllib import pathname2url
 gstlock = threading.Lock()
@@ -223,7 +224,6 @@ def tankInitPose(x, y, yaw):
     rospy.loginfo('[tank_webservice] Set tank initial position to x[' + str(x) + '] y[' + str(y) + '] yaw[' + str(yaw) + ']')
 
 def playsoundInit():
-    gi.require_version('Gst', '1.0')
     Gst.init(None)
     global playbin
     playbin = Gst.ElementFactory.make('playbin', 'playbin')
