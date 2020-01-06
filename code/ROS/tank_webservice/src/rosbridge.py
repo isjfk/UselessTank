@@ -209,6 +209,9 @@ def tankInitPose(x, y, yaw):
                 elif (yaw > math.pi):
                     yaw = yaw - math.pi*2
 
+    # Set yaw to 0 because compass in control board was interferenced. Delete following line after compass fixed.
+    yaw = 0
+
     quat = tf.transformations.quaternion_from_euler(0, 0, yaw)
 
     pose = PoseWithCovarianceStamped()
