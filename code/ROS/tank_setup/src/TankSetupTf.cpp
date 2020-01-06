@@ -10,6 +10,14 @@ double laserTfRoll = 0;
 double laserTfPitch = 0;
 double laserTfYaw = 0;
 
+bool depthTfEnabled = false;
+double depthTfX = 0;
+double depthTfY = 0;
+double depthTfZ = 0;
+double depthTfRoll = 0;
+double depthTfPitch = 0;
+double depthTfYaw = 0;
+
 void loadParams(void);
 
 int main(int argc, char** argv) {
@@ -26,6 +34,10 @@ int main(int argc, char** argv) {
     tf::Quaternion laserQuat;
     laserQuat.setRPY(laserTfRoll, laserTfPitch, laserTfYaw);
 
+    tf::Vector3 depthVect(depthTfX, depthTfY, depthTfZ);
+    tf::Quaternion depthQuat;
+    depthQuat.setRPY(depthTfRoll, depthTfPitch, depthTfYaw);
+
     tf::Vector3 imuVect(0, 0, 0);
     tf::Quaternion imuQuat;
     imuQuat.setRPY(0, 0, 0);
@@ -40,6 +52,15 @@ int main(int argc, char** argv) {
                 ros::Time::now(),
                 "base_link",
                 "base_laser"));
+
+        if (depthTfEnabled) {
+            broadcaster.sendTransform(
+                tf::StampedTransform(
+                    tf::Transform(depthQuat, depthVect),
+                    ros::Time::now(),
+                    "base_link",
+                    "base_depth"));
+        }
 
         broadcaster.sendTransform(
             tf::StampedTransform(
@@ -73,4 +94,12 @@ void loadParams(void) {
     ros::param::param<double>("~laserTfRoll", laserTfRoll, 0);
     ros::param::param<double>("~laserTfPitch", laserTfPitch, 0);
     ros::param::param<double>("~laserTfYaw", laserTfYaw, 0);
+
+    ros::param::param<bool>("~depthTfEnabled", depthTfEnabled, false);
+    ros::param::param<double>("~depthTfX", depthTfX, 0);
+    ros::param::param<double>("~depthTfY", depthTfY, 0);
+    ros::param::param<double>("~depthTfZ", depthTfZ, 0);
+    ros::param::param<double>("~depthTfRoll", depthTfRoll, 0);
+    ros::param::param<double>("~depthTfPitch", depthTfPitch, 0);
+    ros::param::param<double>("~depthTfYaw", depthTfYaw, 0);
 }
