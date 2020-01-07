@@ -5,14 +5,14 @@ Flash image "ubuntu-mate-18.04.2-beta1-desktop-armhf+raspi-ext4.img" into TF car
 Boot Raspberry Pi with the TF card.
 
 ## Configure WIFI
-  Login into Ubuntu Mate desktop.  
+  Login into Ubuntu desktop.  
   Select "Protected EAP (PEAP)" in Authentication.  
   Select "No CA certificate is required".  
   Input you domain account in Username & Password.  
   Click "Connect".  
 
 ## Enable SSH remote login
-  The SSH server is installed but not enabled by default. To enabled the SSH server, open Ubuntu Mate bash shell (Ctrl+Alt+T in desktop):
+  The SSH server is installed but not enabled by default. To enabled the SSH server, open Ubuntu bash shell (Ctrl+Alt+T in desktop):
   ```bash
   sudo dpkg-reconfigure openssh-server
   sudo systemctl enable ssh
@@ -20,8 +20,8 @@ Boot Raspberry Pi with the TF card.
   ```
 
 # Setup ROS automatically by script
-  Transfer directory /code/UbuntuMate/init-setup to Ubuntu Mate ~/ directory by SFTP.  
-  Login into Ubuntu Mate bash shell.
+  Transfer directory /code/UbuntuMate/init-setup to Ubuntu ~/ directory by SFTP.  
+  Login into Ubuntu bash shell.
   ```bash
   cd ~/init-setup
   chmod a+x *.sh
@@ -43,13 +43,13 @@ Boot Raspberry Pi with the TF card.
 
 ## Install common packages
   ```bash
-  sudo apt install vim
+  sudo apt-get install vim
   ```
 
 ## Install & configure audio
   ```bash
-  sudo apt install gstreamer1.0-plugins-base-apps
-  sudo apt install sox libsox-fmt-all
+  sudo apt-get install gstreamer1.0-plugins-base-apps
+  sudo apt-get install sox libsox-fmt-all
   ```
   For tank-prototype-v2, the default sound playback & record device need to be changed by edit file /etc/pulse/default.pa, append following lines:
   ```bash
@@ -67,15 +67,15 @@ Boot Raspberry Pi with the TF card.
   ```bash
   sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
   sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-  sudo apt update
+  sudo apt-get update
 
-  sudo apt install ros-melodic-desktop
-  sudo apt install python-rosinstall python-rosinstall-generator python-wstool build-essential
+  sudo apt-get install ros-melodic-desktop
+  sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool build-essential
   sudo rosdep init
   rosdep update
 
-  sudo apt install ros-melodic-navigation ros-melodic-slam-gmapping ros-melodic-tf
-  sudo apt install ros-melodic-joy ros-melodic-teleop-twist-joy ros-melodic-teleop-twist-keyboard joystick
+  sudo apt-get install ros-melodic-navigation ros-melodic-slam-gmapping ros-melodic-tf
+  sudo apt-get install ros-melodic-joy ros-melodic-teleop-twist-joy ros-melodic-teleop-twist-keyboard joystick
   ```
 
 ## Initialize ROS workspace
@@ -86,14 +86,22 @@ Boot Raspberry Pi with the TF card.
   catkin_make
   source devel/setup.bash
   ```
-  Then copy all files in project /conf/UbuntuMate directory into Ubuntu ~ directory.
+  Then copy all files in project ./init-setup/resource directory into Ubuntu ~ directory.
 
 ## Install Python & Flask
   ```bash
-  sudo apt install python-pip
+  sudo apt-get install python-pip
   pip install rospkg pyyaml
   pip install Flask Flask-Cors
   ```
+
+## Reboot
+  ```bash
+  sudo reboot
+  ```
+
+# Setup tank model
+  Edit file ~/tank_model.env, uncomment lines that match the tank setup.
 
 # Device Configuration
 
