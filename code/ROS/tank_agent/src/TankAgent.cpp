@@ -202,7 +202,7 @@ error_t readTankMsg(TankMsg *tankMsg) {
         return -1;
     }
 
-    size_t dataSize = std::min(tankMsg->dataLength, sizeof(tankMsg->data));
+    size_t dataSize = std::min((size_t) tankMsg->dataLength, sizeof(tankMsg->data));
     if (readSize(&tankMsg->data, dataSize)) {
         return -1;
     }
