@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include "stm32f10x.h"
 
+#include "device/DevGpio.h"
+
 #ifndef __BOARD_H
 #define __BOARD_H
 
@@ -8,11 +10,24 @@
  extern "C" {
 #endif
 
-#define boardLedOn()    GPIO_ResetBits(GPIOB, GPIO_Pin_14)
-#define boardLedOff()   GPIO_SetBits(GPIOB, GPIO_Pin_14)
+#define pdbPowerOn()            GPIO_ResetBits(GPIOC, GPIO_Pin_10)
+#define pdbPowerOff()           GPIO_SetBits(GPIOC, GPIO_Pin_10)
+#define pdbIsPowerButtonDown()  GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_11)
+#define pdbIsPowerButtonUp()    (!GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_11))
+#define pdbPowerLedOn()         GPIO_ResetBits(GPIOC, GPIO_Pin_12)
+#define pdbPowerLedOff()        GPIO_SetBits(GPIOC, GPIO_Pin_12)
+#define pdbPowerLedToggle()     devGpioToggleOutputDataBit(GPIOC, GPIO_Pin_12)
+#define pdbIsStopButtonDown()   GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_11)
+#define pdbIsStopButtonUp()     (!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_11))
+#define pdbStopLedOn()          GPIO_ResetBits(GPIOD, GPIO_Pin_2)
+#define pdbStopLedOff()         GPIO_SetBits(GPIOD, GPIO_Pin_2)
+#define pdbStopLedToggle()      devGpioToggleOutputDataBit(GPIOD, GPIO_Pin_2)
 
-#define boardBeepOn()   GPIO_SetBits(GPIOB, GPIO_Pin_13)
-#define boardBeepOff()  GPIO_ResetBits(GPIOB, GPIO_Pin_13)
+#define boardLedOn()            GPIO_ResetBits(GPIOB, GPIO_Pin_14)
+#define boardLedOff()           GPIO_SetBits(GPIOB, GPIO_Pin_14)
+
+#define boardBeepOn()           GPIO_SetBits(GPIOB, GPIO_Pin_13)
+#define boardBeepOff()          GPIO_ResetBits(GPIOB, GPIO_Pin_13)
 
 void boardLoop(void);
 void boardWdgReload(void);

@@ -472,6 +472,11 @@
               <FileType>1</FileType>
               <FilePath>.\RVMDK\system\SysDelay.c</FilePath>
             </File>
+            <File>
+              <FileName>SysTime.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\system\SysTime.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -481,6 +486,11 @@
               <FileName>DevCrc.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\device\DevCrc.c</FilePath>
+            </File>
+            <File>
+              <FileName>DevGpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\device\DevGpio.c</FilePath>
             </File>
             <File>
               <FileName>DevUsart.c</FileName>

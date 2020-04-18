@@ -6,7 +6,10 @@
 #include "system/SysTick.h"
 #include "system/SysIrq.h"
 #include "system/SysDelay.h"
+#include "system/SysTime.h"
 #include "device/DevHx711.h"
+
+SysTimeInterval pdbLedInterval;
 
 float batteryLowVoltage = 10.7;         // For 3S LiPo battery.
 int batteryLowStatus = 0;
@@ -19,10 +22,13 @@ uint32_t batteryAlarmPrevSysTickMs = 0;
 float boardBatteryVoltage = 0;
 uint32_t boardBatteryVoltageSysTickMs = 0;
 
+void pdbCtrlLoop(void);
 void detectBatteryLowStatus(void);
 void batteryLowAlarmLoop(void);
 
 void boardLoop(void) {
+    pdbCtrlLoop();
+
     boardMeasureBatteryVoltage();
     detectBatteryLowStatus();
     batteryLowAlarmLoop();
@@ -31,6 +37,25 @@ void boardLoop(void) {
     devHx711Loop();
 
     boardWdgReload();
+}
+
+void pdbCtrlLoop(void) {
+    static int count = -1;
+    if (pdbIsPowerButtonDown()) {
+        count = -1;
+    } else {
+        if (count == -1) {
+            sysTimeIntervalInit(&pdbLedInterval, 500);
+            count = 0;
+        } else if (count < 10) {
+            if (sysTimeIsOnInterval(&pdbLedInterval)) {
+                pdbPowerLedToggle();
+                count++;
+            }
+        } else {
+            pdbPowerOff();
+        }
+    }
 }
 
 void boardWdgReload(void) {
