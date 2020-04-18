@@ -130,6 +130,22 @@ P2 / PC9 -> 拉力AD PD_SCK
     树莓派RX -> 坦克控制板TX: 绿
 	树莓派GND -> 坦克控制板GND: 黑
 
+坦克控制板数据线(分电板CTRL -> 坦克控制板):
+规格: 22AWG
+长度: 20cm
+颜色:
+    1(GND) -> GND: 黑
+    2(VCC_MCU) -> 5V: 红
+    3: NC
+    4(PWR_CTRL) -> PC10: 蓝
+    5(PWR_BTN_DET) -> PC11: 绿
+    6(PWR_LED_CTRL) -> PC12: 白
+    7(STOP_BTN_DET) -> PB11: 橙
+    8(STOP_BTN_G_CTRL) -> PD2: 黄
+    9: NC
+    10(VCC_BAT) -> PWR+: 红(15cm)
+    11(GND_BAT) -> PWR-: 黑(15cm)
+
 坦克控制板电源线(坦克控制板 -> 分电板VBAT-OUT):
 规格: 22AWG
 长度: 15cm
