@@ -483,6 +483,11 @@
           <GroupName>device</GroupName>
           <Files>
             <File>
+              <FileName>DevButton.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\device\DevButton.c</FilePath>
+            </File>
+            <File>
               <FileName>DevCrc.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\device\DevCrc.c</FilePath>
