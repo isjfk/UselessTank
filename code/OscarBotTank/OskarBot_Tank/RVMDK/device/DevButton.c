@@ -35,7 +35,7 @@ int32_t devButtonInitButton(DevButton *button, GPIO_TypeDef* gpioPort, uint16_t 
     button->filterTimeMs = DEV_BUTTON_FILTER_TIME_MS_DEFAULT;
 
     button->status = -1;
-    button->prevStatus = GPIO_ReadInputDataBit(gpioPort, gpioPin);
+    button->prevStatus = -1;
     button->prevStatusSetTimeMs = sysTimeCurrentMs();
     button->next = NULL;
 
