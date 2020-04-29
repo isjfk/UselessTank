@@ -50,6 +50,10 @@ int32_t devButtonInitButton(DevButton *button, GPIO_TypeDef* gpioPort, uint16_t 
     return 0;
 }
 
+int32_t devButtonIsUnknown(DevButton *button) {
+    return button->status == -1;
+}
+
 int32_t devButtonIsDown(DevButton *button) {
     return button->status == DEV_BUTTON_STATUS_DOWN;
 }

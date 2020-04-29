@@ -7,7 +7,6 @@
 #include "system/SysIrq.h"
 #include "system/SysDelay.h"
 #include "system/SysTime.h"
-#include "device/DevButton.h"
 #include "device/DevHx711.h"
 
 SysTimeInterval pdbLedInterval;
@@ -22,6 +21,9 @@ uint32_t batteryAlarmPrevSysTickMs = 0;
 
 float boardBatteryVoltage = 0;
 uint32_t boardBatteryVoltageSysTickMs = 0;
+
+DevButton powerButton;
+DevButton stopButton;
 
 void pdbCtrlLoop(void);
 void boardBatteryLoop(void);

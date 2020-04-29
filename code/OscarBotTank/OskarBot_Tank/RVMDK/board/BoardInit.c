@@ -270,7 +270,8 @@ void boardMonitorInit(void) {
 }
 
 void boardButtonInit(void) {
-    // TODO: button init
+    devButtonInitButton(&powerButton, GPIOC, GPIO_Pin_11);
+    devButtonInitButton(&stopButton, GPIOB, GPIO_Pin_11);
 }
 
 void boardIwdgInit(void) {
