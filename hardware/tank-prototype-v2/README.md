@@ -134,10 +134,10 @@ P2 / PC9 -> 拉力AD PD_SCK
 颜色:
     工控机COM1_TX  -> RS232模块232_RX1:  蓝(13cm)
     工控机COM1_RX  -> RS232模块232_TX1:  绿(13cm)
-	工控机COM1_GND -> RS232模块232_GND1: 黑(13cm)
+    工控机COM1_GND -> RS232模块232_GND1: 黑(13cm)
     工控机COM2_TX  -> RS232模块232_RX2:  白(18cm)
     工控机COM2_RX  -> RS232模块232_TX2:  黄(18cm)
-	工控机COM2_GND -> RS232模块232_GND2: 黑(18cm)
+    工控机COM2_GND -> RS232模块232_GND2: 黑(18cm)
 备注：串口TX/RX交叉连接
 
 坦克控制板电源线(坦克控制板 -> 分电板VBAT-OUT):
@@ -151,10 +151,12 @@ P2 / PC9 -> 拉力AD PD_SCK
 颜色:
     坦克控制板COM1_TX  -> RS232模块TTL_TX1:  蓝(12cm)
     坦克控制板COM1_RX  -> RS232模块TTL_RX1:  绿(12cm)
-	坦克控制板COM1_GND -> RS232模块TTL_GND1: 黑(12cm)
+    坦克控制板COM1_VCC -> RS232模块TTL_VCC1: 红(12cm)
+    坦克控制板COM1_GND -> RS232模块TTL_GND1: 黑(12cm)
     坦克控制板COM2_TX  -> RS232模块TTL_TX2:  白(12cm)
     坦克控制板COM2_RX  -> RS232模块TTL_RX2:  黄(12cm)
-	坦克控制板COM2_GND -> RS232模块TTL_GND2: 黑(12cm)
+    坦克控制板COM2_VCC -> RS232模块TTL_VCC2: 红(12cm)
+    坦克控制板COM2_GND -> RS232模块TTL_GND2: 黑(12cm)
 备注：串口TX/RX直连接
 
 坦克控制板数据线(分电板CTRL -> 坦克控制板):
