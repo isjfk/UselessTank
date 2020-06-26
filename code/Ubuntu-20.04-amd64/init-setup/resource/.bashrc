@@ -137,7 +137,7 @@ alias tankgmapping='roslaunch tank_2dnav gmapping.launch'
 alias tanknav='roslaunch tank_2dnav tank_nav.launch'
 alias tank='roslaunch tank_2dnav tank.launch'
 alias tankjoy='roslaunch tank_remote xbox.launch'
-alias tankjoy='roslaunch tank_remote xboxsa.launch'
+alias tankjoysa='roslaunch tank_remote xboxsa.launch'
 alias tankkeyboard='roslaunch tank_remote keyboard.launch'
 
 alias tgsrc='cd ~/package/tank-guider'
