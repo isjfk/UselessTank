@@ -13,6 +13,7 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from nav_msgs.msg import Path
 from sensor_msgs.msg import MagneticField
 from geometry_msgs.msg import PolygonStamped, PoseStamped, PoseWithCovarianceStamped, Quaternion
+from std_srvs.srv import Empty
 
 import gi
 gi.require_version('Gst', '1.0')
@@ -42,14 +43,14 @@ def startListener():
     moveBaseClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     moveBaseClient.wait_for_server()
 
+    global tl
+    tl = tf.TransformListener()
+
     global goalPub
     goalPub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
 
     global initPosePub
     initPosePub = rospy.Publisher('/initialpose', PoseWithCovarianceStamped, queue_size=10)
-
-    global tl
-    tl = tf.TransformListener()
 
     playsoundInit()
 
@@ -226,6 +227,15 @@ def tankInitPose(x, y, yaw):
     global initPosePub
     initPosePub.publish(pose)
     rospy.loginfo('[tank_webservice] Set tank initial position to x[' + str(x) + '] y[' + str(y) + '] yaw[' + str(yaw) + ']')
+
+def tankClearCostmaps():
+    rospy.wait_for_service('/move_base/clear_costmaps')
+    try:
+        clearCostmapsService = rospy.ServiceProxy('/move_base/clear_costmaps', Empty)
+        clearCostmapsService()
+        rospy.loginfo('[tank_webservice] Clear costmaps success')
+    except rospy.ServiceException as e:
+        rospy.logerr('[tank_webservice] Clear costmaps failed: %s', e)
 
 def playsoundInit():
     Gst.init(None)

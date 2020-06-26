@@ -54,12 +54,18 @@ export default {
         x: x,
         y: y
       }).then(function (response) {
+        // Clear pressed state of Set Position button
+        EventBus.$emit('admin.clearSetPositionState')
+
         // Call refresh loop to get path ASAP
         that.tankRefreshLoop()
       })
+    },
 
-      // Clear pressed state of Set Position button
-      EventBus.$emit('admin.clearSetPositionState')
+    clearCostmaps () {
+      this.$axios.post(this.rosRestUrl() + '/tank/action/clearCostmaps').then(function (response) {
+        EventBus.$emit('admin.clearClearCostmapsState')
+      })
     },
 
     getPoiList () {
@@ -167,6 +173,9 @@ export default {
 
     EventBus.$on('admin.isSetPositionState', (isSetPositionState) => {
       this.admin.isSetPositionState = isSetPositionState
+    })
+    EventBus.$on('admin.setClearCostmapsState', () => {
+      this.clearCostmaps()
     })
   },
 

@@ -106,11 +106,16 @@ def tankInitPose():
         rosbridge.tankInitPose(x, y, yaw)
     return ('', 204)
 
+@app.route('/tank/action/clearCostmaps', methods=['GET', 'POST'])
+def tankClearCostmaps():
+    rosbridge.tankClearCostmaps()
+    return ('', 204)
+
 def calcYawToClosestPoi(x, y):
     poiListPath = os.path.abspath(getPoiListFilePath())
     with open(poiListPath, 'r', encoding='utf-8') as poiListFile:
         poiList = json.load(poiListFile)
-    yaw = 0;
+    yaw = 0
     minDist = sys.float_info.max
     for poi in poiList:
         poiX = poi.get('x')
@@ -119,7 +124,7 @@ def calcYawToClosestPoi(x, y):
         if (poiDist < minDist):
             minDist = poiDist
             yaw = math.atan2(poiY - y, poiX - x)
-    return yaw;
+    return yaw
 
 def flaskWorker():
     app.run(host='0.0.0.0')

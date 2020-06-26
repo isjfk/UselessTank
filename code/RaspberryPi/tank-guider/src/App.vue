@@ -7,6 +7,7 @@
     </main>
     <div id="admin" :class="{ adminEnabled: admin.isEnabled, adminDisabled: !admin.isEnabled }">
       <button id="setPosition" class="adminButton" :class="{ adminButtonPressed: admin.isSetPositionState }" @click="setPositionClicked($event)">Set Position</button>
+      <button id="clearCostmaps" class="adminButton" :class="{ adminButtonPressed: admin.isClearCostmapsState }" @click="clearCostmapsClicked($event)">Clear Costmaps</button>
     </div>
   </div>
 </template>
@@ -20,7 +21,7 @@ export default {
   data () {
     return {
       mapUrl: this.rosRestUrl() + '/map/image',
-      admin: {isEnabled: false, isSetPositionState: false}
+      admin: {isEnabled: false, isSetPositionState: false, isClearCostmapsState: false}
     }
   },
 
@@ -41,6 +42,11 @@ export default {
     setPositionClicked (event) {
       this.admin.isSetPositionState = !this.admin.isSetPositionState
       EventBus.$emit('admin.isSetPositionState', this.admin.isSetPositionState)
+    },
+
+    clearCostmapsClicked (event) {
+      this.admin.isClearCostmapsState = true
+      EventBus.$emit('admin.setClearCostmapsState')
     }
   },
 
@@ -52,6 +58,10 @@ export default {
     EventBus.$on('admin.clearSetPositionState', () => {
       this.admin.isSetPositionState = false
       EventBus.$emit('admin.isSetPositionState', this.admin.isSetPositionState)
+    })
+
+    EventBus.$on('admin.clearClearCostmapsState', () => {
+      this.admin.isClearCostmapsState = false
     })
   }
 }
@@ -101,12 +111,13 @@ export default {
   }
 
   .adminEnabled {
-    display: flex;
+    display: block;
   }
 
   .adminButton {
     height: 40px;
     width: 100%;
+    margin-top: 20px;
     background: darkseagreen;
     font-size: x-large;
     font-weight: bold;
