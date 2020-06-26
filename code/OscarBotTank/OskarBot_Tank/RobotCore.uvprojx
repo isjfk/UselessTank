@@ -472,15 +472,30 @@
               <FileType>1</FileType>
               <FilePath>.\RVMDK\system\SysDelay.c</FilePath>
             </File>
+            <File>
+              <FileName>SysTime.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\system\SysTime.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>device</GroupName>
           <Files>
             <File>
+              <FileName>DevButton.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\device\DevButton.c</FilePath>
+            </File>
+            <File>
               <FileName>DevCrc.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\device\DevCrc.c</FilePath>
+            </File>
+            <File>
+              <FileName>DevGpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\RVMDK\device\DevGpio.c</FilePath>
             </File>
             <File>
               <FileName>DevUsart.c</FileName>

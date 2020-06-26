@@ -6,6 +6,7 @@
 #include "system/SysTick.h"
 #include "system/SysIrq.h"
 #include "system/SysDelay.h"
+#include "system/SysTime.h"
 #include "device/DevHx711.h"
 
 float batteryLowVoltage = 10.7;         // For 3S LiPo battery.
@@ -19,65 +20,59 @@ uint32_t batteryAlarmPrevSysTickMs = 0;
 float boardBatteryVoltage = 0;
 uint32_t boardBatteryVoltageSysTickMs = 0;
 
-void detectBatteryLowStatus(void);
-void batteryLowAlarmLoop(void);
+DevButton powerButton;
+DevButton stopButton;
+
+void pdbCtrlLoop(void);
+void boardBatteryLoop(void);
 
 void boardLoop(void) {
-    boardMeasureBatteryVoltage();
-    detectBatteryLowStatus();
-    batteryLowAlarmLoop();
-
+    devButtonLoop();
     // Update leash tension data from HX711.
     devHx711Loop();
+
+    // Should be after devButtonLoop
+    pdbCtrlLoop();
+    boardBatteryLoop();
 
     boardWdgReload();
 }
 
+void pdbCtrlLoop(void) {
+    static SysTimeLoop pwrLedLoop;
+    static SysTimeLoop stopLedLoop;
+    static int count = -1;
+
+    if (pdbIsPowerButtonDown()) {
+        count = -1;
+    } else {
+        if (count == -1) {
+            sysTimeLoopStart(&pwrLedLoop, 500);
+            count = 0;
+        } else if (count < 10) {
+            if (sysTimeLoopShouldEnter(&pwrLedLoop)) {
+                pdbPowerLedToggle();
+                count++;
+            }
+        } else {
+            pdbPowerOff();
+        }
+    }
+
+    if (pdbIsStopButtonUp()) {
+        pdbStopLedOff();
+        sysTimeLoopStop(&stopLedLoop);
+    } else {
+        if (!sysTimeLoopIsStart(&stopLedLoop)) {
+            sysTimeLoopStart(&stopLedLoop, 500);
+        } else if (sysTimeLoopShouldEnter(&stopLedLoop)) {
+            pdbStopLedToggle();
+        }
+    }
+}
+
 void boardWdgReload(void) {
     IWDG_ReloadCounter();
-}
-
-int calcAlarmIntervalTime() {
-    float batteryVoltage = boardGetBatteryVoltage();
-
-    float lowVoltageRange = fabs(batteryLowVoltage - batteryVeryLowVoltage);
-    if (lowVoltageRange == 0) {
-        // To avoid divide by zero.
-        lowVoltageRange = 0.2;
-    }
-
-    float voltageDiff = frange(batteryVoltage - batteryVeryLowVoltage, 0, lowVoltageRange);
-    int intervalTime = (voltageDiff / lowVoltageRange) * 400 + 100;
-
-    return irange(intervalTime, 100, 500);
-}
-
-void batteryLowAlarmLoop() {
-    if (boardIsBatteryLow()) {
-        uint32_t currentSysTickMs = sysTickCurrentMs();
-        int intervalTimeMs = boardIsBatteryVeryLow() ? 100 : calcAlarmIntervalTime();
-
-        if ((currentSysTickMs - batteryAlarmPrevSysTickMs) >= (batteryAlarmStatus ? 100 : intervalTimeMs)) {
-            batteryAlarmStatus = !batteryAlarmStatus;
-            batteryAlarmPrevSysTickMs = currentSysTickMs;
-        }
-
-        if (batteryAlarmStatus) {
-            boardBeepOn();
-            boardLedOn();
-        } else {
-            boardBeepOff();
-            boardLedOff();
-        }
-    } else {
-        if (batteryAlarmStatus) {
-            boardBeepOff();
-            boardLedOff();
-        }
-
-        batteryAlarmPrevSysTickMs = 0;
-        batteryAlarmStatus = 0;
-    }
 }
 
 void alarm(uint16_t onTime, uint16_t offTime) {
@@ -161,6 +156,55 @@ void detectBatteryLowStatus() {
         batteryVeryLowStatus = 0;
         batteryLowStatus = 0;
     }
+}
+
+int calcAlarmIntervalTime() {
+    float batteryVoltage = boardGetBatteryVoltage();
+
+    float lowVoltageRange = fabs(batteryLowVoltage - batteryVeryLowVoltage);
+    if (lowVoltageRange == 0) {
+        // To avoid divide by zero.
+        lowVoltageRange = 0.2;
+    }
+
+    float voltageDiff = frange(batteryVoltage - batteryVeryLowVoltage, 0, lowVoltageRange);
+    int intervalTime = (voltageDiff / lowVoltageRange) * 400 + 100;
+
+    return irange(intervalTime, 100, 500);
+}
+
+void batteryLowAlarmLoop() {
+    if (boardIsBatteryLow()) {
+        uint32_t currentSysTickMs = sysTickCurrentMs();
+        int intervalTimeMs = boardIsBatteryVeryLow() ? 100 : calcAlarmIntervalTime();
+
+        if ((currentSysTickMs - batteryAlarmPrevSysTickMs) >= (batteryAlarmStatus ? 100 : intervalTimeMs)) {
+            batteryAlarmStatus = !batteryAlarmStatus;
+            batteryAlarmPrevSysTickMs = currentSysTickMs;
+        }
+
+        if (batteryAlarmStatus) {
+            boardBeepOn();
+            boardLedOn();
+        } else {
+            boardBeepOff();
+            boardLedOff();
+        }
+    } else {
+        if (batteryAlarmStatus) {
+            boardBeepOff();
+            boardLedOff();
+        }
+
+        batteryAlarmPrevSysTickMs = 0;
+        batteryAlarmStatus = 0;
+    }
+}
+
+void boardBatteryLoop(void) {
+    boardMeasureBatteryVoltage();
+    detectBatteryLowStatus();
+    batteryLowAlarmLoop();
 }
 
 int8_t boardIsBatteryHealth(void) {

@@ -1,7 +1,7 @@
-# Install Ubuntu Desktop 18.04.3 LTS amd64
+# Install Ubuntu Desktop 18.04.4 LTS amd64
 
 ## Prepare the USB driver with Ubuntu image
-Flash image "ubuntu-18.04.3-desktop-amd64.iso" into TF card by balenaEtcher.  
+Flash image "ubuntu-18.04.4-desktop-amd64.iso" into TF card by balenaEtcher.  
 Boot computer with the USB driver and install Ubuntu.
 
 ## Configure WiFi
@@ -12,7 +12,7 @@ Boot computer with the USB driver and install Ubuntu.
   Click "Connect".  
 
 ## Update Ubuntu to latest packages
-  Open Ubuntu bash shell (Ctrl+Alt+T in desktop):
+  In Ubuntu open bash shell (Ctrl+Alt+T in desktop):
   ```bash
   sudo apt-get update
   sudo apt-get upgrade
@@ -20,10 +20,13 @@ Boot computer with the USB driver and install Ubuntu.
   ```
 
 ## Install openssh-server to enable SSH remote login
-  Open Ubuntu bash shell (Ctrl+Alt+T in desktop):
+  In Ubuntu open bash shell (Ctrl+Alt+T in desktop):
   ```bash
   sudo apt-get install net-tools openssh-server
   ```
+
+## Copy ssh private key
+  Copy ssh private key files into ~/.ssh to enable ssh login by certification.
 
 # Setup ROS automatically by script
   Transfer directory ./init-setup to Ubuntu ~/ directory by SFTP.  
@@ -94,8 +97,8 @@ Boot computer with the USB driver and install Ubuntu.
 
 # Device Configuration
 
-## Pairing PS4 joystick to Ubuntu Mate
-  Pair with Ubuntu desktop tool "Bluetooth Manager".  
+## Pairing XBox One joystick to Ubuntu
+  In Ubuntu open "Settings -> Bluetooth".  
   To start pairing, hold "SHARE" and "PS" button in PS4 joystick until indicator flashes.  
   To test the joystick, run:
   ```bash

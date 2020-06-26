@@ -3,16 +3,19 @@
 #include "system/SysIrq.h"
 #include "system/SysTick.h"
 #include "system/SysDelay.h"
+#include "device/DevButton.h"
 #include "device/DevCrc.h"
 #include "device/DevMpu9250.h"
 #include "device/DevUsart.h"
 #include "device/DevMotor.h"
 #include "device/DevHx711.h"
 
+void boardPdbCtrlInit(void);
 void boardBeepLedInit(void);
 void boardTimerInit(void);
 void boardUsartInit(void);
 void boardMonitorInit(void);
+void boardButtonInit(void);
 void boardIwdgInit(void);
 
 void boardInit(void) {
@@ -20,22 +23,29 @@ void boardInit(void) {
 
     sysTickInit();
 
+    boardPdbCtrlInit();
+
     boardBeepLedInit();
     //boardTimerInit();
     boardUsartInit();
     boardMonitorInit();
 
+    devButtonInit();
     devCrcInit();
     devMotorInit();
     devHx711Init();
 
+    // Should be after devButtonInit
+    boardButtonInit();
+
     // Enable IRQ so SysTick can get correct value.
     // MPU9250 requires SysTick to initialize.
     ei();
-    // Make sure SysTick run stablized.
-    sysDelayMs(100);
 
-    if (devMpu9250Init()) {
+    int gyroInitRetryCount = 0;
+    int gyroInitMaxRetry = 10;
+    while ((gyroInitRetryCount++ < gyroInitMaxRetry) && devMpu9250Init());
+    if (gyroInitRetryCount >= gyroInitMaxRetry) {
         alarmGyroInitError();
         NVIC_SystemReset();
     }
@@ -44,15 +54,55 @@ void boardInit(void) {
     boardIwdgInit();
 }
 
+void boardPdbCtrlInit(void) {
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+
+    // Configure output: PWR_CTRL(PC10), PWR_LED_CTRL(PC12)
+    GPIO_InitTypeDef gpio_InitStruct;
+    GPIO_StructInit(&gpio_InitStruct);
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_12;
+    gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_OD;
+    gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOC, &gpio_InitStruct);
+
+    // Configure input: PWR_BTN_DET(PC11)
+    GPIO_StructInit(&gpio_InitStruct);
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_11;
+    gpio_InitStruct.GPIO_Mode = GPIO_Mode_IPD;
+    gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOC, &gpio_InitStruct);
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
+    // Configure input: STOP_BTN_DET(PB11)
+    GPIO_StructInit(&gpio_InitStruct);
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_11;
+    gpio_InitStruct.GPIO_Mode = GPIO_Mode_IPD;
+    gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &gpio_InitStruct);
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+
+    // Configure output: STOP_BTN_G_CTRL(PD2)
+    GPIO_StructInit(&gpio_InitStruct);
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_2;
+    gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_OD;
+    gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOD, &gpio_InitStruct);
+
+    pdbPowerOn();
+    pdbPowerLedOn();
+}
+
 void boardBeepLedInit(void) {
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
     GPIO_InitTypeDef gpio_InitStruct;
     GPIO_StructInit(&gpio_InitStruct);
-	gpio_InitStruct.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
-	gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-	gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOB, &gpio_InitStruct);
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
+    gpio_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
+    gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &gpio_InitStruct);
 }
 
 void boardTimerInit(void) {
@@ -217,6 +267,11 @@ void boardAdcInit(void) {
 
 void boardMonitorInit(void) {
     boardAdcInit();
+}
+
+void boardButtonInit(void) {
+    devButtonInitButton(&powerButton, GPIOC, GPIO_Pin_11);
+    devButtonInitButton(&stopButton, GPIOB, GPIO_Pin_11);
 }
 
 void boardIwdgInit(void) {

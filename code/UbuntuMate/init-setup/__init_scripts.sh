@@ -18,6 +18,9 @@ apt-get install -y sox libsox-fmt-all
 echo 'set-default-sink alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo' >> /etc/pulse/default.pa
 echo 'set-default-source alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo.monitor' >> /etc/pulse/default.pa
 
+# Configure bluetooth to support XBox One Controller
+echo 'options bluetooth disable_ertm=Y' >> /etc/modprobe.d/bluetooth.conf
+
 # Install common packages
 apt-get install -y vim
 
