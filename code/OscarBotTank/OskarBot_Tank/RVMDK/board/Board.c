@@ -9,8 +9,6 @@
 #include "system/SysTime.h"
 #include "device/DevHx711.h"
 
-SysTimeInterval pdbLedInterval;
-
 float batteryLowVoltage = 10.7;         // For 3S LiPo battery.
 int batteryLowStatus = 0;
 float batteryVeryLowVoltage = 10.5;     // For 3S LiPo battery.
@@ -41,20 +39,34 @@ void boardLoop(void) {
 }
 
 void pdbCtrlLoop(void) {
+    static SysTimeLoop pwrLedLoop;
+    static SysTimeLoop stopLedLoop;
     static int count = -1;
+
     if (pdbIsPowerButtonDown()) {
         count = -1;
     } else {
         if (count == -1) {
-            sysTimeIntervalInit(&pdbLedInterval, 500);
+            sysTimeLoopStart(&pwrLedLoop, 500);
             count = 0;
         } else if (count < 10) {
-            if (sysTimeIsOnInterval(&pdbLedInterval)) {
+            if (sysTimeLoopShouldEnter(&pwrLedLoop)) {
                 pdbPowerLedToggle();
                 count++;
             }
         } else {
             pdbPowerOff();
+        }
+    }
+
+    if (pdbIsStopButtonUp()) {
+        pdbStopLedOff();
+        sysTimeLoopStop(&stopLedLoop);
+    } else {
+        if (!sysTimeLoopIsStart(&stopLedLoop)) {
+            sysTimeLoopStart(&stopLedLoop, 500);
+        } else if (sysTimeLoopShouldEnter(&stopLedLoop)) {
+            pdbStopLedToggle();
         }
     }
 }

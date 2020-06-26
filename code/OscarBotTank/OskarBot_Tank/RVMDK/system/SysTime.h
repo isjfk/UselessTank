@@ -23,10 +23,20 @@ static inline void sysTimeGetMs(uint32_t *timeMs) {
 typedef struct {
     uint32_t intervalTimeMs;
     uint32_t prevTimeMs;
-} SysTimeInterval;
+} SysTimeLoop;
 
-int sysTimeIntervalInit(SysTimeInterval *interval, uint32_t intervalTimeMs);
-bool sysTimeIsOnInterval(SysTimeInterval *interval);
+int sysTimeLoopStart(SysTimeLoop *loop, uint32_t intervalTimeMs);
+static inline int sysTimeLoopStop(SysTimeLoop *loop) {
+    if (!loop) {
+        return -1;
+    }
+    loop->prevTimeMs = 0;
+    return 0;
+}
+static inline bool sysTimeLoopIsStart(SysTimeLoop *loop) {
+    return loop && (loop->prevTimeMs > 0) && (loop->intervalTimeMs > 0);
+}
+bool sysTimeLoopShouldEnter(SysTimeLoop *loop);
 
 #ifdef __cplusplus
 }

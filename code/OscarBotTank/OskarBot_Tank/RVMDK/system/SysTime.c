@@ -1,22 +1,29 @@
 #include "SysTime.h"
 
-int sysTimeIntervalInit(SysTimeInterval *interval, uint32_t intervalTimeMs) {
-    if (!interval) {
+int sysTimeLoopStart(SysTimeLoop *loop, uint32_t intervalTimeMs) {
+    if (!loop) {
         return -1;
     }
 
-    interval->intervalTimeMs = intervalTimeMs;
-    interval->prevTimeMs = sysTickCurrentMs();
+    if (intervalTimeMs > 0) {
+        loop->intervalTimeMs = intervalTimeMs;
+    }
+    loop->prevTimeMs = sysTickCurrentMs();
 
     return 0;
 }
 
-bool sysTimeIsOnInterval(SysTimeInterval *interval) {
+bool sysTimeLoopShouldEnter(SysTimeLoop *loop) {
+    if (!sysTimeLoopIsStart(loop)) {
+        return false;
+    }
+
     uint32_t currTimeMs = sysTickCurrentMs();
-    uint32_t intervalTimeMs = currTimeMs - interval->prevTimeMs;
-    if (intervalTimeMs >= interval->intervalTimeMs) {
-        interval->prevTimeMs = currTimeMs - (intervalTimeMs % interval->intervalTimeMs);
+    uint32_t intervalTimeMs = currTimeMs - loop->prevTimeMs;
+    if (intervalTimeMs >= loop->intervalTimeMs) {
+        loop->prevTimeMs = currTimeMs - (intervalTimeMs % loop->intervalTimeMs);
         return true;
     }
+
     return false;
 }
