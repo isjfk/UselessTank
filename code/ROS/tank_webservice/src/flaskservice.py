@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import os
@@ -24,7 +24,7 @@ flaskThread = None
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    traceback.print_exc(e)
+    traceback.print_exception(type(e), e, e.__traceback__)
     return ('', 500)
 
 @app.route('/')
@@ -108,7 +108,8 @@ def tankInitPose():
 
 def calcYawToClosestPoi(x, y):
     poiListPath = os.path.abspath(getPoiListFilePath())
-    poiList = json.load(file(poiListPath, 'r'))
+    with open(poiListPath, 'r', encoding='utf-8') as poiListFile:
+        poiList = json.load(poiListFile)
     yaw = 0;
     minDist = sys.float_info.max
     for poi in poiList:

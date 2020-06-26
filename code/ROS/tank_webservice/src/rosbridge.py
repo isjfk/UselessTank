@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import math
@@ -17,7 +17,7 @@ from geometry_msgs.msg import PolygonStamped, PoseStamped, PoseWithCovarianceSta
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
-from urllib import pathname2url
+from urllib.request import pathname2url
 gstlock = threading.Lock()
 playbin = None
 
@@ -122,7 +122,8 @@ def calcDistance(point1, point2):
 def getMapMeta():
     mapPath = getMapPath()
     metaPath = os.path.abspath(mapPath + '/map.yaml')
-    meta = yaml.full_load(file(metaPath, 'r'))
+    with open(metaPath, 'r', encoding='utf-8') as metaFile:
+        meta = yaml.full_load(metaFile)
     meta['imagePath'] = mapPath + '/' + meta['image']
     return meta
 
