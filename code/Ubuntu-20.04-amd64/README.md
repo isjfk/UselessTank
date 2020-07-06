@@ -1,8 +1,23 @@
-# Install Ubuntu Desktop 18.04.4 LTS amd64
+# Install Ubuntu Desktop 20.04 LTS amd64
 
 ## Prepare the USB driver with Ubuntu image
-Flash image "ubuntu-18.04.4-desktop-amd64.iso" into TF card by balenaEtcher.  
-Boot computer with the USB driver and install Ubuntu.
+Flash image "ubuntu-20.04-desktop-amd64.iso" into USB-disk by balenaEtcher.  
+Boot computer with the USB driver and install Ubuntu, change following options while install:
+- Installtion Type
+  Erase disk and install Ubuntu
+- Where are you?
+  China Time
+- Who are you?
+  - Your name
+    tank
+  - Your computer's name
+    tank-xxx  
+    Replace xxx with number start from 101. E.g. tank-101.
+  - Pick a username
+    tank
+  - Password
+    Initial0
+  - Select "Log in automatically"
 
 ## Configure WiFi
   Login into Ubuntu desktop, connect to WiFi in status bar of upper right conor.  
@@ -11,7 +26,18 @@ Boot computer with the USB driver and install Ubuntu.
   Input you domain account in Username & Password.  
   Click "Connect".  
 
-## Update Ubuntu to latest packages
+## Change Ubuntu settings
+  In Ubuntu open "Software & Updates". Change:
+  - Download from
+    To "Server for United States".
+  In Ubuntu open "Settings", Change:
+  - Power -> Blank Screen
+    To "10 minutes".
+  - Privacy -> Screen Lock
+    Automatic Screen Lock: off  
+    Lock Screen on Suspend: off
+
+## Update Ubuntu to latest
   In Ubuntu open bash shell (Ctrl+Alt+T in desktop):
   ```bash
   sudo apt-get update
@@ -19,11 +45,13 @@ Boot computer with the USB driver and install Ubuntu.
   sudo apt-get dist-upgrade
   ```
 
-## Install openssh-server to enable SSH remote login
+## Install basic software packages & enable SSH remote login
   In Ubuntu open bash shell (Ctrl+Alt+T in desktop):
   ```bash
   sudo apt-get install net-tools openssh-server
   ```
+  In Ubuntu open "Ubuntu Software", install:
+  - Chromium
 
 ## Copy ssh private key
   Copy ssh private key files into ~/.ssh to enable ssh login by certification.
@@ -40,57 +68,9 @@ Boot computer with the USB driver and install Ubuntu.
   If you got any errors occur during execute init-setup.sh, please execute rest of the steps manually. Otherwise there may redundance lines writen into some configuration files.
 
 # Setup ROS manually
-  In case you prefer the manual way.  
   If you execute init-setup.sh already then you should omit this section.
 
-## Config serial port
-  ```bash
-  sudo usermod -a -G dialout `whoami`
-  ```
-
-## Install common packages
-  ```bash
-  sudo apt-get install vim
-  sudo apt-get install gstreamer1.0-plugins-base-apps
-  sudo apt-get install sox libsox-fmt-all
-  ```
-
-## Install ROS packages
-  ```bash
-  sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-  sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-  sudo apt-get update
-
-  sudo apt-get install ros-melodic-desktop
-  sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool build-essential
-  sudo rosdep init
-  rosdep update
-
-  sudo apt-get install ros-melodic-navigation ros-melodic-slam-gmapping ros-melodic-tf
-  sudo apt-get install ros-melodic-joy ros-melodic-teleop-twist-joy ros-melodic-teleop-twist-keyboard joystick
-  ```
-
-## Initialize ROS workspace
-  ```bash
-  source /opt/ros/melodic/setup.bash
-  mkdir -p ~/catkin_ws/src
-  cd ~/catkin_ws/
-  catkin_make
-  source devel/setup.bash
-  ```
-  Then copy all files in project ./init-setup/resource directory into Ubuntu ~ directory.
-
-## Install Python & Flask
-  ```bash
-  sudo apt-get install python-pip
-  pip install rospkg pyyaml
-  pip install Flask Flask-Cors
-  ```
-
-## Reboot
-  ```bash
-  sudo reboot
-  ```
+  In case you prefer the manual way, executes scripts in "__init_scripts.sh" one by one. Keep in mind most of the commands you need to execute by sudo.
 
 # Setup tank model
   Edit file ~/tank_model.env, uncomment lines that match the tank setup.

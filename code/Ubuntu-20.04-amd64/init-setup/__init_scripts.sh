@@ -10,14 +10,13 @@ apt-get update
 #echo '* libraries/restart-without-asking boolean true' | sudo debconf-set-selections
 
 # Install sound packages
-apt-get install -y gstreamer1.0-plugins-base-apps
-apt-get install -y sox libsox-fmt-all
+apt-get install -y gstreamer1.0-plugins-base-apps sox libsox-fmt-all
 
 # Configure bluetooth to support XBox One Controller
 echo 'options bluetooth disable_ertm=Y' >> /etc/modprobe.d/bluetooth.conf
 
 # Install common packages
-apt-get install -y vim
+apt-get install -y vim curl
 
 # Install ROS
 sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
@@ -47,15 +46,12 @@ cd ~
 
 # Install Python3 & Flask
 apt-get install -y python3-pip
-# Fix pip SSLError issue
-#python3 -m pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip
 pip3 install rospkg pyyaml
 pip3 install Flask Flask-Cors
 
 # Install NodeJS
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 apt-get install -y nodejs
-#apt-get install -y npm
 
 # Create package directory
 mkdir -p ~/package
