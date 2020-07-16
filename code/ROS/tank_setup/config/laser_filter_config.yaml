@@ -2,8 +2,8 @@ scan_filter_chain:
 - name: angle-depth
   type: laser_filters/LaserScanAngularBoundsFilter
   params:
-    lower_angle: -2.45
-    upper_angle: 2.45
+    lower_angle: -2.54
+    upper_angle: 2.54
 #- name: angle
 #  type: laser_filters/LaserScanAngularBoundsFilterInPlace
 #  params:

@@ -12,13 +12,9 @@
     <arg name="fisheye_height"      default="480"/>
     <arg name="enable_fisheye"      default="false"/>
 
-<!--
     <arg name="depth_width"         default="640"/>
     <arg name="depth_height"        default="480"/>
--->
-    <arg name="depth_width"         default="480"/>
-    <arg name="depth_height"        default="270"/>
-    <arg name="depth_fps"           default="6"/><!-- 6,15,30 -->
+    <arg name="depth_fps"           default="30"/><!-- 6,15,30 -->
     <arg name="enable_depth"        default="true"/>
 
     <arg name="infra_width"         default="640"/>
@@ -136,7 +132,7 @@
                 scan_time: 0.2      # 1/5
                 range_min: 0.20
                 range_max: 10.0
-                use_inf: false
+                use_inf: true
                 inf_epsilon: 1.0
 
                 # Concurrency level, affects number of pointclouds queued for processing, thread number governed by nodelet manager
