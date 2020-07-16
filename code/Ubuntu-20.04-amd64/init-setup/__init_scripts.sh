@@ -29,12 +29,20 @@ rosdep init
 rosdep update
 #rosdep fix-permissions
 
+apt-get install -y ros-noetic-ddynamic-reconfigure
+
+# Navigation packages
 #apt-get install -y ros-noetic-navigation ros-noetic-slam-gmapping ros-noetic-tf ros-noetic-laser-filters ros-noetic-robot-localization
+
+# Joystick packages
 #apt-get install -y ros-noetic-joy ros-noetic-teleop-twist-joy ros-noetic-teleop-twist-keyboard joystick
 
 # Install dependencies for build some missing packages from source
 apt-get install -y ros-noetic-navigation ros-noetic-openslam-gmapping ros-noetic-tf ros-noetic-laser-filters ros-noetic-robot-localization
 apt-get install -y ros-noetic-teleop-twist-keyboard joystick libusb-dev libspnav-dev libbluetooth-dev libcwiid-dev
+
+# Deepth camera packages
+apt-get install -y ros-noetic-pointcloud-to-laserscan
 
 # Create ROS workspace
 source /opt/ros/noetic/setup.bash
