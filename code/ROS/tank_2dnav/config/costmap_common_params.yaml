@@ -5,8 +5,8 @@ max_obstacle_height: 0.50
 
 inflation_layer:
     enabled: true
-    inflation_radius:       0.50
-    cost_scaling_factor:    15.0
+    inflation_radius:       0.8
+    cost_scaling_factor:    6.0
 
 obstacle_layer:
     enabled: true
