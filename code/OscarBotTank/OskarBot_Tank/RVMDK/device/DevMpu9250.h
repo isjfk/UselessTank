@@ -12,7 +12,7 @@
  extern "C" {
 #endif
 
-#define MPU_FREQ_HZ_DEFAULT     (100)
+#define MPU_FREQ_HZ_DEFAULT     (50)
 #define COMPASS_FREQ_HZ_DEFAULT (50)
 
 extern inv_error_t devMpu9250Status;

@@ -227,10 +227,10 @@ void usartInit(USART_TypeDef* USARTx, uint32_t baudRate) {
 
 void boardUsartInit(void) {
     boardUsart1GpioInit();
-    usartInit(USART1, 115200);
+    usartInit(USART1, 57600);
 
     boardUsart2GpioInit();
-    usartInit(USART2, 115200);
+    usartInit(USART2, 57600);
 
 //    boardUsart3GpioInit();
 //    usartInit(USART3, 115200);

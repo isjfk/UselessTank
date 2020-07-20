@@ -3,11 +3,6 @@
     <!-- Run the map server -->
     <node name="map_server" pkg="map_server" type="map_server" args="$(find tank_2dnav)/map/map.yaml" />
 
-    <!--
-    <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" output="screen">
-    </node>
-    -->
-
     <!--- Run AMCL -->
     <node name="amcl" pkg="amcl" type="amcl" args="scan:=scan" output="screen">
         <rosparam file="$(find tank_2dnav)/config/amcl_params.yaml" command="load" />
