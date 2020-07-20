@@ -1,7 +1,7 @@
 tank_setup_tf_node:
     tfRate: 20
 
-    laserTfX: 0.08
+    laserTfX: 0.06
     laserTfY: 0
     laserTfZ: 0.20
     laserTfRoll: 0
