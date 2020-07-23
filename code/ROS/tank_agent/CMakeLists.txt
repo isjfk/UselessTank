@@ -129,6 +129,7 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/tank_agent.cpp
 # )
+add_library(TankMsgLib src/TankMsg.c)
 add_library(StdCrc32Lib src/StdCrc32.c)
 
 ## Add cmake target dependencies of the library
@@ -159,6 +160,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 # )
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  TankMsgLib
   StdCrc32Lib
 )
 

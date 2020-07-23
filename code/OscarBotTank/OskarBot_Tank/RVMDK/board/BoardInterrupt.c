@@ -169,7 +169,7 @@ void USART1_IRQHandler(void) {
         USART_ClearITPendingBit(usartPort, USART_IT_RXNE);
 
         uint8_t b = USART_ReceiveData(usartPort);
-        tankCmdAppendByte(b);
+        //tankCmdAppendByte(b);
     }
 }
 
@@ -185,7 +185,7 @@ void USART2_IRQHandler(void) {
 
     if (USART_GetITStatus(usartPort, USART_IT_TXE) == SET) {
         uint8_t b;
-        if (tankMsgReadByte(&b) == COMMON_DATABUF_OK) {
+        if (tankMsgSendBufReadByte(&b) == COMMON_DATABUF_OK) {
             USART_SendData(usartPort, b);
         } else {
             USART_ITConfig(usartPort, USART_IT_TXE, DISABLE);

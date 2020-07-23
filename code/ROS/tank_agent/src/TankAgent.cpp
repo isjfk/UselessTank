@@ -10,6 +10,7 @@
 #include <thread>
 
 #include "TankAgent.h"
+#include "TankMsg.h"
 #include "StdCrc32.h"
 
 #include "ros/ros.h"
@@ -20,8 +21,6 @@
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/TransformStamped.h"
 #include "geometry_msgs/Twist.h"
-
-#define MSG_DATA_LENGTH_MAX     100
 
 char serialPort[2048];
 char serialBaudrateStr[16];
@@ -76,13 +75,13 @@ double odomTwist[3] = { 0, 0, 0 };
 void tankMsgThreadFunc(void);
 error_t readTankMsg(TankMsg *tankMsg);
 void tankMsgEncoderFix(TankMsg *tankMsg);
-void publishImuMsg(TankMsg& tankMsg);
-void publishMagMsg(TankMsg& tankMsg);
-bool updateOdomData(TankMsg& tankMsg);
-void publishOdomImuMsg(TankMsg& tankMsg);
-void publishOdomEncoderMsg(TankMsg& tankMsg);
-void publishOdomMsg(TankMsg& tankMsg);
-void broadcastOdomTf(TankMsg& tankMsg);
+void publishImuMsg(TankMsg *tankMsg);
+void publishMagMsg(TankMsg *tankMsg);
+bool updateOdomData(TankMsg *tankMsg);
+void publishOdomImuMsg(TankMsg *tankMsg);
+void publishOdomEncoderMsg(TankMsg *tankMsg);
+void publishOdomMsg(TankMsg *tankMsg);
+void broadcastOdomTf(TankMsg *tankMsg);
 
 
 void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel);
@@ -138,97 +137,67 @@ error_t readSize(void *buf, size_t size) {
     return 0;
 }
 
-int isStartTag(uint8_t *buf) {
-    return (buf[0] == 0x55) && (buf[1] == 0xAA);
-}
+error_t readTankMsgStartTag() {
+    uint8_t tag = 0;
+    size_t startTagCount = 0;
+    size_t startTagCountMin = 5;
+    size_t readCount = 0;
 
-error_t readTankMsgHeader(uint32_t *header) {
-    uint8_t buf[4];
-
-    memset(buf, 0, sizeof(buf));
-
-    while (!isStartTag(buf)) {
-        if (readSize(buf, 2)) {
-            return -1;
-        }
-        if (buf[1] == 0x55) {
-            buf[0] = buf[1];
-            if (readSize(buf + 1, 1)) {
-                return -1;
-            }
+    while ((readSize(&tag, 1) == 0) && (readCount++ < sizeof(TankMsgPacket))) {
+        if ((tag == 0xFF) && (startTagCount >= startTagCountMin)) {
+            return 0;
+        } else if (tag == 0x55) {
+            startTagCount++;
+        } else {
+            startTagCount = 0;
         }
     }
 
-    while (isStartTag(buf)) {
-        if (readSize(buf, 2)) {
-            return -1;
-        }
-    }
-
-    if (readSize(buf + 2, 2)) {
-        return -1;
-    }
-
-    *header = *((uint32_t *) buf);
-    tankMsgCount++;
-
-    return 0;
+    return -1;
 }
 
 error_t readTankMsg(TankMsg *tankMsg) {
-    uint8_t extraBuf[MSG_DATA_LENGTH_MAX];
-
-    memset(tankMsg, 0, sizeof(tankMsg));
-
-    if (readTankMsgHeader(&tankMsg->header)) {
-        return -1;
-    }
-
-    tankMsg->startTag = 0xAA55AA55;
-    if (tankMsg->header != 0x00000001) {
-        ROS_WARN("[TankAgent] TankMsg[%d] Unsupported TankMsg header[%08X]!", tankMsgCount, tankMsg->header);
-        return -1;
-    }
-
-    if (readSize(&tankMsg->timestamp, sizeof(tankMsg->timestamp))) {
-        return -1;
-    }
-
-    if (readSize(&tankMsg->dataLength, sizeof(tankMsg->dataLength))) {
-        return -1;
-    }
-    if (tankMsg->dataLength > MSG_DATA_LENGTH_MAX) {
-        ROS_WARN("[TankAgent] TankMsg[%d] Unsupported TankMsg dataLength[%d], max allowed[%d]!", tankMsgCount, tankMsg->dataLength, MSG_DATA_LENGTH_MAX);
-        return -1;
-    }
-
-    size_t dataSize = std::min((size_t) tankMsg->dataLength, sizeof(tankMsg->data));
-    if (readSize(&tankMsg->data, dataSize)) {
-        return -1;
-    }
-
-    size_t extraSize = tankMsg->dataLength - dataSize;
-    if (extraSize > 0) {
-        if (readSize(extraBuf, extraSize)) {
-            return -1;
-        }
-    }
-
-    if (readSize(&tankMsg->crc, sizeof(tankMsg->crc))) {
-        return -1;
-    }
-
     StdCrc32 crc32;
-    size_t tankMsgCrcSize = (((uint8_t *) &tankMsg->data) - ((uint8_t *) &tankMsg->header)) + dataSize;
-    stdCrc32Init(&crc32);
-    stdCrc32Update(&crc32, &tankMsg->header, tankMsgCrcSize);
-    if (extraSize > 0) {
-        stdCrc32Update(&crc32, extraBuf, extraSize);
-    }
-    uint32_t crc = stdCrc32Get(&crc32);
 
-    if (crc != tankMsg->crc) {
-        ROS_WARN("[TankAgent] TankMsg[%d] Error validate TankMsg crc32 checksum, skip to next! Received crc32[%08X] expected crc32[%08X]", tankMsgCount, tankMsg->crc, crc);
+    memset(tankMsg, 0, sizeof(TankMsg));
+
+    if (readTankMsgStartTag()) {
+        return -1;
+    }
+
+    tankMsgCount++;
+
+    if (readSize(tankMsgHeaderAddr(tankMsg), tankMsgHeaderSize(tankMsg))) {
+        return -1;
+    }
+
+    stdCrc32Init(&crc32);
+    stdCrc32Update(&crc32, tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
+
+    uint32_t crcHeader = stdCrc32Get(&crc32);
+    if (crcHeader != tankMsg->crcHeader) {
+        ROS_WARN("[TankAgent] TankMsg[%d] Error validate TankMsg header CRC32 checksum, skip to next! Received CRC32[%08X] expected CRC32[%08X]", tankMsgCount, tankMsg->crcHeader, crcHeader);
+        return -1;
+    }
+    if (tankMsg->desc.field.version != 1) {
+        ROS_WARN("[TankAgent] TankMsg[%d] Unsupported TankMsg desc[%08X]!", tankMsgCount, tankMsg->desc.value);
+        return -1;
+    }
+    if (tankMsg->dataLength > tankMsgDataSizeMax(tankMsg)) {
+        ROS_WARN("[TankAgent] TankMsg[%d] Unsupported TankMsg dataLength[%d], max allowed[%d]!", tankMsgCount, tankMsg->dataLength, (uint32_t) tankMsgDataSizeMax(tankMsg));
+        return -1;
+    }
+
+    if (readSize(tankMsgDataAddr(tankMsg), tankMsgDataSize(tankMsg))) {
+        return -1;
+    }
+
+    stdCrc32Init(&crc32);
+    stdCrc32Update(&crc32, tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
+
+    uint32_t crcData = stdCrc32Get(&crc32);
+    if (crcData != tankMsg->crcData) {
+        ROS_WARN("[TankAgent] TankMsg[%d] Error validate TankMsg data CRC32 checksum, skip to next! Received CRC32[%08X] expected CRC32[%08X]", tankMsgCount, tankMsg->crcData, crcData);
         return -1;
     }
 
@@ -238,37 +207,40 @@ error_t readTankMsg(TankMsg *tankMsg) {
 void logTankMsg(TankMsg *tankMsg) {
     if (logTankMsgConfig & 0b00000001) {
         uint8_t *buf = (uint8_t *) tankMsg;
-        for (size_t i = 0; i < sizeof(TankMsg); i++) {
+        for (size_t i = 0; i < tankMsgSize(tankMsg); i++) {
             printf("%02X", (int) buf[i]);
         }
         printf("\r\n");
     }
 
     if (logTankMsgConfig & 0b00000010) {
-        printf("TankMsg[%08d] ts[%08d] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%9.0f %9.0f %9.0f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\r\n",
+        TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
+        printf("TankMsg[%06d] seq[%06d] ts[%08d] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\r\n",
                 tankMsgCount,
+                tankMsg->seq,
                 tankMsg->timestamp,
-                tankMsg->data.gyro[0], tankMsg->data.gyro[1], tankMsg->data.gyro[2],
-                tankMsg->data.accel[0], tankMsg->data.accel[1], tankMsg->data.accel[2],
-                tankMsg->data.compass[0], tankMsg->data.compass[1], tankMsg->data.compass[2],
-                tankMsg->data.quat[0], tankMsg->data.quat[1], tankMsg->data.quat[2], tankMsg->data.quat[3],
-                tankMsg->data.motorEncoderLeft, tankMsg->data.motorEncoderRight);
+                data->gyro[0], data->gyro[1], data->gyro[2],
+                data->accel[0], data->accel[1], data->accel[2],
+                data->compass[0], data->compass[1], data->compass[2],
+                data->quat[0], data->quat[1], data->quat[2], data->quat[3],
+                data->motorEncoderLeft, data->motorEncoderRight);
     }
 }
 
 void tankMsgThreadFunc() {
-    TankMsg tankMsg;
+    TankMsg _tankMsg;
+    TankMsg *tankMsg = &_tankMsg;
 
     while (ros::ok()) {
         currentTime = ros::Time::now();
 
-        if (readTankMsg(&tankMsg)) {
+        if (readTankMsg(tankMsg)) {
             //ROS_WARN("[TankAgent] Read TankMsg from serial error!");
             continue;
         }
 
-        tankMsgEncoderFix(&tankMsg);
-        logTankMsg(&tankMsg);
+        tankMsgEncoderFix(tankMsg);
+        logTankMsg(tankMsg);
 
         if (updateOdomData(tankMsg)) {
             publishImuMsg(tankMsg);
@@ -280,9 +252,10 @@ void tankMsgThreadFunc() {
             broadcastOdomTf(tankMsg);
         }
 
-        prevMsgTimestamp = tankMsg.timestamp;
-        prevEncoderLeft = (int16_t) tankMsg.data.motorEncoderLeft;
-        prevEncoderRight = (int16_t) tankMsg.data.motorEncoderRight;
+        TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
+        prevMsgTimestamp = tankMsg->timestamp;
+        prevEncoderLeft = (int16_t) data->motorEncoderLeft;
+        prevEncoderRight = (int16_t) data->motorEncoderRight;
         prevImuTheta = imuTheta;
     }
 }
@@ -292,29 +265,31 @@ void tankMsgEncoderFix(TankMsg *tankMsg) {
         return;
     }
 
-    uint16_t encoderLeft = (uint16_t) tankMsg->data.motorEncoderLeft;
-    uint16_t encoderRight = (uint16_t) tankMsg->data.motorEncoderRight;
+    TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
+    uint16_t encoderLeft = (uint16_t) data->motorEncoderLeft;
+    uint16_t encoderRight = (uint16_t) data->motorEncoderRight;
 
     encoderLeft = UINT16_MAX - encoderLeft + 1;
     encoderRight = UINT16_MAX - encoderRight + 1;
 
-    tankMsg->data.motorEncoderLeft = encoderLeft;
-    tankMsg->data.motorEncoderRight = encoderRight;
+    data->motorEncoderLeft = encoderLeft;
+    data->motorEncoderRight = encoderRight;
 }
 
-void publishImuMsg(TankMsg& tankMsg) {
+void publishImuMsg(TankMsg *tankMsg) {
     if (!imuMsgPublishEnabled) {
         return;
     }
 
+    TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
     sensor_msgs::Imu imuMsg;
     imuMsg.header.stamp = currentTime;
     imuMsg.header.frame_id = "imu_link";
 
-    imuMsg.orientation.w = tankMsg.data.quat[0];
-    imuMsg.orientation.x = tankMsg.data.quat[1];
-    imuMsg.orientation.y = tankMsg.data.quat[2];
-    imuMsg.orientation.z = tankMsg.data.quat[3];
+    imuMsg.orientation.w = data->quat[0];
+    imuMsg.orientation.x = data->quat[1];
+    imuMsg.orientation.y = data->quat[2];
+    imuMsg.orientation.z = data->quat[3];
     imuMsg.orientation_covariance[0] = 0.0025;
     imuMsg.orientation_covariance[1] = 0;
     imuMsg.orientation_covariance[2] = 0;
@@ -325,9 +300,9 @@ void publishImuMsg(TankMsg& tankMsg) {
     imuMsg.orientation_covariance[7] = 0;
     imuMsg.orientation_covariance[8] = 0.0025;
 
-    imuMsg.angular_velocity.x = tankMsg.data.gyro[0];
-    imuMsg.angular_velocity.y = tankMsg.data.gyro[1];
-    imuMsg.angular_velocity.z = tankMsg.data.gyro[2];
+    imuMsg.angular_velocity.x = data->gyro[0];
+    imuMsg.angular_velocity.y = data->gyro[1];
+    imuMsg.angular_velocity.z = data->gyro[2];
     imuMsg.angular_velocity_covariance[0] = 0.02;
     imuMsg.angular_velocity_covariance[1] = 0;
     imuMsg.angular_velocity_covariance[2] = 0;
@@ -338,9 +313,9 @@ void publishImuMsg(TankMsg& tankMsg) {
     imuMsg.angular_velocity_covariance[7] = 0;
     imuMsg.angular_velocity_covariance[8] = 0.02;
 
-    imuMsg.linear_acceleration.x = tankMsg.data.accel[0];
-    imuMsg.linear_acceleration.y = tankMsg.data.accel[1];
-    imuMsg.linear_acceleration.z = tankMsg.data.accel[2];
+    imuMsg.linear_acceleration.x = data->accel[0];
+    imuMsg.linear_acceleration.y = data->accel[1];
+    imuMsg.linear_acceleration.z = data->accel[2];
     imuMsg.linear_acceleration_covariance[0] = 0.04;
     imuMsg.linear_acceleration_covariance[1] = 0;
     imuMsg.linear_acceleration_covariance[2] = 0;
@@ -354,27 +329,29 @@ void publishImuMsg(TankMsg& tankMsg) {
     imuMsgPub->publish(imuMsg);
 }
 
-void publishMagMsg(TankMsg& tankMsg) {
+void publishMagMsg(TankMsg *tankMsg) {
     if (!magMsgPublishEnabled) {
         return;
     }
 
+    TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
     sensor_msgs::MagneticField magMsg;
     magMsg.header.stamp = currentTime;
     magMsg.header.frame_id = "mag_link";
 
-    magMsg.magnetic_field.x = tankMsg.data.compass[0];
-    magMsg.magnetic_field.y = tankMsg.data.compass[1];
-    magMsg.magnetic_field.z = tankMsg.data.compass[2];
+    magMsg.magnetic_field.x = data->compass[0];
+    magMsg.magnetic_field.y = data->compass[1];
+    magMsg.magnetic_field.z = data->compass[2];
 
     magMsgPub->publish(magMsg);
 }
 
-bool updateOdomData(TankMsg& tankMsg) {
-    uint32_t timestamp = tankMsg.timestamp;
+bool updateOdomData(TankMsg *tankMsg) {
+    TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
+    uint32_t timestamp = tankMsg->timestamp;
     if ((prevMsgTimestamp == 0) || (prevMsgTimestamp >= timestamp)) {
         // Tank control board reset, calculate imuTheta so it will not jump in next cycle
-        float *quat = tankMsg.data.quat;
+        float *quat = data->quat;
         imuTheta = atan2f(quat[1] * quat[2] + quat[0] * quat[3], 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
         return false;
     }
@@ -382,8 +359,8 @@ bool updateOdomData(TankMsg& tankMsg) {
     double timeDiffMs = timestamp - prevMsgTimestamp;
     double timeDiff = timeDiffMs / 1000.0;
 
-    int16_t encoderLeft = (int16_t) tankMsg.data.motorEncoderLeft;
-    int16_t encoderRight = (int16_t) tankMsg.data.motorEncoderRight;
+    int16_t encoderLeft = (int16_t) data->motorEncoderLeft;
+    int16_t encoderRight = (int16_t) data->motorEncoderRight;
     int16_t encoderLeftDiff = encoderLeft - prevEncoderLeft;
     int16_t encoderRightDiff = encoderRight - prevEncoderRight;
     double encoderDiff = (encoderLeftDiff + encoderRightDiff) / 2;
@@ -400,7 +377,7 @@ bool updateOdomData(TankMsg& tankMsg) {
         encoderTheta += M_PI * 2;
     }
 
-    float *quat = tankMsg.data.quat;
+    float *quat = data->quat;
     imuTheta = atan2f(quat[1] * quat[2] + quat[0] * quat[3], 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
     double imuThetaDiff = imuTheta - prevImuTheta;
 
@@ -426,7 +403,7 @@ bool updateOdomData(TankMsg& tankMsg) {
     return true;
 }
 
-void publishOdomImuMsg(TankMsg& tankMsg) {
+void publishOdomImuMsg(TankMsg *tankMsg) {
     if (!odomImuMsgPublishEnabled) {
         return;
     }
@@ -452,7 +429,7 @@ void publishOdomImuMsg(TankMsg& tankMsg) {
     odomImuMsgPub->publish(odomMsg);
 }
 
-void publishOdomEncoderMsg(TankMsg& tankMsg) {
+void publishOdomEncoderMsg(TankMsg *tankMsg) {
     if (!odomEncoderMsgPublishEnabled) {
         return;
     }
@@ -478,7 +455,7 @@ void publishOdomEncoderMsg(TankMsg& tankMsg) {
     odomEncoderMsgPub->publish(odomMsg);
 }
 
-void publishOdomMsg(TankMsg& tankMsg) {
+void publishOdomMsg(TankMsg *tankMsg) {
     if (!odomMsgPublishEnabled) {
         return;
     }
@@ -504,7 +481,7 @@ void publishOdomMsg(TankMsg& tankMsg) {
     odomMsgPub->publish(odomMsg);
 }
 
-void broadcastOdomTf(TankMsg& tankMsg) {
+void broadcastOdomTf(TankMsg *tankMsg) {
     if (!odomTfBroadcastEnabled) {
         return;
     }
@@ -705,4 +682,3 @@ void closeSerialPort() {
 
     close(serialFd);
 }
-

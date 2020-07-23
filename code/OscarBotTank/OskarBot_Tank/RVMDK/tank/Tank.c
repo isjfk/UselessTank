@@ -125,7 +125,7 @@ void tankInit(void) {
     tankControlInit();
     tankPidInit();
     tankCmdInit();
-    tankMsgInit();
+    tankMsgSendInit();
 }
 
 void tankPidInit(void) {
@@ -157,7 +157,7 @@ void tankLoop(void) {
         tankThrottleLimitByLevelLoop();
         tankThrottleLimitByLeashTensionLoop();
 
-        tankMsgLoop();
+        tankMsgSendLoop();
     }
 
     tankMotorLoop();

@@ -1,6 +1,5 @@
 #include <stddef.h>
-
-#include "common/CommonDataBuf.h"
+#include <stdint.h>
 
 #ifndef __TANK_MSG_H
 #define __TANK_MSG_H
@@ -8,6 +7,7 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
+
 
 #define TANK_MSG_VERSION                1
 
@@ -70,12 +70,6 @@ uint8_t* tankMsgInit(TankMsg *tankMsg, TankMsg *tankMsgReq, uint32_t dataType, u
 #define tankMsgReqInitByType(tankMsg, DataType)             (DataType *) tankMsgInit(tankMsg, NULL, tankMsgDataType(DataType), tankMsgDataLength(DataType))
 #define tankMsgRspInitByType(tankMsg, tankMsgReq, DataType) (DataType *) tankMsgInit(tankMsg, tankMsgReq, tankMsgDataType(DataType), tankMsgDataLength(DataType))
 
-
-
-void tankMsgSendInit(void);
-void tankMsgSendLoop(void);
-
-CommonDataBufError tankMsgSendBufReadByte(uint8_t *data);
 
 #ifdef __cplusplus
 }
