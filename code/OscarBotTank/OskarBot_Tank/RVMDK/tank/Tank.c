@@ -3,7 +3,8 @@
 
 #include "Tank.h"
 #include "TankCmd.h"
-#include "TankMsg.h"
+#include "TankMsgRecv.h"
+#include "TankMsgSend.h"
 #include "common/CommonMath.h"
 #include "system/SysIrq.h"
 #include "system/SysTick.h"
@@ -125,6 +126,7 @@ void tankInit(void) {
     tankControlInit();
     tankPidInit();
     tankCmdInit();
+    tankMsgRecvInit();
     tankMsgSendInit();
 }
 
@@ -143,6 +145,7 @@ void tankPidInit(void) {
 
 void tankLoop(void) {
     tankCmdLoop();
+    tankMsgRecvLoop();
 
     if (tankControlIsTimeout()) {
         tankControlSet(0, 0);
