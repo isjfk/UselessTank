@@ -27,8 +27,8 @@ char serialBaudrateStr[16];
 speed_t serialBaudrate;
 
 bool encoderInverted = false;
-double encoderCountXPerMeter = 0;
-double encoderDiffYawFullTurn = 0;
+double encoderTickXPerMeter = 0;
+double encoderTickDiffYawFullTurn = 0;
 
 bool imuMsgPublishEnabled = true;
 bool magMsgPublishEnabled = true;
@@ -139,17 +139,17 @@ error_t readSize(void *buf, size_t size) {
 
 error_t readTankMsgStartTag() {
     uint8_t tag = 0;
-    size_t startTagCount = 0;
-    size_t startTagCountMin = 5;
-    size_t readCount = 0;
+    size_t startTagSize = 0;
+    size_t startTagSizeMin = 5;
+    size_t readDataSize = 0;
 
-    while ((readSize(&tag, 1) == 0) && (readCount++ < sizeof(TankMsgPacket))) {
-        if ((tag == 0xFF) && (startTagCount >= startTagCountMin)) {
+    while ((readSize(&tag, 1) == 0) && (readDataSize++ < sizeof(TankMsgPacket))) {
+        if ((tag == 0xFF) && (startTagSize >= startTagSizeMin)) {
             return 0;
         } else if (tag == 0x55) {
-            startTagCount++;
+            startTagSize++;
         } else {
-            startTagCount = 0;
+            startTagSize = 0;
         }
     }
 
@@ -365,9 +365,9 @@ bool updateOdomData(TankMsg *tankMsg) {
     int16_t encoderRightDiff = encoderRight - prevEncoderRight;
     double encoderDiff = (encoderLeftDiff + encoderRightDiff) / 2;
 
-    double encoderDistanceDiff = encoderDiff / encoderCountXPerMeter;
+    double encoderDistanceDiff = encoderDiff / encoderTickXPerMeter;
     double encoderSpeed = encoderDistanceDiff / timeDiff;
-    double encoderThetaDiff = (-encoderLeftDiff + encoderRightDiff) / (encoderDiffYawFullTurn / 2) * M_PI;
+    double encoderThetaDiff = (-encoderLeftDiff + encoderRightDiff) / (encoderTickDiffYawFullTurn / 2) * M_PI;
 
     // Limit encoderTheta range in [-M_PI, +M_PI]
     double encoderTheta = encoderOdomPose[2] + encoderThetaDiff;
@@ -616,16 +616,16 @@ void loadParams(void) {
     }
 
     ros::param::param<bool>("~encoderInverted", encoderInverted, false);
-    ros::param::param<double>("~encoderCountXPerMeter", encoderCountXPerMeter, 0);
-    ros::param::param<double>("~encoderDiffYawFullTurn", encoderDiffYawFullTurn, 0);
+    ros::param::param<double>("~encoderTickXPerMeter", encoderTickXPerMeter, 0);
+    ros::param::param<double>("~encoderTickDiffYawFullTurn", encoderTickDiffYawFullTurn, 0);
 
-    if (encoderCountXPerMeter == 0) {
-        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderCountXPerMeter[%f]! Check your env: TANK_MOTOR_MODEL", encoderCountXPerMeter);
+    if (encoderTickXPerMeter == 0) {
+        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderTickXPerMeter[%f]! Check your env: TANK_MOTOR_MODEL", encoderTickXPerMeter);
         exit(-1);
     }
 
-    if (encoderDiffYawFullTurn == 0) {
-        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderDiffYawFullTurn[%f]! Check your env: TANK_MOTOR_MODEL", encoderDiffYawFullTurn);
+    if (encoderTickDiffYawFullTurn == 0) {
+        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderTickDiffYawFullTurn[%f]! Check your env: TANK_MOTOR_MODEL", encoderTickDiffYawFullTurn);
         exit(-1);
     }
 

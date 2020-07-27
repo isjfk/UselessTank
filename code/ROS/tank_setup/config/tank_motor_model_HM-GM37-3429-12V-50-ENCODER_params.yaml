@@ -1,4 +1,4 @@
 tank_agent_node:
-    encoderInverted: false
-    encoderCountXPerMeter: 17278.2
-    encoderDiffYawFullTurn: 27640
+    encoderInverted:            false
+    encoderTickXPerMeter:       17278.2
+    encoderTickDiffYawFullTurn: 27640
