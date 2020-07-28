@@ -128,13 +128,13 @@
                 angle_max:  0.65    #  37deg (4:3)
                 #angle_min: -0.75    # -43deg (16:9)
                 #angle_max:  0.75    #  43deg (16:9)
-                angle_increment: 0.006283 # (M_PI*2)/(8000/8)
-                scan_time: 0.2      # 1/5
+                angle_increment: 0.0087 # M_PI/360.0
+                scan_time: 0.1      # 1/10
                 range_min: 0.20
                 #range_max: 10.0
                 range_max: 3.0
                 use_inf: true
-                inf_epsilon: 1.0
+                inf_epsilon: 1.0    # value added to max range when use_infs parameter is set to false
 
                 # Concurrency level, affects number of pointclouds queued for processing, thread number governed by nodelet manager
                 # 0 : Detect number of cores

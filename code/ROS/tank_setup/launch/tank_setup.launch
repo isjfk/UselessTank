@@ -31,8 +31,8 @@
         <param name="serial_port" type="string" value="/dev/ttyUSB0" />
         <param name="serial_baudrate" type="int" value="115200" />
         <param name="frame_id" type="string" value="base_laser" />
-        <!-- scan_mode: Legacy, Express, Boost -->
-        <param name="scan_mode" type="string" value="Boost" /> 
+        <!-- scan_mode: Standard, Legacy, Express, Boost -->
+        <param name="scan_mode" type="string" value="Standard" /> 
         <param name="inverted" type="bool" value="false" />
         <param name="angle_compensate" type="bool" value="true" />
     </node>
