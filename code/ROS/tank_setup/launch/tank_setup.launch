@@ -13,8 +13,8 @@
         <param name="odomMsgPublishEnabled" type="bool" value="false" />
         <param name="odomTfBroadcastEnabled" type="bool" value="false" />
 <!--
-        <param name="logTankMsg" type="string" value="00000010" />
-        <param name="logTankCmd" type="string" value="00000001" />
+        <param name="logTankMsgRecv" type="string" value="00000010" />
+        <param name="logTankMsgSend" type="string" value="00000001" />
 -->
     </node>
 

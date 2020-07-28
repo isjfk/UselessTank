@@ -41,10 +41,14 @@ typedef struct {
 #define tankMsgDataCrcSize(tankMsg)     tankMsgDataSize(tankMsg)
 #define tankMsgAddr(tankMsg)            ((uint8_t *) &((tankMsg)->desc))
 #define tankMsgSize(tankMsg)            (tankMsgHeaderSize(tankMsg) + tankMsgDataSize(tankMsg))
+#define tankMsgSet(tankMsg, offset, data) ((uint8_t *)(tankMsg))[offset] = data
 
-#define tankMsgDataType(DataType)       (DATA_TYPE_##DataType)
-#define tankMsgDataLength(DataType)     (sizeof(DataType))
+#define tankMsgDataType(DataType)       (TankMsg_dataType_##DataType)
+#define tankMsgDataSizeOfType(DataType) (sizeof(DataType))
 #define tankMsgDataPtrOfType(tankMsg, DataType) ((DataType *) (tankMsg)->data)
+#define tankMsgDataIsType(tankMsg, DataType) (tankMsg->dataType == tankMsgDataType(DataType))
+
+#define tankMsgSizeOfType(tankMsg, DataType) (tankMsgHeaderSize(tankMsg) + tankMsgDataSizeOfType(tankMsg))
 
 typedef struct {
     uint8_t startTag[8];
@@ -55,6 +59,14 @@ typedef struct {
 #define tankMsgPacketSize(packet)       (sizeof((packet)->startTag) + tankMsgSize(&((packet)->tankMsg)))
 
 typedef struct {
+    float x;
+    float yaw;
+    float encoderTickPerMeterX;
+    float encoderTickDiffFullTurnYaw;
+} TankMsgCtrlTank;
+#define TankMsg_dataType_TankMsgCtrlTank        1
+
+typedef struct {
     float gyro[3];
     float accel[3];
     float compass[3];
@@ -62,13 +74,13 @@ typedef struct {
     uint32_t motorEncoderLeft;
     uint32_t motorEncoderRight;
 } TankMsgSensorData;
-#define DATA_TYPE_TankMsgSensorData     1
+#define TankMsg_dataType_TankMsgSensorData      2
 
 TankMsg* tankMsgPacketInit(TankMsgPacket *packet);
 
 uint8_t* tankMsgInit(TankMsg *tankMsg, TankMsg *tankMsgReq, uint32_t dataType, uint32_t dataLength);
-#define tankMsgReqInitByType(tankMsg, DataType)             (DataType *) tankMsgInit(tankMsg, NULL, tankMsgDataType(DataType), tankMsgDataLength(DataType))
-#define tankMsgRspInitByType(tankMsg, tankMsgReq, DataType) (DataType *) tankMsgInit(tankMsg, tankMsgReq, tankMsgDataType(DataType), tankMsgDataLength(DataType))
+#define tankMsgReqInitByType(tankMsg, DataType)             (DataType *) tankMsgInit(tankMsg, NULL, tankMsgDataType(DataType), tankMsgDataSizeOfType(DataType))
+#define tankMsgRspInitByType(tankMsg, tankMsgReq, DataType) (DataType *) tankMsgInit(tankMsg, tankMsgReq, tankMsgDataType(DataType), tankMsgDataSizeOfType(DataType))
 
 
 #ifdef __cplusplus

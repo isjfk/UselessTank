@@ -12,6 +12,8 @@
 void tankMsgRecvInit(void);
 void tankMsgRecvLoop(void);
 
+CommonDataBufError tankMsgRecvBufAppendByte(uint8_t data);
+
 #ifdef __cplusplus
 }
 #endif

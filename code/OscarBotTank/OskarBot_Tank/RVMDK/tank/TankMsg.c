@@ -2,7 +2,7 @@
 
 #include "TankMsg.h"
 
-uint32_t tankMsgSeq = 1;
+static uint32_t tankMsgSeq = 1;
 
 TankMsg* tankMsgPacketInit(TankMsgPacket *packet) {
     memset(packet, 0, sizeof(TankMsgPacket));

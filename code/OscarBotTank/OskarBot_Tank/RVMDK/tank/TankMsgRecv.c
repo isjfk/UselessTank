@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stddef.h>
 #include <string.h>
 #include <math.h>
 
@@ -14,8 +15,109 @@
 #include "device/DevMotor.h"
 #include "device/DevUsart.h"
 
+uint32_t tankMsgRecvInternalErrorCount = 0;
+uint32_t tankMsgRecvValidMsgCount = 0;
+uint32_t tankMsgRecvIllegalMsgCount = 0;
+uint32_t tankMsgRecvUnsupportedMsgCount = 0;
+
+static uint8_t tankMsgRecvData[sizeof(TankMsg) * 4];
+static CommonDataBuf tankMsgRecvBuf;
+
+static TankMsgPacket tankMsgPacket;
+static TankMsg *tankMsg = &(tankMsgPacket.tankMsg);
+
+static uint8_t state = 0;
+static size_t readSize = 0;
+static const size_t startTagSizeMin = 5;
+
+#define STATE_START_TAG     1
+#define STATE_MSG_HEADER    2
+#define STATE_MSG_DATA      3
+
+static void tankMsgRecvOnReceived(TankMsg *tankMsg);
+static inline bool tankMsgRecvIsHeaderValid(TankMsg *tankMsg);
+static inline bool tankMsgRecvIsDataValid(TankMsg *tankMsg);
+
 void tankMsgRecvInit(void) {
+    dataBufInit(&tankMsgRecvBuf, tankMsgRecvData, sizeof(tankMsgRecvData));
+
+    tankMsgPacketInit(&tankMsgPacket);
 }
 
 void tankMsgRecvLoop(void) {
+    uint8_t data;
+    while (dataBufReadByte(&tankMsgRecvBuf, &data) == COMMON_DATABUF_OK) {
+        switch (state) {
+        case STATE_START_TAG:
+            if ((data == 0xFF) && (readSize > startTagSizeMin)) {
+                readSize = 0;
+                state = STATE_MSG_HEADER;
+            } else if (data == 0x55) {
+                readSize++;
+            } else {
+                readSize = 0;
+            }
+            break;
+        case STATE_MSG_HEADER:
+            tankMsgSet(tankMsg, readSize++, data);
+            if (readSize >= tankMsgHeaderSize(tankMsg)) {
+                if (tankMsgRecvIsHeaderValid(tankMsg)) {
+                    state = STATE_MSG_DATA;
+                } else {
+                    tankMsgRecvIllegalMsgCount++;
+                    readSize = 0;
+                    state = STATE_START_TAG;
+                }
+            }
+            break;
+        case STATE_MSG_DATA:
+            tankMsgSet(tankMsg, readSize++, data);
+            if (readSize >= tankMsgSize(tankMsg)) {
+                if (tankMsgRecvIsDataValid(tankMsg)) {
+                    tankMsgRecvValidMsgCount++;
+                    tankMsgRecvOnReceived(tankMsg);
+                } else {
+                    tankMsgRecvIllegalMsgCount++;
+                }
+                readSize = 0;
+                state = STATE_START_TAG;
+            }
+            break;
+        default:
+            tankMsgRecvInternalErrorCount++;
+            readSize = 0;
+            state = STATE_START_TAG;
+            break;
+        }
+    }
+}
+
+static void tankMsgRecvOnTankMsgCtrlTank(TankMsg *tankMsg, TankMsgCtrlTank *msgData) {
+    tankThrottleSet(msgData->x / 300.0);
+    tankYawSet(msgData->yaw / 300.0);
+}
+
+static void tankMsgRecvOnReceived(TankMsg *tankMsg) {
+    switch (tankMsg->dataType) {
+    case tankMsgDataType(TankMsgCtrlTank):
+        tankMsgRecvOnTankMsgCtrlTank(tankMsg, tankMsgDataPtrOfType(tankMsg, TankMsgCtrlTank));
+        break;
+    default:
+        tankMsgRecvUnsupportedMsgCount++;
+        break;
+    }
+}
+
+static inline bool tankMsgRecvIsHeaderValid(TankMsg *tankMsg) {
+    uint32_t crc32 = devStdCrc32ByteArray(tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
+    return crc32 == tankMsg->crcHeader;
+}
+
+static inline bool tankMsgRecvIsDataValid(TankMsg *tankMsg) {
+    uint32_t crc32 = devStdCrc32ByteArray(tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
+    return crc32 == tankMsg->crcData;
+}
+
+CommonDataBufError tankMsgRecvBufAppendByte(uint8_t data) {
+    return dataBufAppendByte(&tankMsgRecvBuf, data);
 }

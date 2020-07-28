@@ -11,6 +11,7 @@
 
 void tankMsgSendInit(void);
 void tankMsgSendLoop(void);
+
 CommonDataBufError tankMsgSendBufReadByte(uint8_t *data);
 
 #ifdef __cplusplus

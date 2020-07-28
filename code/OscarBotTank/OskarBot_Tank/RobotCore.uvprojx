@@ -428,11 +428,6 @@
               <FilePath>.\RVMDK\tank\Tank.c</FilePath>
             </File>
             <File>
-              <FileName>TankCmd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\RVMDK\tank\TankCmd.c</FilePath>
-            </File>
-            <File>
               <FileName>TankMsg.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\RVMDK\tank\TankMsg.c</FilePath>

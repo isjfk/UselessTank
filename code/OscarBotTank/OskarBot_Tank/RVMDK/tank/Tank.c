@@ -2,7 +2,6 @@
 #include <stdbool.h>
 
 #include "Tank.h"
-#include "TankCmd.h"
 #include "TankMsgRecv.h"
 #include "TankMsgSend.h"
 #include "common/CommonMath.h"
@@ -125,7 +124,6 @@ void tankThrottleSlowSetLoop(void) {
 void tankInit(void) {
     tankControlInit();
     tankPidInit();
-    tankCmdInit();
     tankMsgRecvInit();
     tankMsgSendInit();
 }
@@ -144,7 +142,6 @@ void tankPidInit(void) {
 }
 
 void tankLoop(void) {
-    tankCmdLoop();
     tankMsgRecvLoop();
 
     if (tankControlIsTimeout()) {

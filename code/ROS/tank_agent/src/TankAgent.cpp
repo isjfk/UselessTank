@@ -27,8 +27,8 @@ char serialBaudrateStr[16];
 speed_t serialBaudrate;
 
 bool encoderInverted = false;
-double encoderTickXPerMeter = 0;
-double encoderTickDiffYawFullTurn = 0;
+double encoderTickPerMeterX = 0;
+double encoderTickDiffFullTurnYaw = 0;
 
 bool imuMsgPublishEnabled = true;
 bool magMsgPublishEnabled = true;
@@ -37,8 +37,7 @@ bool odomEncoderMsgPublishEnabled = true;
 bool odomMsgPublishEnabled = true;
 bool odomTfBroadcastEnabled = true;
 
-uint8_t logTankMsgConfig;
-uint8_t logTankCmdConfig;
+uint8_t logTankMsgRecvConfig;
 
 int serialFd = -1;
 struct termios orgTty;
@@ -57,7 +56,7 @@ ros::Publisher *odomImuMsgPub;
 ros::Publisher *odomEncoderMsgPub;
 tf::TransformBroadcaster *tfBroadcaster;
 
-uint32_t tankMsgCount = 0;
+uint32_t tankMsgRecvCount = 0;
 
 ros::Time currentTime;
 uint32_t prevMsgTimestamp = 0;
@@ -72,7 +71,7 @@ double encoderOdomTwist[3] = { 0, 0, 0 };
 double odomPose[3] = { 0, 0, 0 };
 double odomTwist[3] = { 0, 0, 0 };
 
-void tankMsgThreadFunc(void);
+void tankMsgRecvThreadFunc(void);
 error_t readTankMsg(TankMsg *tankMsg);
 void tankMsgEncoderFix(TankMsg *tankMsg);
 void publishImuMsg(TankMsg *tankMsg);
@@ -84,7 +83,11 @@ void publishOdomMsg(TankMsg *tankMsg);
 void broadcastOdomTf(TankMsg *tankMsg);
 
 
-void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel);
+uint8_t logTankMsgSendConfig;
+uint32_t tankMsgSendCount = 0;
+
+// Send TankMsgCtrlTank on ros cmd_vel message
+void rosCmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel);
 
 
 int main(int argc, char **argv) {
@@ -102,7 +105,7 @@ int main(int argc, char **argv) {
     ros::Publisher op = nh.advertise<nav_msgs::Odometry>("odom", 10);
     ros::Publisher oip = nh.advertise<nav_msgs::Odometry>("odom_imu", 10);
     ros::Publisher oep = nh.advertise<nav_msgs::Odometry>("odom_encoder", 10);
-    ros::Subscriber cmdVelSub = nh.subscribe("cmd_vel", 10, tankCmdCallback);
+    ros::Subscriber cmdVelSub = nh.subscribe("cmd_vel", 10, rosCmdVelCallback);
     tf::TransformBroadcaster tb;
 
     imuMsgPub = &ip;
@@ -115,11 +118,11 @@ int main(int argc, char **argv) {
     openSerialPort();
 
     // Start TankMsg thread.
-    std::thread tankMsgThread(tankMsgThreadFunc);
+    std::thread tankMsgRecvThread(tankMsgRecvThreadFunc);
 
     ros::spin();
 
-    tankMsgThread.join();
+    tankMsgRecvThread.join();
     closeSerialPort();
 }
 
@@ -157,34 +160,33 @@ error_t readTankMsgStartTag() {
 }
 
 error_t readTankMsg(TankMsg *tankMsg) {
-    StdCrc32 crc32;
-
     memset(tankMsg, 0, sizeof(TankMsg));
 
     if (readTankMsgStartTag()) {
         return -1;
     }
 
-    tankMsgCount++;
+    tankMsgRecvCount++;
 
     if (readSize(tankMsgHeaderAddr(tankMsg), tankMsgHeaderSize(tankMsg))) {
         return -1;
     }
 
+    StdCrc32 crc32;
     stdCrc32Init(&crc32);
     stdCrc32Update(&crc32, tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
 
     uint32_t crcHeader = stdCrc32Get(&crc32);
     if (crcHeader != tankMsg->crcHeader) {
-        ROS_WARN("[TankAgent] TankMsg[%d] Error validate TankMsg header CRC32 checksum, skip to next! Received CRC32[%08X] expected CRC32[%08X]", tankMsgCount, tankMsg->crcHeader, crcHeader);
+        ROS_WARN("[TankAgent] TankMsgRecv[%d] Error validate TankMsg header CRC32 checksum, skip to next! Received CRC32[%08X] expected CRC32[%08X]", tankMsgRecvCount, tankMsg->crcHeader, crcHeader);
         return -1;
     }
     if (tankMsg->desc.field.version != 1) {
-        ROS_WARN("[TankAgent] TankMsg[%d] Unsupported TankMsg desc[%08X]!", tankMsgCount, tankMsg->desc.value);
+        ROS_WARN("[TankAgent] TankMsgRecv[%d] Unsupported TankMsg desc[%08X]!", tankMsgRecvCount, tankMsg->desc.value);
         return -1;
     }
     if (tankMsg->dataLength > tankMsgDataSizeMax(tankMsg)) {
-        ROS_WARN("[TankAgent] TankMsg[%d] Unsupported TankMsg dataLength[%d], max allowed[%d]!", tankMsgCount, tankMsg->dataLength, (uint32_t) tankMsgDataSizeMax(tankMsg));
+        ROS_WARN("[TankAgent] TankMsgRecv[%d] Unsupported TankMsg dataLength[%d], max allowed[%d]!", tankMsgRecvCount, tankMsg->dataLength, (uint32_t) tankMsgDataSizeMax(tankMsg));
         return -1;
     }
 
@@ -197,26 +199,28 @@ error_t readTankMsg(TankMsg *tankMsg) {
 
     uint32_t crcData = stdCrc32Get(&crc32);
     if (crcData != tankMsg->crcData) {
-        ROS_WARN("[TankAgent] TankMsg[%d] Error validate TankMsg data CRC32 checksum, skip to next! Received CRC32[%08X] expected CRC32[%08X]", tankMsgCount, tankMsg->crcData, crcData);
+        ROS_WARN("[TankAgent] TankMsgRecv[%d] Error validate TankMsg data CRC32 checksum, skip to next! Received CRC32[%08X] expected CRC32[%08X]", tankMsgRecvCount, tankMsg->crcData, crcData);
         return -1;
     }
 
     return 0;
 }
 
-void logTankMsg(TankMsg *tankMsg) {
-    if (logTankMsgConfig & 0b00000001) {
-        uint8_t *buf = (uint8_t *) tankMsg;
-        for (size_t i = 0; i < tankMsgSize(tankMsg); i++) {
-            printf("%02X", (int) buf[i]);
-        }
-        printf("\r\n");
+void logTankMsgHex(TankMsg *tankMsg, const char *type, uint32_t count) {
+    printf("%s[%06u] seq[%06u] ts[%08u] hex[", type, count, tankMsg->seq, tankMsg->timestamp);
+    uint8_t *buf = (uint8_t *) tankMsg;
+    for (size_t i = 0; i < tankMsgSize(tankMsg); i++) {
+        printf("%02X", (int) buf[i]);
     }
+    printf("]\r\n");
+}
 
-    if (logTankMsgConfig & 0b00000010) {
+void logTankMsgData(TankMsg *tankMsg, const char *type, uint32_t count) {
+    if (tankMsgDataIsType(tankMsg, TankMsgSensorData)) {
         TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
-        printf("TankMsg[%06d] seq[%06d] ts[%08d] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\r\n",
-                tankMsgCount,
+        printf("%s[%06u] seq[%06u] ts[%08u] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\r\n",
+                type,
+                count,
                 tankMsg->seq,
                 tankMsg->timestamp,
                 data->gyro[0], data->gyro[1], data->gyro[2],
@@ -224,10 +228,38 @@ void logTankMsg(TankMsg *tankMsg) {
                 data->compass[0], data->compass[1], data->compass[2],
                 data->quat[0], data->quat[1], data->quat[2], data->quat[3],
                 data->motorEncoderLeft, data->motorEncoderRight);
+    } else if (tankMsgDataIsType(tankMsg, TankMsgCtrlTank)) {
+        TankMsgCtrlTank *data = tankMsgDataPtrOfType(tankMsg, TankMsgCtrlTank);
+        printf("%s[%06u] seq[%06u] ts[%08u] x[%11.2f] yaw[%11.2f] encoderTickPerMeterX[%11.2f] encoderTickDiffFullTurnYaw[%11.2f]\r\n",
+                type,
+                count,
+                tankMsg->seq,
+                tankMsg->timestamp,
+                data->x,
+                data->yaw,
+                data->encoderTickPerMeterX,
+                data->encoderTickDiffFullTurnYaw);
+    } else {
+        printf("%s[%06u] seq[%06u] ts[%08u] Unsupported dataType[%u]\r\n",
+                type,
+                count,
+                tankMsg->seq,
+                tankMsg->timestamp,
+                tankMsg->dataType);
     }
 }
 
-void tankMsgThreadFunc() {
+void logTankMsgRecv(TankMsg *tankMsg) {
+    if (logTankMsgRecvConfig & 0b00000001) {
+        logTankMsgHex(tankMsg, "TankMsgRecv", tankMsgRecvCount);
+    }
+
+    if (logTankMsgRecvConfig & 0b00000010) {
+        logTankMsgData(tankMsg, "TankMsgRecv", tankMsgRecvCount);
+    }
+}
+
+void tankMsgRecvThreadFunc() {
     TankMsg _tankMsg;
     TankMsg *tankMsg = &_tankMsg;
 
@@ -240,7 +272,7 @@ void tankMsgThreadFunc() {
         }
 
         tankMsgEncoderFix(tankMsg);
-        logTankMsg(tankMsg);
+        logTankMsgRecv(tankMsg);
 
         if (updateOdomData(tankMsg)) {
             publishImuMsg(tankMsg);
@@ -365,9 +397,9 @@ bool updateOdomData(TankMsg *tankMsg) {
     int16_t encoderRightDiff = encoderRight - prevEncoderRight;
     double encoderDiff = (encoderLeftDiff + encoderRightDiff) / 2;
 
-    double encoderDistanceDiff = encoderDiff / encoderTickXPerMeter;
+    double encoderDistanceDiff = encoderDiff / encoderTickPerMeterX;
     double encoderSpeed = encoderDistanceDiff / timeDiff;
-    double encoderThetaDiff = (-encoderLeftDiff + encoderRightDiff) / (encoderTickDiffYawFullTurn / 2) * M_PI;
+    double encoderThetaDiff = (-encoderLeftDiff + encoderRightDiff) / (encoderTickDiffFullTurnYaw / 2) * M_PI;
 
     // Limit encoderTheta range in [-M_PI, +M_PI]
     double encoderTheta = encoderOdomPose[2] + encoderThetaDiff;
@@ -500,6 +532,7 @@ void broadcastOdomTf(TankMsg *tankMsg) {
 }
 
 
+
 error_t writeSize(void *buf, size_t size) {
     while (size > 0) {
         ssize_t len = write(serialFd, buf, size);
@@ -513,7 +546,17 @@ error_t writeSize(void *buf, size_t size) {
     return 0;
 }
 
-void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
+void logTankMsgSend(TankMsg *tankMsg) {
+    if (logTankMsgSendConfig & 0b00000001) {
+        logTankMsgHex(tankMsg, "TankMsgSend", tankMsgSendCount);
+    }
+
+    if (logTankMsgSendConfig & 0b00000010) {
+        logTankMsgData(tankMsg, "TankMsgSend", tankMsgSendCount);
+    }
+}
+
+void rosCmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
     const double speedMax = 0.5;        // Unit: meter/second.
     const double turnMax = M_PI;        // Unit: rad/second. To degree/second: turnMax / (2 * M_PI) * 360.0
     const int tankRcMax = 30000;
@@ -528,15 +571,33 @@ void tankCmdCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
     int tankThrottle = (int) (speed / speedMax * tankRcMax);
     int tankYaw = (int) (turn / turnMax * tankRcMax);
 
-    char buf[1024];
-    int size = sprintf(buf, "$AP0:%dX%dY!", tankYaw, tankThrottle);
+    TankMsgPacket tankMsgPacket;
+    TankMsg *tankMsg = &(tankMsgPacket.tankMsg);
 
-    writeSize(buf, size);
+    tankMsgPacketInit(&tankMsgPacket);
+    TankMsgCtrlTank *data = tankMsgReqInitByType(tankMsg, TankMsgCtrlTank);
 
-    if (logTankCmdConfig & 0x00000001) {
-        printf("Write TankCmd[%s] to serial.\r\n", buf);
-    }
+    tankMsg->timestamp = ros::Time::now().toNSec() / 1000000;
+    data->x = tankThrottle;
+    data->yaw = tankYaw;
+    data->encoderTickPerMeterX = encoderTickPerMeterX;
+    data->encoderTickDiffFullTurnYaw = encoderTickDiffFullTurnYaw;
+
+    StdCrc32 crc32;
+    stdCrc32Init(&crc32);
+    stdCrc32Update(&crc32, tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
+    tankMsg->crcHeader = stdCrc32Get(&crc32);
+
+    stdCrc32Init(&crc32);
+    stdCrc32Update(&crc32, tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
+    tankMsg->crcData = stdCrc32Get(&crc32);
+
+    writeSize(tankMsgPacketAddr(&tankMsgPacket), tankMsgPacketSize(&tankMsgPacket));
+    tankMsgSendCount++;
+
+    logTankMsgSend(tankMsg);
 }
+
 
 
 void loadParams(void) {
@@ -616,16 +677,16 @@ void loadParams(void) {
     }
 
     ros::param::param<bool>("~encoderInverted", encoderInverted, false);
-    ros::param::param<double>("~encoderTickXPerMeter", encoderTickXPerMeter, 0);
-    ros::param::param<double>("~encoderTickDiffYawFullTurn", encoderTickDiffYawFullTurn, 0);
+    ros::param::param<double>("~encoderTickPerMeterX", encoderTickPerMeterX, 0);
+    ros::param::param<double>("~encoderTickDiffFullTurnYaw", encoderTickDiffFullTurnYaw, 0);
 
-    if (encoderTickXPerMeter == 0) {
-        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderTickXPerMeter[%f]! Check your env: TANK_MOTOR_MODEL", encoderTickXPerMeter);
+    if (encoderTickPerMeterX == 0) {
+        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderTickPerMeterX[%f]! Check your env: TANK_MOTOR_MODEL", encoderTickPerMeterX);
         exit(-1);
     }
 
-    if (encoderTickDiffYawFullTurn == 0) {
-        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderTickDiffYawFullTurn[%f]! Check your env: TANK_MOTOR_MODEL", encoderTickDiffYawFullTurn);
+    if (encoderTickDiffFullTurnYaw == 0) {
+        ROS_ERROR("[TankAgent] Node Exit - Incorrect encoderTickDiffFullTurnYaw[%f]! Check your env: TANK_MOTOR_MODEL", encoderTickDiffFullTurnYaw);
         exit(-1);
     }
 
@@ -636,13 +697,13 @@ void loadParams(void) {
     ros::param::param<bool>("~odomMsgPublishEnabled", odomMsgPublishEnabled, true);
     ros::param::param<bool>("~odomTfBroadcastEnabled", odomTfBroadcastEnabled, true);
 
-    std::string logTankMsgStr;
-    ros::param::param<std::string>("~logTankMsg", logTankMsgStr, "0");
-    logTankMsgConfig = strtoul(logTankMsgStr.c_str(), NULL, 2);
+    std::string logTankMsgRecvStr;
+    ros::param::param<std::string>("~logTankMsgRecv", logTankMsgRecvStr, "0");
+    logTankMsgRecvConfig = strtoul(logTankMsgRecvStr.c_str(), NULL, 2);
 
-    std::string logTankCmdStr;
-    ros::param::param<std::string>("~logTankCmd", logTankCmdStr, "0");
-    logTankCmdConfig = strtoul(logTankCmdStr.c_str(), NULL, 2);
+    std::string logTankMsgSendStr;
+    ros::param::param<std::string>("~logTankMsgSend", logTankMsgSendStr, "0");
+    logTankMsgSendConfig = strtoul(logTankMsgSendStr.c_str(), NULL, 2);
 }
 
 void openSerialPort() {

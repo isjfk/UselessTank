@@ -25,7 +25,7 @@
 #include "BoardInterrupt.h"
 
 #include "tank/Tank.h"
-#include "tank/TankCmd.h"
+#include "tank/TankMsgRecv.h"
 #include "tank/TankMsgSend.h"
 #include "board/Board.h"
 #include "system/SysTick.h"
@@ -168,8 +168,8 @@ void USART1_IRQHandler(void) {
     if (USART_GetITStatus(usartPort, USART_IT_RXNE) == SET) {
         USART_ClearITPendingBit(usartPort, USART_IT_RXNE);
 
-        uint8_t b = USART_ReceiveData(usartPort);
-        //tankCmdAppendByte(b);
+        //uint8_t b = USART_ReceiveData(usartPort);
+        USART_ReceiveData(usartPort);
     }
 }
 
@@ -180,7 +180,7 @@ void USART2_IRQHandler(void) {
         USART_ClearITPendingBit(usartPort, USART_IT_RXNE);
 
         uint8_t b = USART_ReceiveData(usartPort);
-        tankCmdAppendByte(b);
+        tankMsgRecvBufAppendByte(b);
     }
 
     if (USART_GetITStatus(usartPort, USART_IT_TXE) == SET) {

@@ -18,11 +18,14 @@
 #define accelG2Ms2(g)               (g * 9.80665)
 #define microTesla2Tesla(mt)        (mt / 1000000.0)
 
-uint8_t tankMsgSendData[sizeof(TankMsg) * 4];
-CommonDataBuf tankMsgSendBuf;
+uint32_t tankMsgSendSuccessMsgCount = 0;
+uint32_t tankMsgSendOverflowMsgCount = 0;
 
-TankMsgPacket tankMsgPacket;
-TankMsg *tankMsg = &(tankMsgPacket.tankMsg);
+static uint8_t tankMsgSendData[sizeof(TankMsg) * 4];
+static CommonDataBuf tankMsgSendBuf;
+
+static TankMsgPacket tankMsgPacket;
+static TankMsg *tankMsg = &(tankMsgPacket.tankMsg);
 
 CommonDataBufError tankMsgSend(void);
 CommonDataBufError tankMsgSendSensorMsg(void);
@@ -74,11 +77,15 @@ CommonDataBufError tankMsgSend(void) {
 
     CommonDataBufError bufStatus = dataBufAppendByteArray(&tankMsgSendBuf, tankMsgPacketAddr(&tankMsgPacket), tankMsgPacketSize(&tankMsgPacket));
     if (bufStatus == COMMON_DATABUF_OK) {
+        tankMsgSendSuccessMsgCount++;
+
         irqLock();
         if (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == SET) {
             USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
         }
         irqUnLock();
+    } else {
+        tankMsgSendOverflowMsgCount++;
     }
 
     return bufStatus;
