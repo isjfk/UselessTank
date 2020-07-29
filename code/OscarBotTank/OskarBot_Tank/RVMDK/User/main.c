@@ -52,8 +52,8 @@ extern float volatile bat_volt;
 
 int main(void)
 {
-    tankInit();
     boardInit();
+    tankInit();
 
 	// PS2手柄初始化 Handle initialization
 #ifdef ENABLE_PS2

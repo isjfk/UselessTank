@@ -1,4 +1,7 @@
 #include <stddef.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "stm32f10x.h"
 
 #include "device/DevButton.h"
@@ -13,6 +16,8 @@
 
 extern DevButton powerButton;
 extern DevButton stopButton;
+extern bool shutdown;
+extern bool powerOff;
 
 #define pdbPowerOn()            GPIO_ResetBits(GPIOC, GPIO_Pin_10)
 #define pdbPowerOff()           GPIO_SetBits(GPIOC, GPIO_Pin_10)
@@ -49,6 +54,20 @@ int8_t boardIsBatteryHealth(void);
 int8_t boardIsBatteryLow(void);
 int8_t boardIsBatteryVeryLow(void);
 void checkBatteryStatusOnInit(void);
+
+static inline bool isShutdown(void) {
+    return shutdown;
+}
+
+static inline bool isPowerOff(void) {
+    return powerOff;
+}
+
+static inline bool setPowerOff(bool status) {
+    bool orgStatus = powerOff;
+    powerOff = status;
+    return orgStatus;
+}
 
 #ifdef __cplusplus
 }

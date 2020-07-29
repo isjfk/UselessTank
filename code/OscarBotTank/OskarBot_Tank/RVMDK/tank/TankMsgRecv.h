@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 
 #include "common/CommonDataBuf.h"
 
@@ -8,6 +9,11 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
+
+extern uint32_t tankMsgRecvInternalErrorCount;
+extern uint32_t tankMsgRecvValidMsgCount;
+extern uint32_t tankMsgRecvIllegalMsgCount;
+extern uint32_t tankMsgRecvUnsupportedMsgCount;
 
 void tankMsgRecvInit(void);
 void tankMsgRecvLoop(void);

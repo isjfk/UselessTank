@@ -5,6 +5,7 @@
 #include "TankMsgSend.h"
 #include "Tank.h"
 #include "TankMsg.h"
+#include "TankMsgRecv.h"
 #include "common/CommonMisc.h"
 #include "system/SysIrq.h"
 #include "system/SysTime.h"
@@ -27,17 +28,21 @@ static CommonDataBuf tankMsgSendBuf;
 static TankMsgPacket tankMsgPacket;
 static TankMsg *tankMsg = &(tankMsgPacket.tankMsg);
 
+static SysTimeLoop sendTankStatusLoop;
+
 CommonDataBufError tankMsgSend(void);
 CommonDataBufError tankMsgSendSensorMsg(void);
+CommonDataBufError tankMsgSendTankStatus(void);
 
 void tankMsgSendInit(void) {
     dataBufInit(&tankMsgSendBuf, tankMsgSendData, sizeof(tankMsgSendData));
-
     tankMsgPacketInit(&tankMsgPacket);
+    sysTimeLoopStart(&sendTankStatusLoop, 1000);
 }
 
 void tankMsgSendLoop(void) {
     tankMsgSendSensorMsg();
+    tankMsgSendTankStatus();
 }
 
 CommonDataBufError tankMsgSendSensorMsg(void) {
@@ -67,6 +72,29 @@ CommonDataBufError tankMsgSendSensorMsg(void) {
     data->compass[0] = microTesla2Tesla(data->compass[0]);
     data->compass[1] = microTesla2Tesla(data->compass[1]);
     data->compass[2] = microTesla2Tesla(data->compass[2]);
+
+    return tankMsgSend();
+}
+
+CommonDataBufError tankMsgSendTankStatus(void) {
+    if (!sysTimeLoopShouldEnter(&sendTankStatusLoop)) {
+        return COMMON_DATABUF_OK;
+    }
+
+    TankMsgTankStatus *data = tankMsgReqInitByType(tankMsg, TankMsgTankStatus);
+    tankMsg->timestamp = sysTimeCurrentMs();
+
+    data->isShutdown = isShutdown();
+    data->isEmergencyStop = pdbIsStopButtonDown();
+    data->isBatteryVoltageLow = boardIsBatteryLow();
+    data->isBatteryVoltageVeryLow = boardIsBatteryVeryLow();
+    data->batteryVoltage = boardGetBatteryVoltage();
+    data->tankMsgSendSuccessMsgCount = tankMsgSendSuccessMsgCount;
+    data->tankMsgSendOverflowMsgCount = tankMsgSendOverflowMsgCount;
+    data->tankMsgRecvInternalErrorCount = tankMsgRecvInternalErrorCount;
+    data->tankMsgRecvValidMsgCount = tankMsgRecvValidMsgCount;
+    data->tankMsgRecvIllegalMsgCount = tankMsgRecvIllegalMsgCount;
+    data->tankMsgRecvUnsupportedMsgCount = tankMsgRecvUnsupportedMsgCount;
 
     return tankMsgSend();
 }

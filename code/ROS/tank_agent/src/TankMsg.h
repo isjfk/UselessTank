@@ -9,6 +9,7 @@
 #endif
 
 
+
 #define TANK_MSG_VERSION                1
 
 typedef struct {
@@ -32,31 +33,31 @@ typedef struct {
     uint8_t  data[100];
 } TankMsg;
 
-#define tankMsgHeaderAddr(tankMsg)      ((uint8_t *) &((tankMsg)->desc))
-#define tankMsgHeaderSize(tankMsg)      (((tankMsg)->data) - ((uint8_t *) &((tankMsg)->desc)))
-#define tankMsgHeaderCrcSize(tankMsg)   (((uint8_t *) &((tankMsg)->crcHeader)) - ((uint8_t *) &((tankMsg)->desc)))
-#define tankMsgDataAddr(tankMsg)        ((tankMsg)->data)
-#define tankMsgDataSizeMax(tankMsg)     (sizeof((tankMsg)->data))
-#define tankMsgDataSize(tankMsg)        (((tankMsg)->dataLength > tankMsgDataSizeMax(tankMsg)) ? tankMsgDataSizeMax(tankMsg) : (tankMsg)->dataLength)
-#define tankMsgDataCrcSize(tankMsg)     tankMsgDataSize(tankMsg)
-#define tankMsgAddr(tankMsg)            ((uint8_t *) &((tankMsg)->desc))
-#define tankMsgSize(tankMsg)            (tankMsgHeaderSize(tankMsg) + tankMsgDataSize(tankMsg))
-#define tankMsgSet(tankMsg, offset, data) ((uint8_t *)(tankMsg))[offset] = data
+#define tankMsgHeaderAddr(tankMsg)              ((uint8_t *) &((tankMsg)->desc))
+#define tankMsgHeaderSize(tankMsg)              (((tankMsg)->data) - ((uint8_t *) &((tankMsg)->desc)))
+#define tankMsgHeaderCrcSize(tankMsg)           (((uint8_t *) &((tankMsg)->crcHeader)) - ((uint8_t *) &((tankMsg)->desc)))
+#define tankMsgDataAddr(tankMsg)                ((tankMsg)->data)
+#define tankMsgDataSizeMax(tankMsg)             (sizeof((tankMsg)->data))
+#define tankMsgDataSize(tankMsg)                (((tankMsg)->dataLength > tankMsgDataSizeMax(tankMsg)) ? tankMsgDataSizeMax(tankMsg) : (tankMsg)->dataLength)
+#define tankMsgDataCrcSize(tankMsg)             tankMsgDataSize(tankMsg)
+#define tankMsgAddr(tankMsg)                    ((uint8_t *) &((tankMsg)->desc))
+#define tankMsgSize(tankMsg)                    (tankMsgHeaderSize(tankMsg) + tankMsgDataSize(tankMsg))
+#define tankMsgSet(tankMsg, offset, data)       ((uint8_t *)(tankMsg))[offset] = data
 
-#define tankMsgDataType(DataType)       (TankMsg_dataType_##DataType)
-#define tankMsgDataSizeOfType(DataType) (sizeof(DataType))
+#define tankMsgDataType(DataType)               (TankMsg_dataType_##DataType)
+#define tankMsgDataSizeOfType(DataType)         (sizeof(DataType))
 #define tankMsgDataPtrOfType(tankMsg, DataType) ((DataType *) (tankMsg)->data)
-#define tankMsgDataIsType(tankMsg, DataType) (tankMsg->dataType == tankMsgDataType(DataType))
+#define tankMsgDataIsType(tankMsg, DataType)    (tankMsg->dataType == tankMsgDataType(DataType))
 
-#define tankMsgSizeOfType(tankMsg, DataType) (tankMsgHeaderSize(tankMsg) + tankMsgDataSizeOfType(tankMsg))
+#define tankMsgSizeOfType(tankMsg, DataType)    (tankMsgHeaderSize(tankMsg) + tankMsgDataSizeOfType(tankMsg))
 
 typedef struct {
     uint8_t startTag[8];
     TankMsg  tankMsg;
 } TankMsgPacket;
 
-#define tankMsgPacketAddr(packet)       ((uint8_t *) (packet))
-#define tankMsgPacketSize(packet)       (sizeof((packet)->startTag) + tankMsgSize(&((packet)->tankMsg)))
+#define tankMsgPacketAddr(packet)               ((uint8_t *) (packet))
+#define tankMsgPacketSize(packet)               (sizeof((packet)->startTag) + tankMsgSize(&((packet)->tankMsg)))
 
 typedef struct {
     float x;
@@ -76,11 +77,32 @@ typedef struct {
 } TankMsgSensorData;
 #define TankMsg_dataType_TankMsgSensorData      2
 
+typedef struct {
+    uint8_t isShutdown;
+} TankMsgRosStatus;
+#define TankMsg_dataType_TankMsgRosStatus       3
+
+typedef struct {
+    uint8_t isShutdown;
+    uint8_t isEmergencyStop;
+    uint8_t isBatteryVoltageLow;
+    uint8_t isBatteryVoltageVeryLow;
+    float batteryVoltage;
+    uint32_t tankMsgSendSuccessMsgCount;
+    uint32_t tankMsgSendOverflowMsgCount;
+    uint32_t tankMsgRecvInternalErrorCount;
+    uint32_t tankMsgRecvValidMsgCount;
+    uint32_t tankMsgRecvIllegalMsgCount;
+    uint32_t tankMsgRecvUnsupportedMsgCount;
+} TankMsgTankStatus;
+#define TankMsg_dataType_TankMsgTankStatus      4
+
 TankMsg* tankMsgPacketInit(TankMsgPacket *packet);
 
 uint8_t* tankMsgInit(TankMsg *tankMsg, TankMsg *tankMsgReq, uint32_t dataType, uint32_t dataLength);
 #define tankMsgReqInitByType(tankMsg, DataType)             (DataType *) tankMsgInit(tankMsg, NULL, tankMsgDataType(DataType), tankMsgDataSizeOfType(DataType))
 #define tankMsgRspInitByType(tankMsg, tankMsgReq, DataType) (DataType *) tankMsgInit(tankMsg, tankMsgReq, tankMsgDataType(DataType), tankMsgDataSizeOfType(DataType))
+
 
 
 #ifdef __cplusplus

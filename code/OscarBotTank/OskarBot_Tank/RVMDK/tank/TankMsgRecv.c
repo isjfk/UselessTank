@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stddef.h>
 #include <string.h>
 #include <math.h>
 
@@ -40,7 +39,6 @@ static inline bool tankMsgRecvIsDataValid(TankMsg *tankMsg);
 
 void tankMsgRecvInit(void) {
     dataBufInit(&tankMsgRecvBuf, tankMsgRecvData, sizeof(tankMsgRecvData));
-
     tankMsgPacketInit(&tankMsgPacket);
 }
 

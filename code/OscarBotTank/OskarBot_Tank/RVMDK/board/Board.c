@@ -22,6 +22,8 @@ uint32_t boardBatteryVoltageSysTickMs = 0;
 
 DevButton powerButton;
 DevButton stopButton;
+bool shutdown;
+bool powerOff;
 
 void pdbCtrlLoop(void);
 void boardBatteryLoop(void);

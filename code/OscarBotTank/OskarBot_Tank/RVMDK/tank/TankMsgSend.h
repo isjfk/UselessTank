@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 
 #include "common/CommonDataBuf.h"
 
@@ -8,6 +9,9 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
+
+extern uint32_t tankMsgSendSuccessMsgCount;
+extern uint32_t tankMsgSendOverflowMsgCount;
 
 void tankMsgSendInit(void);
 void tankMsgSendLoop(void);
