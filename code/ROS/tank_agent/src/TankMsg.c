@@ -27,6 +27,8 @@ uint8_t* tankMsgInit(TankMsg *tankMsg, TankMsg *tankMsgReq, uint32_t dataType, u
     tankMsg->seqOfReq = (tankMsgReq == NULL) ? 0 : tankMsgReq->seq;
     tankMsg->dataType = dataType;
     tankMsg->dataLength = dataLength;
+    tankMsg->crcHeader = 0;
+    tankMsg->crcHeaderData = 0;
 
     return tankMsg->data;
 }

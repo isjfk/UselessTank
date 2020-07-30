@@ -129,8 +129,8 @@ static inline bool tankMsgRecvIsHeaderValid(TankMsg *tankMsg) {
 }
 
 static inline bool tankMsgRecvIsDataValid(TankMsg *tankMsg) {
-    uint32_t crc32 = devStdCrc32ByteArray(tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
-    return crc32 == tankMsg->crcData;
+    uint32_t crc32 = devStdCrc32UpdateByteArray(tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
+    return crc32 == tankMsg->crcHeaderData;
 }
 
 CommonDataBufError tankMsgRecvBufAppendByte(uint8_t data) {

@@ -28,8 +28,8 @@ typedef struct {
     uint32_t seqOfReq;
     uint32_t dataType;
     uint32_t dataLength;
-    uint32_t crcHeader; // CRC32 checksum of header, not include field crcHeader & crcData
-    uint32_t crcData;   // CRC32 checksum of data
+    uint32_t crcHeader;     // CRC32 checksum of header, not include field crcHeader & crcData
+    uint32_t crcHeaderData; // CRC32 checksum of header & data, not include field crcHeader & crcData
     uint8_t  data[100];
 } TankMsg;
 

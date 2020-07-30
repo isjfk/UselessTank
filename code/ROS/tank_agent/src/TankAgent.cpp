@@ -204,12 +204,11 @@ error_t readTankMsg(TankMsg *tankMsg) {
         return -1;
     }
 
-    stdCrc32Init(&crc32);
     stdCrc32Update(&crc32, tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
 
-    uint32_t crcData = stdCrc32Get(&crc32);
-    if (crcData != tankMsg->crcData) {
-        ROS_WARN("[TankAgent] TankMsgRecv[%d] Error validate TankMsg data CRC32 checksum, skip to next! Received CRC32[%08X] expected CRC32[%08X]", tankMsgRecvCount, tankMsg->crcData, crcData);
+    uint32_t crcHeaderData = stdCrc32Get(&crc32);
+    if (crcHeaderData != tankMsg->crcHeaderData) {
+        ROS_WARN("[TankAgent] TankMsgRecv[%d] Error validate TankMsg data CRC32 checksum, skip to next! Received CRC32[%08X] expected CRC32[%08X]", tankMsgRecvCount, tankMsg->crcHeaderData, crcHeaderData);
         return -1;
     }
 
@@ -644,9 +643,8 @@ error_t writeTankMsgPacket(TankMsgPacket *tankMsgPacket) {
     stdCrc32Update(&crc32, tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
     tankMsg->crcHeader = stdCrc32Get(&crc32);
 
-    stdCrc32Init(&crc32);
     stdCrc32Update(&crc32, tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
-    tankMsg->crcData = stdCrc32Get(&crc32);
+    tankMsg->crcHeaderData = stdCrc32Get(&crc32);
 
     logTankMsgSend(tankMsg);
 

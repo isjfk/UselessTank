@@ -101,7 +101,7 @@ CommonDataBufError tankMsgSendTankStatus(void) {
 
 CommonDataBufError tankMsgSend(void) {
     tankMsg->crcHeader = devStdCrc32ByteArray(tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
-    tankMsg->crcData = devStdCrc32ByteArray(tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
+    tankMsg->crcHeaderData = devStdCrc32UpdateByteArray(tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
 
     CommonDataBufError bufStatus = dataBufAppendByteArray(&tankMsgSendBuf, tankMsgPacketAddr(&tankMsgPacket), tankMsgPacketSize(&tankMsgPacket));
     if (bufStatus == COMMON_DATABUF_OK) {
