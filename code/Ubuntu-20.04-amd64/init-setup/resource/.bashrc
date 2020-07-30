@@ -120,10 +120,11 @@ source ~/catkin_ws/devel/setup.bash
 
 export ROS_IP=`ifconfig wlp2s0 | grep "inet " | awk '{ print $2 }'`
 export ROS_MASTER_URI="http://${ROS_IP}:11311"
+export SHUTDOWN_CMD='echo "Initial0" | sudo -S shutdown now'
 
 alias refreshEnv='source ~/.bashrc'
 alias supass='echo "Initial0" | sudo -S ls >&/dev/null'
-alias sushutdown='echo "Initial0" | sudo -S shutdown now >&/dev/null'
+alias sushutdown='${SHUTDOWN_CMD} >&/dev/null'
 alias sureboot='echo "Initial0" | sudo -S reboot >&/dev/null'
 
 alias pymod='find ~/catkin_ws/src \( -name "*.py" -o -name "*.cfg" \) -exec chmod a+x {} \;'

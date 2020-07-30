@@ -16,8 +16,12 @@ static inline uint32_t sysTimeCurrentMs(void) {
     return sysTickCurrentMs();
 }
 
-static inline void sysTimeGetMs(uint32_t *timeMs) {
-    sysTickGetMs(timeMs);
+static inline uint32_t sysTimeGetMs(uint32_t *timeMs) {
+    return sysTickGetMs(timeMs);
+}
+
+static inline uint32_t sysTimeSetMs(uint32_t timeMs) {
+    return sysTickSetMs(timeMs);
 }
 
 typedef struct {

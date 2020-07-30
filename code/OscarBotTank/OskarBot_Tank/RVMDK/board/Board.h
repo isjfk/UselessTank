@@ -18,6 +18,7 @@ extern DevButton powerButton;
 extern DevButton stopButton;
 extern bool shutdown;
 extern bool powerOff;
+extern uint32_t heartBeatTimeMs;
 
 #define pdbPowerOn()            GPIO_ResetBits(GPIOC, GPIO_Pin_10)
 #define pdbPowerOff()           GPIO_SetBits(GPIOC, GPIO_Pin_10)
@@ -34,9 +35,11 @@ extern bool powerOff;
 
 #define boardLedOn()            GPIO_ResetBits(GPIOB, GPIO_Pin_14)
 #define boardLedOff()           GPIO_SetBits(GPIOB, GPIO_Pin_14)
+#define boardLedToggle()        devGpioToggleOutputDataBit(GPIOB, GPIO_Pin_14)
 
 #define boardBeepOn()           GPIO_SetBits(GPIOB, GPIO_Pin_13)
 #define boardBeepOff()          GPIO_ResetBits(GPIOB, GPIO_Pin_13)
+#define boardBeepToggle()       devGpioToggleOutputDataBit(GPIOB, GPIO_Pin_13)
 
 void boardLoop(void);
 void boardWdgReload(void);
@@ -67,6 +70,10 @@ static inline bool setPowerOff(bool status) {
     bool orgStatus = powerOff;
     powerOff = status;
     return orgStatus;
+}
+
+static inline void updateHeartBeatTimeMs(uint32_t timeMs) {
+    heartBeatTimeMs = timeMs;
 }
 
 #ifdef __cplusplus

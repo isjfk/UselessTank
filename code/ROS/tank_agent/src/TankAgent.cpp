@@ -86,8 +86,12 @@ void broadcastOdomTf(TankMsg *tankMsg);
 uint8_t logTankMsgSendConfig;
 uint32_t tankMsgSendCount = 0;
 
+error_t writeTankMsgPacket(TankMsgPacket *tankMsgPacket);
 // Send TankMsgCtrlTank on ros cmd_vel message
 void rosCmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel);
+// Send TankMsgRosStatus on timer
+void sendTankMsgRosStatus(void);
+void tankMsgRosStatusCallback(const ros::TimerEvent& event);
 
 
 int main(int argc, char **argv) {
@@ -105,8 +109,10 @@ int main(int argc, char **argv) {
     ros::Publisher op = nh.advertise<nav_msgs::Odometry>("odom", 10);
     ros::Publisher oip = nh.advertise<nav_msgs::Odometry>("odom_imu", 10);
     ros::Publisher oep = nh.advertise<nav_msgs::Odometry>("odom_encoder", 10);
-    ros::Subscriber cmdVelSub = nh.subscribe("cmd_vel", 10, rosCmdVelCallback);
     tf::TransformBroadcaster tb;
+
+    ros::Subscriber cmdVelSub = nh.subscribe("cmd_vel", 10, rosCmdVelCallback);
+    ros::Timer rosStatusTimer = nh.createTimer(ros::Duration(1.0), tankMsgRosStatusCallback);
 
     imuMsgPub = &ip;
     magMsgPub = &mp;
@@ -120,7 +126,11 @@ int main(int argc, char **argv) {
     // Start TankMsg thread.
     std::thread tankMsgRecvThread(tankMsgRecvThreadFunc);
 
-    ros::spin();
+    ros::Rate rate(50);
+    while (ros::ok()) {
+        ros::spinOnce();
+        rate.sleep();
+    }
 
     tankMsgRecvThread.join();
     closeSerialPort();
@@ -206,8 +216,8 @@ error_t readTankMsg(TankMsg *tankMsg) {
     return 0;
 }
 
-void logTankMsgHex(TankMsg *tankMsg, const char *type, uint32_t count) {
-    printf("%s[%06u] seq[%06u] ts[%08u] hex[", type, count, tankMsg->seq, tankMsg->timestamp);
+void logTankMsgHex(TankMsg *tankMsg, const char *prefix, uint32_t count) {
+    printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] hex[", prefix, count, tankMsg->seq, tankMsg->timestampMs, tankMsg->dataType);
     uint8_t *buf = (uint8_t *) tankMsg;
     for (size_t i = 0; i < tankMsgSize(tankMsg); i++) {
         printf("%02X", (int) buf[i]);
@@ -215,14 +225,15 @@ void logTankMsgHex(TankMsg *tankMsg, const char *type, uint32_t count) {
     printf("]\r\n");
 }
 
-void logTankMsgData(TankMsg *tankMsg, const char *type, uint32_t count) {
+void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
     if (tankMsgDataIsType(tankMsg, TankMsgSensorData)) {
         TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
-        printf("%s[%06u] seq[%06u] ts[%08u] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\r\n",
-                type,
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\r\n",
+                prefix,
                 count,
                 tankMsg->seq,
-                tankMsg->timestamp,
+                tankMsg->timestampMs,
+                tankMsg->dataType,
                 data->gyro[0], data->gyro[1], data->gyro[2],
                 data->accel[0], data->accel[1], data->accel[2],
                 data->compass[0], data->compass[1], data->compass[2],
@@ -230,32 +241,104 @@ void logTankMsgData(TankMsg *tankMsg, const char *type, uint32_t count) {
                 data->motorEncoderLeft, data->motorEncoderRight);
     } else if (tankMsgDataIsType(tankMsg, TankMsgCtrlTank)) {
         TankMsgCtrlTank *data = tankMsgDataPtrOfType(tankMsg, TankMsgCtrlTank);
-        printf("%s[%06u] seq[%06u] ts[%08u] x[%11.2f] yaw[%11.2f] encoderTickPerMeterX[%11.2f] encoderTickDiffFullTurnYaw[%11.2f]\r\n",
-                type,
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] x[%11.2f] yaw[%11.2f] encoderTickPerMeterX[%11.2f] encoderTickDiffFullTurnYaw[%11.2f]\r\n",
+                prefix,
                 count,
                 tankMsg->seq,
-                tankMsg->timestamp,
+                tankMsg->timestampMs,
+                tankMsg->dataType,
                 data->x,
                 data->yaw,
                 data->encoderTickPerMeterX,
                 data->encoderTickDiffFullTurnYaw);
-    } else {
-        printf("%s[%06u] seq[%06u] ts[%08u] Unsupported dataType[%u]\r\n",
-                type,
+    } else if (tankMsgDataIsType(tankMsg, TankMsgRosStatus)) {
+        TankMsgRosStatus *data = tankMsgDataPtrOfType(tankMsg, TankMsgRosStatus);
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u]\r\n",
+                prefix,
                 count,
                 tankMsg->seq,
-                tankMsg->timestamp,
+                tankMsg->timestampMs,
+                tankMsg->dataType);
+    } else if (tankMsgDataIsType(tankMsg, TankMsgTankStatus)) {
+        TankMsgTankStatus *data = tankMsgDataPtrOfType(tankMsg, TankMsgTankStatus);
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] shutdown[%u] stop[%u] batLow[%u] batVeryLow[%u] batVtg[%5.2f] sendSucc[%u] sendOverflow[%u] recvValid[%u] recvIlegl[%u] recvUnsupt[%u] recvIntlErr[%u]\r\n",
+                prefix,
+                count,
+                tankMsg->seq,
+                tankMsg->timestampMs,
+                tankMsg->dataType,
+                (uint32_t) data->isShutdown,
+                (uint32_t) data->isEmergencyStop,
+                (uint32_t) data->isBatteryVoltageLow,
+                (uint32_t) data->isBatteryVoltageVeryLow,
+                data->batteryVoltage,
+                data->tankMsgSendSuccessMsgCount,
+                data->tankMsgSendOverflowMsgCount,
+                data->tankMsgRecvValidMsgCount,
+                data->tankMsgRecvIllegalMsgCount,
+                data->tankMsgRecvUnsupportedMsgCount,
+                data->tankMsgRecvInternalErrorCount);
+    } else {
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] Unsupported dataType[%u]\r\n",
+                prefix,
+                count,
+                tankMsg->seq,
+                tankMsg->timestampMs,
+                tankMsg->dataType,
                 tankMsg->dataType);
     }
 }
 
 void logTankMsgRecv(TankMsg *tankMsg) {
     if (logTankMsgRecvConfig & 0b00000001) {
-        logTankMsgHex(tankMsg, "TankMsgRecv", tankMsgRecvCount);
+        logTankMsgHex(tankMsg, "Recv", tankMsgRecvCount);
     }
 
     if (logTankMsgRecvConfig & 0b00000010) {
-        logTankMsgData(tankMsg, "TankMsgRecv", tankMsgRecvCount);
+        logTankMsgData(tankMsg, "Recv", tankMsgRecvCount);
+    }
+}
+
+void recvOnTankMsgSensorData(TankMsg *tankMsg) {
+    if (updateOdomData(tankMsg)) {
+        publishImuMsg(tankMsg);
+        publishMagMsg(tankMsg);
+        publishOdomImuMsg(tankMsg);
+        publishOdomEncoderMsg(tankMsg);
+        publishOdomMsg(tankMsg);
+
+        broadcastOdomTf(tankMsg);
+    }
+
+    TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
+    prevMsgTimestamp = tankMsg->timestampMs;
+    prevEncoderLeft = (int16_t) data->motorEncoderLeft;
+    prevEncoderRight = (int16_t) data->motorEncoderRight;
+    prevImuTheta = imuTheta;
+}
+
+void recvOnTankMsgTankStatus(TankMsg *tankMsg) {
+    TankMsgTankStatus *data = tankMsgDataPtrOfType(tankMsg, TankMsgTankStatus);
+    if (data->isShutdown) {
+        // Send ROS status message to sync with tank control board.
+        sendTankMsgRosStatus();
+
+        ROS_INFO("Power button is up, shutdown the system now.");
+
+        const char *shutdownCmdEnv = "SHUTDOWN_CMD";
+        const char *shutdownCmd = getenv(shutdownCmdEnv);
+        if ((shutdownCmd == NULL) || (strlen(shutdownCmd) <= 0)) {
+            ROS_WARN("Error shutdown the system, shutdown command env [%s] is not set!", shutdownCmdEnv);
+            return;
+        }
+
+        ROS_INFO("Execute shutdown command: %s", shutdownCmd);
+
+        // Execute the shutdown command
+        int status = system(shutdownCmd);
+        if (status) {
+            ROS_ERROR("Error shutdown the system, return status[%d] when execute shutdown command[%s].", status, shutdownCmd);
+        }
     }
 }
 
@@ -271,24 +354,18 @@ void tankMsgRecvThreadFunc() {
             continue;
         }
 
-        tankMsgEncoderFix(tankMsg);
-        logTankMsgRecv(tankMsg);
-
-        if (updateOdomData(tankMsg)) {
-            publishImuMsg(tankMsg);
-            publishMagMsg(tankMsg);
-            publishOdomImuMsg(tankMsg);
-            publishOdomEncoderMsg(tankMsg);
-            publishOdomMsg(tankMsg);
-
-            broadcastOdomTf(tankMsg);
+        // Fix encoder data for tank sensor data message
+        if (tankMsgDataIsType(tankMsg, TankMsgSensorData)) {
+            tankMsgEncoderFix(tankMsg);
         }
 
-        TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
-        prevMsgTimestamp = tankMsg->timestamp;
-        prevEncoderLeft = (int16_t) data->motorEncoderLeft;
-        prevEncoderRight = (int16_t) data->motorEncoderRight;
-        prevImuTheta = imuTheta;
+        logTankMsgRecv(tankMsg);
+
+        if (tankMsgDataIsType(tankMsg, TankMsgSensorData)) {
+            recvOnTankMsgSensorData(tankMsg);
+        } else if (tankMsgDataIsType(tankMsg, TankMsgTankStatus)) {
+            recvOnTankMsgTankStatus(tankMsg);
+        }
     }
 }
 
@@ -380,7 +457,7 @@ void publishMagMsg(TankMsg *tankMsg) {
 
 bool updateOdomData(TankMsg *tankMsg) {
     TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
-    uint32_t timestamp = tankMsg->timestamp;
+    uint32_t timestamp = tankMsg->timestampMs;
     if ((prevMsgTimestamp == 0) || (prevMsgTimestamp >= timestamp)) {
         // Tank control board reset, calculate imuTheta so it will not jump in next cycle
         float *quat = data->quat;
@@ -548,12 +625,38 @@ error_t writeSize(void *buf, size_t size) {
 
 void logTankMsgSend(TankMsg *tankMsg) {
     if (logTankMsgSendConfig & 0b00000001) {
-        logTankMsgHex(tankMsg, "TankMsgSend", tankMsgSendCount);
+        logTankMsgHex(tankMsg, "Send", tankMsgSendCount);
     }
 
     if (logTankMsgSendConfig & 0b00000010) {
-        logTankMsgData(tankMsg, "TankMsgSend", tankMsgSendCount);
+        logTankMsgData(tankMsg, "Send", tankMsgSendCount);
     }
+}
+
+error_t writeTankMsgPacket(TankMsgPacket *tankMsgPacket) {
+    TankMsg *tankMsg = &(tankMsgPacket->tankMsg);
+
+    tankMsg->timestampMs = ros::Time::now().toNSec() / 1000000;
+    tankMsgSendCount++;
+
+    StdCrc32 crc32;
+    stdCrc32Init(&crc32);
+    stdCrc32Update(&crc32, tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
+    tankMsg->crcHeader = stdCrc32Get(&crc32);
+
+    stdCrc32Init(&crc32);
+    stdCrc32Update(&crc32, tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
+    tankMsg->crcData = stdCrc32Get(&crc32);
+
+    logTankMsgSend(tankMsg);
+
+    error_t status = writeSize(tankMsgPacketAddr(tankMsgPacket), tankMsgPacketSize(tankMsgPacket));
+    if (status) {
+        ROS_WARN("[TankAgent] TankMsgSend[%d] Error send TankMsg! status[%d]", tankMsgSendCount, status);
+        return status;
+    }
+
+    return 0;
 }
 
 void rosCmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
@@ -572,30 +675,27 @@ void rosCmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
     int tankYaw = (int) (turn / turnMax * tankRcMax);
 
     TankMsgPacket tankMsgPacket;
-    TankMsg *tankMsg = &(tankMsgPacket.tankMsg);
-
-    tankMsgPacketInit(&tankMsgPacket);
+    TankMsg *tankMsg = tankMsgPacketInit(&tankMsgPacket);
     TankMsgCtrlTank *data = tankMsgReqInitByType(tankMsg, TankMsgCtrlTank);
 
-    tankMsg->timestamp = ros::Time::now().toNSec() / 1000000;
     data->x = tankThrottle;
     data->yaw = tankYaw;
     data->encoderTickPerMeterX = encoderTickPerMeterX;
     data->encoderTickDiffFullTurnYaw = encoderTickDiffFullTurnYaw;
 
-    StdCrc32 crc32;
-    stdCrc32Init(&crc32);
-    stdCrc32Update(&crc32, tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
-    tankMsg->crcHeader = stdCrc32Get(&crc32);
+    writeTankMsgPacket(&tankMsgPacket);
+}
 
-    stdCrc32Init(&crc32);
-    stdCrc32Update(&crc32, tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
-    tankMsg->crcData = stdCrc32Get(&crc32);
+void sendTankMsgRosStatus(void) {
+    TankMsgPacket tankMsgPacket;
+    TankMsg *tankMsg = tankMsgPacketInit(&tankMsgPacket);
+    TankMsgRosStatus *data = tankMsgReqInitByType(tankMsg, TankMsgRosStatus);
 
-    writeSize(tankMsgPacketAddr(&tankMsgPacket), tankMsgPacketSize(&tankMsgPacket));
-    tankMsgSendCount++;
+    writeTankMsgPacket(&tankMsgPacket);
+}
 
-    logTankMsgSend(tankMsg);
+void tankMsgRosStatusCallback(const ros::TimerEvent& event) {
+    sendTankMsgRosStatus();
 }
 
 

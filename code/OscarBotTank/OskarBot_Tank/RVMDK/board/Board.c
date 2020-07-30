@@ -3,7 +3,6 @@
 
 #include "Board.h"
 #include "common/CommonMath.c"
-#include "system/SysTick.h"
 #include "system/SysIrq.h"
 #include "system/SysDelay.h"
 #include "system/SysTime.h"
@@ -15,17 +14,25 @@ float batteryVeryLowVoltage = 10.5;     // For 3S LiPo battery.
 int batteryVeryLowStatus = 0;
 
 int batteryAlarmStatus = 0;
-uint32_t batteryAlarmPrevSysTickMs = 0;
+uint32_t batteryAlarmPrevTimeMs = 0;
 
 float boardBatteryVoltage = 0;
-uint32_t boardBatteryVoltageSysTickMs = 0;
+uint32_t boardBatteryVoltageTimeMs = 0;
 
 DevButton powerButton;
 DevButton stopButton;
-bool shutdown;
-bool powerOff;
+bool shutdown = false;
+bool powerOff = false;
+uint32_t heartBeatTimeMs;
 
-void pdbCtrlLoop(void);
+static uint32_t shutdownTimeMs = 0;
+static uint32_t prevTimeMs = 0;
+static bool foundHeartBeat = false;
+static const uint32_t powerOffTimeoutMsWithHeartBeat =      10 * 1000;  // 10 seconds
+static const uint32_t powerOffTimeoutMsWithoutHeartBeat =   60 * 1000;  // 60 seconds
+
+void powerControlLoop(void);
+void emergencyStopLoop(void);
 void boardBatteryLoop(void);
 
 void boardLoop(void) {
@@ -34,32 +41,69 @@ void boardLoop(void) {
     devHx711Loop();
 
     // Should be after devButtonLoop
-    pdbCtrlLoop();
+    powerControlLoop();
+    emergencyStopLoop();
     boardBatteryLoop();
 
     boardWdgReload();
 }
 
-void pdbCtrlLoop(void) {
+void powerControlLoop(void) {
     static SysTimeLoop pwrLedLoop;
-    static SysTimeLoop stopLedLoop;
-    static int count = -1;
 
-    if (pdbIsPowerButtonDown()) {
-        count = -1;
-    } else {
-        if (count == -1) {
+    if (!shutdown) {
+        if (pdbIsPowerButtonUp()) {
+            // Power button up, enter shutdown process
             sysTimeLoopStart(&pwrLedLoop, 500);
-            count = 0;
-        } else if (count < 10) {
-            if (sysTimeLoopShouldEnter(&pwrLedLoop)) {
-                pdbPowerLedToggle();
-                count++;
+            pdbPowerLedOn();
+            boardLedOn();
+            boardBeepOn();
+
+            shutdown = true;
+            shutdownTimeMs = sysTimeCurrentMs();
+            prevTimeMs = shutdownTimeMs;
+        }
+    } else {
+        if (sysTimeLoopShouldEnter(&pwrLedLoop)) {
+            pdbPowerLedToggle();
+            boardLedToggle();
+            boardBeepToggle();
+        }
+
+        if ((sysTimeCurrentMs() - prevTimeMs) > 500) {
+            // Handle time jump when tank first sync with ROS
+            shutdownTimeMs = sysTimeCurrentMs();
+            foundHeartBeat = false;
+        }
+
+        if ((sysTimeCurrentMs() - heartBeatTimeMs) < 2000) {
+            foundHeartBeat = true;
+        }
+
+        if (foundHeartBeat) {
+            // Heart beat found
+            uint32_t timeDiffMs = sysTimeCurrentMs() - heartBeatTimeMs;
+            if (timeDiffMs > powerOffTimeoutMsWithHeartBeat) {
+                powerOff = true;
             }
         } else {
+            // No heart beat found, probably ROS is not started.
+            uint32_t timeDiffMs = sysTimeCurrentMs() - shutdownTimeMs;
+            if (timeDiffMs > powerOffTimeoutMsWithoutHeartBeat) {
+                powerOff = true;
+            }
+        }
+
+        if (powerOff) {
             pdbPowerOff();
         }
+
+        prevTimeMs = sysTimeCurrentMs();
     }
+}
+
+void emergencyStopLoop(void) {
+    static SysTimeLoop stopLedLoop;
 
     if (pdbIsStopButtonUp()) {
         pdbStopLedOff();
@@ -125,11 +169,11 @@ float boardBatteryVoltageFromAdc(void) {
 
 void boardMeasureBatteryVoltage(void) {
 	float voltageCurrent = boardBatteryVoltageFromAdc();
-    uint32_t sysTickMsCurrent = sysTickCurrentMs();
-    uint32_t cycleTimeMs = sysTickMsCurrent - boardBatteryVoltageSysTickMs;
+    uint32_t sysTimeMsCurrent = sysTimeCurrentMs();
+    uint32_t cycleTimeMs = sysTimeMsCurrent - boardBatteryVoltageTimeMs;
     uint32_t voltageRegulationCycleMs = 1000;
 
-    if ((boardBatteryVoltageSysTickMs == 0) || (cycleTimeMs > voltageRegulationCycleMs)) {
+    if ((boardBatteryVoltageTimeMs == 0) || (cycleTimeMs > voltageRegulationCycleMs)) {
         boardBatteryVoltage = voltageCurrent;
     } else {
         float orgVoltagePercent = (voltageRegulationCycleMs - cycleTimeMs) / (float) voltageRegulationCycleMs;
@@ -137,7 +181,7 @@ void boardMeasureBatteryVoltage(void) {
         boardBatteryVoltage = orgVoltagePercent * boardBatteryVoltage + currVoltagePercent * voltageCurrent;
     }
 
-    boardBatteryVoltageSysTickMs = sysTickMsCurrent;
+    boardBatteryVoltageTimeMs = sysTimeMsCurrent;
 }
 
 void detectBatteryLowStatus() {
@@ -177,12 +221,12 @@ int calcAlarmIntervalTime() {
 
 void batteryLowAlarmLoop() {
     if (boardIsBatteryLow()) {
-        uint32_t currentSysTickMs = sysTickCurrentMs();
+        uint32_t currentSysTimeMs = sysTimeCurrentMs();
         int intervalTimeMs = boardIsBatteryVeryLow() ? 100 : calcAlarmIntervalTime();
 
-        if ((currentSysTickMs - batteryAlarmPrevSysTickMs) >= (batteryAlarmStatus ? 100 : intervalTimeMs)) {
+        if ((currentSysTimeMs - batteryAlarmPrevTimeMs) >= (batteryAlarmStatus ? 100 : intervalTimeMs)) {
             batteryAlarmStatus = !batteryAlarmStatus;
-            batteryAlarmPrevSysTickMs = currentSysTickMs;
+            batteryAlarmPrevTimeMs = currentSysTimeMs;
         }
 
         if (batteryAlarmStatus) {
@@ -198,7 +242,7 @@ void batteryLowAlarmLoop() {
             boardLedOff();
         }
 
-        batteryAlarmPrevSysTickMs = 0;
+        batteryAlarmPrevTimeMs = 0;
         batteryAlarmStatus = 0;
     }
 }

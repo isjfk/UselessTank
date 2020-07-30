@@ -1,6 +1,9 @@
+#include <stddef.h>
 #include <stdint.h>
 
 #include "stm32f10x.h"
+
+#include "system/SysIrq.h"
 
 #ifndef __SYS_TICK_H
 #define __SYS_TICK_H
@@ -27,8 +30,22 @@ static inline uint32_t sysTickCurrentMs(void) {
     return sysTickMs;
 }
 
-static inline void sysTickGetMs(uint32_t *tick) {
-    *tick = sysTickMs;
+static inline uint32_t sysTickGetMs(uint32_t *tickMs) {
+    uint32_t currentSysTickMs = sysTickMs;
+    if (tickMs != NULL) {
+        *tickMs = currentSysTickMs;
+    }
+    return currentSysTickMs;
+}
+
+static inline uint32_t sysTickSetMs(const uint32_t tickMs) {
+    irqLock();
+
+    uint32_t currentSysTickMs = sysTickMs;
+    sysTickMs = tickMs;
+
+    irqUnLock();
+    return currentSysTickMs;
 }
 
 #ifdef __cplusplus

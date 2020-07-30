@@ -47,11 +47,11 @@ void tankMsgSendLoop(void) {
 
 CommonDataBufError tankMsgSendSensorMsg(void) {
     int8_t accuracy;
-    inv_time_t timestamp;
+    inv_time_t timestampMs;
 
     TankMsgSensorData *data = tankMsgReqInitByType(tankMsg, TankMsgSensorData);
 
-    devMpu9250GetGyroFloat(data->gyro, &accuracy, &timestamp);
+    devMpu9250GetGyroFloat(data->gyro, &accuracy, &timestampMs);
     devMpu9250GetAccelFloat(data->accel, &accuracy, NULL);
     devMpu9250GetCompassFloat(data->compass, &accuracy, NULL);
     devMpu9250GetQuatFloat(data->quat, &accuracy, NULL);
@@ -60,7 +60,7 @@ CommonDataBufError tankMsgSendSensorMsg(void) {
     data->motorEncoderRight = devMotorGetRightEncoder();
 
     // Use gyro timestamp as TankMsg timestamp.
-    tankMsg->timestamp = timestamp;
+    tankMsg->timestampMs = timestampMs;
 
     // Convert unit to ROS standard
     data->gyro[0] = gyroDegree2Radian(data->gyro[0]);
@@ -82,7 +82,7 @@ CommonDataBufError tankMsgSendTankStatus(void) {
     }
 
     TankMsgTankStatus *data = tankMsgReqInitByType(tankMsg, TankMsgTankStatus);
-    tankMsg->timestamp = sysTimeCurrentMs();
+    tankMsg->timestampMs = sysTimeCurrentMs();
 
     data->isShutdown = isShutdown();
     data->isEmergencyStop = pdbIsStopButtonDown();
@@ -91,10 +91,10 @@ CommonDataBufError tankMsgSendTankStatus(void) {
     data->batteryVoltage = boardGetBatteryVoltage();
     data->tankMsgSendSuccessMsgCount = tankMsgSendSuccessMsgCount;
     data->tankMsgSendOverflowMsgCount = tankMsgSendOverflowMsgCount;
-    data->tankMsgRecvInternalErrorCount = tankMsgRecvInternalErrorCount;
     data->tankMsgRecvValidMsgCount = tankMsgRecvValidMsgCount;
     data->tankMsgRecvIllegalMsgCount = tankMsgRecvIllegalMsgCount;
     data->tankMsgRecvUnsupportedMsgCount = tankMsgRecvUnsupportedMsgCount;
+    data->tankMsgRecvInternalErrorCount = tankMsgRecvInternalErrorCount;
 
     return tankMsgSend();
 }

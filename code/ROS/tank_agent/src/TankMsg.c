@@ -22,7 +22,7 @@ uint8_t* tankMsgInit(TankMsg *tankMsg, TankMsg *tankMsgReq, uint32_t dataType, u
     tankMsg->desc.value = 0;
     tankMsg->desc.field.version = TANK_MSG_VERSION;
     tankMsg->desc.field.isReq = (tankMsgReq == NULL);
-    tankMsg->timestamp = 0;
+    tankMsg->timestampMs = 0;
     tankMsg->seq = tankMsgSeq++;
     tankMsg->seqOfReq = (tankMsgReq == NULL) ? 0 : tankMsgReq->seq;
     tankMsg->dataType = dataType;

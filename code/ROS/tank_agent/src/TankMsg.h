@@ -23,7 +23,7 @@ typedef struct {
         } field;
         uint32_t value;
     } desc;
-    uint32_t timestamp;
+    uint32_t timestampMs;
     uint32_t seq;
     uint32_t seqOfReq;
     uint32_t dataType;
@@ -56,6 +56,8 @@ typedef struct {
     TankMsg  tankMsg;
 } TankMsgPacket;
 
+#define tankMsgPacketStartTagAddr(packet)       ((packet)->startTag)
+#define tankMsgPacketStartTagSize(packet)       (sizeof((packet)->startTag))
 #define tankMsgPacketAddr(packet)               ((uint8_t *) (packet))
 #define tankMsgPacketSize(packet)               (sizeof((packet)->startTag) + tankMsgSize(&((packet)->tankMsg)))
 
@@ -78,7 +80,7 @@ typedef struct {
 #define TankMsg_dataType_TankMsgSensorData      2
 
 typedef struct {
-    uint8_t isShutdown;
+    uint32_t unused;
 } TankMsgRosStatus;
 #define TankMsg_dataType_TankMsgRosStatus       3
 
@@ -90,10 +92,10 @@ typedef struct {
     float batteryVoltage;
     uint32_t tankMsgSendSuccessMsgCount;
     uint32_t tankMsgSendOverflowMsgCount;
-    uint32_t tankMsgRecvInternalErrorCount;
     uint32_t tankMsgRecvValidMsgCount;
     uint32_t tankMsgRecvIllegalMsgCount;
     uint32_t tankMsgRecvUnsupportedMsgCount;
+    uint32_t tankMsgRecvInternalErrorCount;
 } TankMsgTankStatus;
 #define TankMsg_dataType_TankMsgTankStatus      4
 

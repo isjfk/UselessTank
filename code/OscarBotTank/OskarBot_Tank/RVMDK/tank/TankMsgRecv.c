@@ -14,10 +14,10 @@
 #include "device/DevMotor.h"
 #include "device/DevUsart.h"
 
-uint32_t tankMsgRecvInternalErrorCount = 0;
 uint32_t tankMsgRecvValidMsgCount = 0;
 uint32_t tankMsgRecvIllegalMsgCount = 0;
 uint32_t tankMsgRecvUnsupportedMsgCount = 0;
+uint32_t tankMsgRecvInternalErrorCount = 0;
 
 static uint8_t tankMsgRecvData[sizeof(TankMsg) * 4];
 static CommonDataBuf tankMsgRecvBuf;
@@ -25,13 +25,13 @@ static CommonDataBuf tankMsgRecvBuf;
 static TankMsgPacket tankMsgPacket;
 static TankMsg *tankMsg = &(tankMsgPacket.tankMsg);
 
-static uint8_t state = 0;
-static size_t readSize = 0;
-static const size_t startTagSizeMin = 5;
-
 #define STATE_START_TAG     1
 #define STATE_MSG_HEADER    2
 #define STATE_MSG_DATA      3
+
+static uint8_t state = STATE_START_TAG;
+static size_t readSize = 0;
+static const size_t startTagSizeMin = 5;
 
 static void tankMsgRecvOnReceived(TankMsg *tankMsg);
 static inline bool tankMsgRecvIsHeaderValid(TankMsg *tankMsg);
@@ -95,10 +95,27 @@ static void tankMsgRecvOnTankMsgCtrlTank(TankMsg *tankMsg, TankMsgCtrlTank *msgD
     tankYawSet(msgData->yaw / 300.0);
 }
 
+static void tankMsgRecvOnTankMsgRosStatus(TankMsg *tankMsg, TankMsgRosStatus *msgData) {
+    // Max timestamp difference in ms which a time correction should execute
+    uint32_t sysTimeMsMaxDiff = 100;
+    // Time offset in ms between ROS send the message and control board start to process the message
+    uint32_t sysTimeMsOffset = 30;
+
+    uint32_t rosSysTimeMs = tankMsg->timestampMs;
+    if ((rosSysTimeMs - sysTimeCurrentMs()) > sysTimeMsMaxDiff) {
+        sysTimeSetMs(rosSysTimeMs + sysTimeMsOffset);
+    }
+
+    updateHeartBeatTimeMs(sysTimeCurrentMs());
+}
+
 static void tankMsgRecvOnReceived(TankMsg *tankMsg) {
     switch (tankMsg->dataType) {
     case tankMsgDataType(TankMsgCtrlTank):
         tankMsgRecvOnTankMsgCtrlTank(tankMsg, tankMsgDataPtrOfType(tankMsg, TankMsgCtrlTank));
+        break;
+    case tankMsgDataType(TankMsgRosStatus):
+        tankMsgRecvOnTankMsgRosStatus(tankMsg, tankMsgDataPtrOfType(tankMsg, TankMsgRosStatus));
         break;
     default:
         tankMsgRecvUnsupportedMsgCount++;
