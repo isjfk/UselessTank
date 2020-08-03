@@ -3,7 +3,7 @@
     <rosparam file="$(find tank_setup)/config/tank_model_$(optenv TANK_MODEL)_params.yaml" command="load" />
     <rosparam file="$(find tank_setup)/config/tank_motor_model_$(optenv TANK_MOTOR_MODEL)_params.yaml" command="load" />
 
-    <node name="tank_agent_node" pkg="tank_agent" type="tank_agent_node" output="screen">
+    <node name="tank_agent_node" pkg="tank_agent" type="tank_agent_node" respawn="true" respawn_delay="3">
         <param name="serialPort" type="string" value="/dev/ttyS1" />
         <param name="serialBaudrate" type="string" value="57600" />
         <param name="imuMsgPublishEnabled" type="bool" value="true" />
@@ -14,18 +14,18 @@
         <param name="odomTfBroadcastEnabled" type="bool" value="false" />
 <!--
         <param name="logTankMsgRecv" type="string" value="00000010" />
-        <param name="logTankMsgSend" type="string" value="00000001" />
+        <param name="logTankMsgSend" type="string" value="00000010" />
 -->
     </node>
 
-    <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true" output="screen">
+    <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true" respawn="true" respawn_delay="3">
         <rosparam command="load" file="$(find tank_setup)/config/robot_localization_ekf.yaml" />
         <remap from="odometry/filtered" to="odom" />
     </node>
 
-    <node name="tank_setup_tf_node" pkg="tank_setup" type="tank_setup_tf_node" output="screen" />
+    <node name="tank_setup_tf_node" pkg="tank_setup" type="tank_setup_tf_node" respawn="true" respawn_delay="3" />
 
-    <node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
+    <node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" respawn="true" respawn_delay="3">
         <remap from="scan" to="scan" />
 
         <param name="serial_port" type="string" value="/dev/ttyUSB0" />
@@ -37,7 +37,7 @@
         <param name="angle_compensate" type="bool" value="true" />
     </node>
 
-    <node name="laser_filter" pkg="laser_filters" type="scan_to_scan_filter_chain" output="screen">
+    <node name="laser_filter" pkg="laser_filters" type="scan_to_scan_filter_chain" respawn="true" respawn_delay="3">
         <remap from="scan" to="scan" />
         <remap from="scan_filtered" to="scan_filtered" />
 

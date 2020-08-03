@@ -57,7 +57,7 @@
 
     <group ns="$(arg camera)">
 
-        <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+        <include file="$(find tank_2dnav)/launch/includes/nodelet.launch.xml">
             <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
             <arg name="external_manager"         value="$(arg external_manager)"/>
             <arg name="manager"                  value="$(arg manager)"/>
@@ -114,7 +114,7 @@
         </include>
 
         <!-- push pointcloud_to_laserscan nodelet into sensor's nodelet manager-->
-        <node pkg="nodelet" type="nodelet" name="pointcloud_to_laserscan" args="load pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet $(arg manager)" output="screen">
+        <node pkg="nodelet" type="nodelet" name="pointcloud_to_laserscan" args="load pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet $(arg manager)" respawn="true" respawn_delay="3">
             <remap from="cloud_in" to="/camera/depth/color/points"/>
             <remap from="scan" to="/depth_laser_scan"/>
             <rosparam>
