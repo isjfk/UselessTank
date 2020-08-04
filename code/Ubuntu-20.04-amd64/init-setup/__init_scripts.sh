@@ -64,8 +64,8 @@ apt-get install -y nodejs
 # Create package directory
 mkdir -p ~/package
 
-# Copy resource files
-cp -R ${SCRIPT_DIR}/resource/. ~/
+# Copy tank home files
+cp -R ${SCRIPT_DIR}/tank/. ~/
 
 # Fix file permissions caused by sudo
 chown -R tank:tank ~
