@@ -32,6 +32,8 @@ extern uint32_t heartBeatTimeMs;
 #define pdbStopLedOn()          GPIO_ResetBits(GPIOD, GPIO_Pin_2)
 #define pdbStopLedOff()         GPIO_SetBits(GPIOD, GPIO_Pin_2)
 #define pdbStopLedToggle()      devGpioToggleOutputDataBit(GPIOD, GPIO_Pin_2)
+#define pdbIsRosPowerOn()       GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_10)
+#define pdbIsRosPowerOff()      (!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_10))
 
 #define boardLedOn()            GPIO_ResetBits(GPIOB, GPIO_Pin_14)
 #define boardLedOff()           GPIO_SetBits(GPIOB, GPIO_Pin_14)
@@ -46,6 +48,7 @@ void boardWdgReload(void);
 
 void alarm(uint16_t onTime, uint16_t offTime);
 
+void alarmSystemBoot(void);
 void alarmSystemOk(void);
 void alarmSystemError(void);
 void alarmGyroInitError(void);

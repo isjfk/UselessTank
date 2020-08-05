@@ -90,6 +90,15 @@ void boardPdbCtrlInit(void) {
     gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOD, &gpio_InitStruct);
 
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
+    // Configure input: ROS_PWR_DET(PB10)
+    GPIO_StructInit(&gpio_InitStruct);
+    gpio_InitStruct.GPIO_Pin = GPIO_Pin_10;
+    gpio_InitStruct.GPIO_Mode = GPIO_Mode_IPD;
+    gpio_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &gpio_InitStruct);
+
     pdbPowerOn();
     pdbPowerLedOn();
 }

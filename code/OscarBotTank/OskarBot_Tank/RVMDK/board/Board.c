@@ -26,10 +26,10 @@ bool powerOff = false;
 uint32_t heartBeatTimeMs;
 
 static uint32_t shutdownTimeMs = 0;
+static uint32_t rosPowerOffTimeMs = 0;
 static uint32_t prevTimeMs = 0;
-static bool foundHeartBeat = false;
-static const uint32_t powerOffTimeoutMsWithHeartBeat =      10 * 1000;  // 10 seconds
-static const uint32_t powerOffTimeoutMsWithoutHeartBeat =   60 * 1000;  // 60 seconds
+static const uint32_t powerOffDelayAfterRosPowerOffMs = 0.5 * 1000; // 0.5 seconds
+static const uint32_t powerOffTimeoutMs =               120 * 1000; // 120 seconds
 
 void powerControlLoop(void);
 void emergencyStopLoop(void);
@@ -50,6 +50,7 @@ void boardLoop(void) {
 
 void powerControlLoop(void) {
     static SysTimeLoop pwrLedLoop;
+    uint32_t currTimeMs = sysTimeCurrentMs();
 
     if (!shutdown) {
         if (pdbIsPowerButtonUp()) {
@@ -60,8 +61,9 @@ void powerControlLoop(void) {
             boardBeepOn();
 
             shutdown = true;
-            shutdownTimeMs = sysTimeCurrentMs();
-            prevTimeMs = shutdownTimeMs;
+            shutdownTimeMs = currTimeMs;
+            rosPowerOffTimeMs = 0;
+            prevTimeMs = currTimeMs;
         }
     } else {
         if (sysTimeLoopShouldEnter(&pwrLedLoop)) {
@@ -70,26 +72,25 @@ void powerControlLoop(void) {
             boardBeepToggle();
         }
 
-        if ((sysTimeCurrentMs() - prevTimeMs) > 500) {
+        if ((currTimeMs - prevTimeMs) > 500) {
             // Handle time jump when tank first sync with ROS
-            shutdownTimeMs = sysTimeCurrentMs();
-            foundHeartBeat = false;
+            shutdownTimeMs = currTimeMs;
+            rosPowerOffTimeMs = 0;
+            prevTimeMs = currTimeMs;
         }
 
-        if ((sysTimeCurrentMs() - heartBeatTimeMs) < 2000) {
-            foundHeartBeat = true;
-        }
+        if (pdbIsRosPowerOff()) {
+            if (rosPowerOffTimeMs == 0) {
+                rosPowerOffTimeMs = currTimeMs;
+            }
 
-        if (foundHeartBeat) {
-            // Heart beat found
-            uint32_t timeDiffMs = sysTimeCurrentMs() - heartBeatTimeMs;
-            if (timeDiffMs > powerOffTimeoutMsWithHeartBeat) {
+            uint32_t timeDiffMs = currTimeMs - rosPowerOffTimeMs;
+            if (timeDiffMs > powerOffDelayAfterRosPowerOffMs) {
                 powerOff = true;
             }
         } else {
-            // No heart beat found, probably ROS is not started.
-            uint32_t timeDiffMs = sysTimeCurrentMs() - shutdownTimeMs;
-            if (timeDiffMs > powerOffTimeoutMsWithoutHeartBeat) {
+            uint32_t timeDiffMs = currTimeMs - shutdownTimeMs;
+            if (timeDiffMs > powerOffTimeoutMs) {
                 powerOff = true;
             }
         }
@@ -98,7 +99,7 @@ void powerControlLoop(void) {
             pdbPowerOff();
         }
 
-        prevTimeMs = sysTimeCurrentMs();
+        prevTimeMs = currTimeMs;
     }
 }
 
@@ -129,6 +130,10 @@ void alarm(uint16_t onTime, uint16_t offTime) {
     boardBeepOff();
     boardLedOff();
     sysDelayMs(offTime);
+}
+
+void alarmSystemBoot(void) {
+    alarm(100, 100);
 }
 
 void alarmSystemOk(void) {
