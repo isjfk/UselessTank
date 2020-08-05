@@ -73,7 +73,7 @@ int main(void)
 //		while(1) boardBeepOn();
 //	}
 
-    alarmSystemBoot();
+    alarmSystemOk();
 
     /* 主循环 Infinite loop */
     while (1) {

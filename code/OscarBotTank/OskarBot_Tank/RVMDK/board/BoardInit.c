@@ -3,6 +3,7 @@
 #include "system/SysIrq.h"
 #include "system/SysTick.h"
 #include "system/SysDelay.h"
+#include "device/DevGpio.h"
 #include "device/DevButton.h"
 #include "device/DevCrc.h"
 #include "device/DevMpu9250.h"
@@ -15,7 +16,6 @@ void boardBeepLedInit(void);
 void boardTimerInit(void);
 void boardUsartInit(void);
 void boardMonitorInit(void);
-void boardButtonInit(void);
 void boardIwdgInit(void);
 
 void boardInit(void) {
@@ -23,6 +23,7 @@ void boardInit(void) {
 
     sysTickInit();
 
+    // First initialize PDB to stable power source
     boardPdbCtrlInit();
 
     boardBeepLedInit();
@@ -30,13 +31,14 @@ void boardInit(void) {
     boardUsartInit();
     boardMonitorInit();
 
+    devGpioInit();
     devButtonInit();
     devCrcInit();
     devMotorInit();
     devHx711Init();
 
-    // Should be after devButtonInit
-    boardButtonInit();
+    // Should be after dev init
+    boardDevInit();
 
     // Enable IRQ so SysTick can get correct value.
     // MPU9250 requires SysTick to initialize.
@@ -276,11 +278,6 @@ void boardAdcInit(void) {
 
 void boardMonitorInit(void) {
     boardAdcInit();
-}
-
-void boardButtonInit(void) {
-    devButtonInitButton(&powerButton, GPIOC, GPIO_Pin_11);
-    devButtonInitButton(&stopButton, GPIOB, GPIO_Pin_11);
 }
 
 void boardIwdgInit(void) {

@@ -1,3 +1,5 @@
+#include <stddef.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "stm32f10x.h"
@@ -35,9 +37,9 @@ void devButtonLoop(void);
 
 int32_t devButtonInitButton(DevButton *button, GPIO_TypeDef* gpioPort, uint16_t gpioPin);
 
-int32_t devButtonIsUnknown(DevButton *button);
-int32_t devButtonIsDown(DevButton *button);
-int32_t devButtonIsUp(DevButton *button);
+bool devButtonIsUnknown(DevButton *button);
+bool devButtonIsDown(DevButton *button);
+bool devButtonIsUp(DevButton *button);
 
 #ifdef __cplusplus
 }

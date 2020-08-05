@@ -106,7 +106,7 @@ static void tankMsgRecvOnTankMsgRosStatus(TankMsg *tankMsg, TankMsgRosStatus *ms
         sysTimeSetMs(rosSysTimeMs + sysTimeMsOffset);
     }
 
-    updateHeartBeatTimeMs(sysTimeCurrentMs());
+    updateRosHeartBeatTimeMs(sysTimeCurrentMs());
 }
 
 static void tankMsgRecvOnReceived(TankMsg *tankMsg) {

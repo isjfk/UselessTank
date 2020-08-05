@@ -18,7 +18,6 @@ extern DevButton powerButton;
 extern DevButton stopButton;
 extern bool shutdown;
 extern bool powerOff;
-extern uint32_t heartBeatTimeMs;
 
 #define pdbPowerOn()            devGpioBitSetLow(GPIOC, GPIO_Pin_10)
 #define pdbPowerOff()           devGpioBitSetHigh(GPIOC, GPIO_Pin_10)
@@ -35,24 +34,27 @@ extern uint32_t heartBeatTimeMs;
 #define pdbIsRosPowerOn()       devGpioBitIsInputHigh(GPIOB, GPIO_Pin_10)
 #define pdbIsRosPowerOff()      devGpioBitIsInputLow(GPIOB, GPIO_Pin_10)
 
+#define boardBeepOn()           devGpioBitSetHigh(GPIOB, GPIO_Pin_13)
+#define boardBeepOff()          devGpioBitSetLow(GPIOB, GPIO_Pin_13)
+#define boardBeepToggle()       devGpioBitToggle(GPIOB, GPIO_Pin_13)
+
 #define boardLedOn()            devGpioBitSetLow(GPIOB, GPIO_Pin_14)
 #define boardLedOff()           devGpioBitSetHigh(GPIOB, GPIO_Pin_14)
 #define boardLedToggle()        devGpioBitToggle(GPIOB, GPIO_Pin_14)
 
-#define boardBeepOn()           devGpioBitSetHigh(GPIOB, GPIO_Pin_13)
-#define boardBeepOff()          devGpioBitSetLow(GPIOB, GPIO_Pin_13)
-#define boardBeepToggle()       devGpioBitToggle(GPIOB, GPIO_Pin_13)
+void boardDevInit(void);
 
 void boardLoop(void);
 void boardWdgReload(void);
 
 void alarm(uint16_t onTime, uint16_t offTime);
 
-void alarmSystemBoot(void);
 void alarmSystemOk(void);
 void alarmSystemError(void);
 void alarmGyroInitError(void);
 void alarmGyroLoopError(void);
+
+void alarmRosOk(void);
 
 void boardMeasureBatteryVoltage(void);
 float boardGetBatteryVoltage(void);
@@ -75,9 +77,7 @@ static inline bool setPowerOff(bool status) {
     return orgStatus;
 }
 
-static inline void updateHeartBeatTimeMs(uint32_t timeMs) {
-    heartBeatTimeMs = timeMs;
-}
+void updateRosHeartBeatTimeMs(uint32_t timeMs);
 
 #ifdef __cplusplus
 }

@@ -19,11 +19,55 @@ uint32_t batteryAlarmPrevTimeMs = 0;
 float boardBatteryVoltage = 0;
 uint32_t boardBatteryVoltageTimeMs = 0;
 
+static uint32_t patternDataSystemOk[] = { 100, 500 };
+static DevGpioPinPattern beepPatternSystemOk = {
+    .gpioPin = {
+        .port = GPIOB,
+        .pin = GPIO_Pin_13,
+    },
+    .startLevel = 1,
+    .endLevel = 0,
+    .patternData = patternDataSystemOk,
+    .patternDataSize = arrayLen(patternDataSystemOk),
+};
+static DevGpioPinPattern ledPatternSystemOk = {
+    .gpioPin = {
+        .port = GPIOB,
+        .pin = GPIO_Pin_14,
+    },
+    .startLevel = 0,
+    .endLevel = 1,
+    .patternData = patternDataSystemOk,
+    .patternDataSize = arrayLen(patternDataSystemOk),
+};
+
+static uint32_t patternDataRosOk[] = { 100, 100, 100, 100, 100, 500 };
+static DevGpioPinPattern beepPatternRosOk = {
+    .gpioPin = {
+        .port = GPIOB,
+        .pin = GPIO_Pin_13,
+    },
+    .startLevel = 1,
+    .endLevel = 0,
+    .patternData = patternDataRosOk,
+    .patternDataSize = arrayLen(patternDataRosOk),
+};
+static DevGpioPinPattern ledPatternRosOk = {
+    .gpioPin = {
+        .port = GPIOB,
+        .pin = GPIO_Pin_14,
+    },
+    .startLevel = 0,
+    .endLevel = 1,
+    .patternData = patternDataRosOk,
+    .patternDataSize = arrayLen(patternDataRosOk),
+};
+
 DevButton powerButton;
 DevButton stopButton;
 bool shutdown = false;
 bool powerOff = false;
-uint32_t heartBeatTimeMs;
+static uint32_t rosHeartBeatTimeMs;
 
 static uint32_t shutdownTimeMs = 0;
 static uint32_t rosPowerOffTimeMs = 0;
@@ -31,11 +75,34 @@ static uint32_t prevTimeMs = 0;
 static const uint32_t powerOffDelayAfterRosPowerOffMs = 0.5 * 1000; // 0.5 seconds
 static const uint32_t powerOffTimeoutMs =               120 * 1000; // 120 seconds
 
+void boardGpioInit(void);
+void boardButtonInit(void);
+
 void powerControlLoop(void);
 void emergencyStopLoop(void);
 void boardBatteryLoop(void);
 
+
+
+void boardDevInit(void) {
+    boardGpioInit();
+    boardButtonInit();
+}
+
+void boardGpioInit(void) {
+    devGpioPinPatternInit(&beepPatternSystemOk);
+    devGpioPinPatternInit(&ledPatternSystemOk);
+    devGpioPinPatternInit(&beepPatternRosOk);
+    devGpioPinPatternInit(&ledPatternRosOk);
+}
+
+void boardButtonInit(void) {
+    devButtonInitButton(&powerButton, GPIOC, GPIO_Pin_11);
+    devButtonInitButton(&stopButton, GPIOB, GPIO_Pin_11);
+}
+
 void boardLoop(void) {
+    devGpioLoop();
     devButtonLoop();
     // Update leash tension data from HX711.
     devHx711Loop();
@@ -124,6 +191,13 @@ void emergencyStopLoop(void) {
     }
 }
 
+void updateRosHeartBeatTimeMs(uint32_t timeMs) {
+    if ((timeMs - rosHeartBeatTimeMs) > 10000) {
+        alarmRosOk();
+    }
+    rosHeartBeatTimeMs = timeMs;
+}
+
 void boardWdgReload(void) {
     IWDG_ReloadCounter();
 }
@@ -138,14 +212,10 @@ void alarm(uint16_t onTime, uint16_t offTime) {
     sysDelayMs(offTime);
 }
 
-void alarmSystemBoot(void) {
-    alarm(100, 100);
-}
-
 void alarmSystemOk(void) {
-    alarm(100, 100);
-    alarm(100, 100);
-    alarm(100, 100);
+    //alarm(100, 100);
+    devGpioPinPatternStartOnce(&beepPatternSystemOk);
+    devGpioPinPatternStartOnce(&ledPatternSystemOk);
 }
 
 void alarmSystemError(void) {
@@ -164,6 +234,14 @@ void alarmGyroInitError(void) {
 void alarmGyroLoopError(void) {
     alarm(100, 100);
     alarm(100, 1000);
+}
+
+void alarmRosOk(void) {
+    //alarm(100, 100);
+    //alarm(100, 100);
+    //alarm(100, 100);
+    devGpioPinPatternStartOnce(&beepPatternRosOk);
+    devGpioPinPatternStartOnce(&ledPatternRosOk);
 }
 
 float boardGetBatteryVoltage(void) {
