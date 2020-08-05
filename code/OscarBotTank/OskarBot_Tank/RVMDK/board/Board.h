@@ -20,28 +20,28 @@ extern bool shutdown;
 extern bool powerOff;
 extern uint32_t heartBeatTimeMs;
 
-#define pdbPowerOn()            GPIO_ResetBits(GPIOC, GPIO_Pin_10)
-#define pdbPowerOff()           GPIO_SetBits(GPIOC, GPIO_Pin_10)
+#define pdbPowerOn()            devGpioBitSetLow(GPIOC, GPIO_Pin_10)
+#define pdbPowerOff()           devGpioBitSetHigh(GPIOC, GPIO_Pin_10)
 #define pdbIsPowerButtonDown()  devButtonIsDown(&powerButton)
 #define pdbIsPowerButtonUp()    devButtonIsUp(&powerButton)
-#define pdbPowerLedOn()         GPIO_ResetBits(GPIOC, GPIO_Pin_12)
-#define pdbPowerLedOff()        GPIO_SetBits(GPIOC, GPIO_Pin_12)
-#define pdbPowerLedToggle()     devGpioToggleOutputDataBit(GPIOC, GPIO_Pin_12)
+#define pdbPowerLedOn()         devGpioBitSetLow(GPIOC, GPIO_Pin_12)
+#define pdbPowerLedOff()        devGpioBitSetHigh(GPIOC, GPIO_Pin_12)
+#define pdbPowerLedToggle()     devGpioBitToggle(GPIOC, GPIO_Pin_12)
 #define pdbIsStopButtonDown()   devButtonIsDown(&stopButton)
 #define pdbIsStopButtonUp()     devButtonIsUp(&stopButton)
-#define pdbStopLedOn()          GPIO_ResetBits(GPIOD, GPIO_Pin_2)
-#define pdbStopLedOff()         GPIO_SetBits(GPIOD, GPIO_Pin_2)
-#define pdbStopLedToggle()      devGpioToggleOutputDataBit(GPIOD, GPIO_Pin_2)
-#define pdbIsRosPowerOn()       GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_10)
-#define pdbIsRosPowerOff()      (!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_10))
+#define pdbStopLedOn()          devGpioBitSetLow(GPIOD, GPIO_Pin_2)
+#define pdbStopLedOff()         devGpioBitSetHigh(GPIOD, GPIO_Pin_2)
+#define pdbStopLedToggle()      devGpioBitToggle(GPIOD, GPIO_Pin_2)
+#define pdbIsRosPowerOn()       devGpioBitIsInputHigh(GPIOB, GPIO_Pin_10)
+#define pdbIsRosPowerOff()      devGpioBitIsInputLow(GPIOB, GPIO_Pin_10)
 
-#define boardLedOn()            GPIO_ResetBits(GPIOB, GPIO_Pin_14)
-#define boardLedOff()           GPIO_SetBits(GPIOB, GPIO_Pin_14)
-#define boardLedToggle()        devGpioToggleOutputDataBit(GPIOB, GPIO_Pin_14)
+#define boardLedOn()            devGpioBitSetLow(GPIOB, GPIO_Pin_14)
+#define boardLedOff()           devGpioBitSetHigh(GPIOB, GPIO_Pin_14)
+#define boardLedToggle()        devGpioBitToggle(GPIOB, GPIO_Pin_14)
 
-#define boardBeepOn()           GPIO_SetBits(GPIOB, GPIO_Pin_13)
-#define boardBeepOff()          GPIO_ResetBits(GPIOB, GPIO_Pin_13)
-#define boardBeepToggle()       devGpioToggleOutputDataBit(GPIOB, GPIO_Pin_13)
+#define boardBeepOn()           devGpioBitSetHigh(GPIOB, GPIO_Pin_13)
+#define boardBeepOff()          devGpioBitSetLow(GPIOB, GPIO_Pin_13)
+#define boardBeepToggle()       devGpioBitToggle(GPIOB, GPIO_Pin_13)
 
 void boardLoop(void);
 void boardWdgReload(void);
