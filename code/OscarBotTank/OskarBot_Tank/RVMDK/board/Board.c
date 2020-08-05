@@ -69,7 +69,13 @@ void powerControlLoop(void) {
         if (sysTimeLoopShouldEnter(&pwrLedLoop)) {
             pdbPowerLedToggle();
             boardLedToggle();
-            boardBeepToggle();
+            if (pdbIsPowerButtonDown()) {
+                // Power button is pressed down again after up, power off not possible.
+                // Long alarm to notify user.
+                boardBeepOn();
+            } else {
+                boardBeepToggle();
+            }
         }
 
         if ((currTimeMs - prevTimeMs) > 500) {
