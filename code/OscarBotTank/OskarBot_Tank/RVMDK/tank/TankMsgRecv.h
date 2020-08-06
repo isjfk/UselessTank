@@ -10,6 +10,8 @@
  extern "C" {
 #endif
 
+extern uint32_t tankMsgRecvPrevSeq;
+extern uint32_t tankMsgRecvCurrSeq;
 extern uint32_t tankMsgRecvInternalErrorCount;
 extern uint32_t tankMsgRecvValidMsgCount;
 extern uint32_t tankMsgRecvIllegalMsgCount;

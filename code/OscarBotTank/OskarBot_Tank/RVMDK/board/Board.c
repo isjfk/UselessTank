@@ -67,7 +67,6 @@ DevButton powerButton;
 DevButton stopButton;
 bool shutdown = false;
 bool powerOff = false;
-static uint32_t rosHeartBeatTimeMs;
 
 static uint32_t shutdownTimeMs = 0;
 static uint32_t rosPowerOffTimeMs = 0;
@@ -189,13 +188,6 @@ void emergencyStopLoop(void) {
             pdbStopLedToggle();
         }
     }
-}
-
-void updateRosHeartBeatTimeMs(uint32_t timeMs) {
-    if ((timeMs - rosHeartBeatTimeMs) > 10000) {
-        alarmRosOk();
-    }
-    rosHeartBeatTimeMs = timeMs;
 }
 
 void boardWdgReload(void) {

@@ -77,8 +77,6 @@ static inline bool setPowerOff(bool status) {
     return orgStatus;
 }
 
-void updateRosHeartBeatTimeMs(uint32_t timeMs);
-
 #ifdef __cplusplus
 }
 #endif

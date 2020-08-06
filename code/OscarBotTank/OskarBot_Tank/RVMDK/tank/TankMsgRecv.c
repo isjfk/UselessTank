@@ -14,6 +14,8 @@
 #include "device/DevMotor.h"
 #include "device/DevUsart.h"
 
+uint32_t tankMsgRecvSeqPrev = UINT32_MAX;
+uint32_t tankMsgRecvSeqCurr = UINT32_MAX;
 uint32_t tankMsgRecvValidMsgCount = 0;
 uint32_t tankMsgRecvIllegalMsgCount = 0;
 uint32_t tankMsgRecvUnsupportedMsgCount = 0;
@@ -105,11 +107,20 @@ static void tankMsgRecvOnTankMsgRosStatus(TankMsg *tankMsg, TankMsgRosStatus *ms
     if ((rosSysTimeMs - sysTimeCurrentMs()) > sysTimeMsMaxDiff) {
         sysTimeSetMs(rosSysTimeMs + sysTimeMsOffset);
     }
+}
 
-    updateRosHeartBeatTimeMs(sysTimeCurrentMs());
+static void tankMsgRecvUpdateStatus(TankMsg *tankMsg) {
+    tankMsgRecvSeqPrev = tankMsgRecvSeqCurr;
+    tankMsgRecvSeqCurr = tankMsg->seq;
+
+    if (tankMsgRecvSeqCurr < tankMsgRecvSeqPrev) {
+        alarmRosOk();
+    }
 }
 
 static void tankMsgRecvOnReceived(TankMsg *tankMsg) {
+    tankMsgRecvUpdateStatus(tankMsg);
+
     switch (tankMsg->dataType) {
     case tankMsgDataType(TankMsgCtrlTank):
         tankMsgRecvOnTankMsgCtrlTank(tankMsg, tankMsgDataPtrOfType(tankMsg, TankMsgCtrlTank));
