@@ -221,13 +221,13 @@ void logTankMsgHex(TankMsg *tankMsg, const char *prefix, uint32_t count) {
     for (size_t i = 0; i < tankMsgSize(tankMsg); i++) {
         printf("%02X", (int) buf[i]);
     }
-    printf("]\r\n");
+    printf("]\n");
 }
 
 void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
     if (tankMsgDataIsType(tankMsg, TankMsgSensorData)) {
         TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\r\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -240,7 +240,7 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
                 data->motorEncoderLeft, data->motorEncoderRight);
     } else if (tankMsgDataIsType(tankMsg, TankMsgCtrlTank)) {
         TankMsgCtrlTank *data = tankMsgDataPtrOfType(tankMsg, TankMsgCtrlTank);
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] x[%11.2f] yaw[%11.2f] encoderTickPerMeterX[%11.2f] encoderTickDiffFullTurnYaw[%11.2f]\r\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] x[%11.2f] yaw[%11.2f] encoderTickPerMeterX[%11.2f] encoderTickDiffFullTurnYaw[%11.2f]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -252,7 +252,7 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
                 data->encoderTickDiffFullTurnYaw);
     } else if (tankMsgDataIsType(tankMsg, TankMsgRosStatus)) {
         TankMsgRosStatus *data = tankMsgDataPtrOfType(tankMsg, TankMsgRosStatus);
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u]\r\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -260,7 +260,7 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
                 tankMsg->dataType);
     } else if (tankMsgDataIsType(tankMsg, TankMsgTankStatus)) {
         TankMsgTankStatus *data = tankMsgDataPtrOfType(tankMsg, TankMsgTankStatus);
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] shutdown[%u] stop[%u] batLow[%u] batVeryLow[%u] batVtg[%5.2f] sendSucc[%u] sendOverflow[%u] recvValid[%u] recvIlegl[%u] recvUnsupt[%u] recvIntlErr[%u]\r\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] shutdown[%u] stop[%u] batLow[%u] batVeryLow[%u] batVtg[%5.2f] sendSucc[%u] sendOverflow[%u] recvValid[%u] recvIlegl[%u] recvUnsupt[%u] recvIntlErr[%u]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -278,7 +278,7 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
                 data->tankMsgRecvUnsupportedMsgCount,
                 data->tankMsgRecvInternalErrorCount);
     } else {
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] Unsupported dataType[%u]\r\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] Unsupported dataType[%u]\n",
                 prefix,
                 count,
                 tankMsg->seq,
