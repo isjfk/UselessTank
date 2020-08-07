@@ -140,6 +140,7 @@ static inline bool tankMsgRecvIsHeaderValid(TankMsg *tankMsg) {
 }
 
 static inline bool tankMsgRecvIsDataValid(TankMsg *tankMsg) {
+    devStdCrc32ByteArray(tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
     uint32_t crc32 = devStdCrc32UpdateByteArray(tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
     return crc32 == tankMsg->crcHeaderData;
 }
