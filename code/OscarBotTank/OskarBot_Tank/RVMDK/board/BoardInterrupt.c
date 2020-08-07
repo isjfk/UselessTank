@@ -185,7 +185,7 @@ void USART2_IRQHandler(void) {
 
     if (USART_GetITStatus(usartPort, USART_IT_TXE) == SET) {
         uint8_t b;
-        if (tankMsgSendBufReadByte(&b) == COMMON_DATABUF_OK) {
+        if (tankMsgSendBufReadByte(&b) == COMMON_ERROR_OK) {
             USART_SendData(usartPort, b);
         } else {
             USART_ITConfig(usartPort, USART_IT_TXE, DISABLE);

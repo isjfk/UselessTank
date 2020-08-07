@@ -22,7 +22,7 @@
 uint32_t tankMsgSendSuccessMsgCount = 0;
 uint32_t tankMsgSendOverflowMsgCount = 0;
 
-static uint8_t tankMsgSendData[sizeof(TankMsg) * 4];
+static uint8_t tankMsgSendData[sizeof(TankMsg) * 5];
 static CommonDataBuf tankMsgSendBuf;
 
 static TankMsgPacket tankMsgPacket;
@@ -30,9 +30,9 @@ static TankMsg *tankMsg = &(tankMsgPacket.tankMsg);
 
 static SysTimeLoop sendTankStatusLoop;
 
-CommonDataBufError tankMsgSend(void);
-CommonDataBufError tankMsgSendSensorMsg(void);
-CommonDataBufError tankMsgSendTankStatus(void);
+CommonError tankMsgSend(void);
+CommonError tankMsgSendSensorMsg(void);
+CommonError tankMsgSendTankStatus(void);
 
 void tankMsgSendInit(void) {
     dataBufInit(&tankMsgSendBuf, tankMsgSendData, sizeof(tankMsgSendData));
@@ -45,7 +45,39 @@ void tankMsgSendLoop(void) {
     tankMsgSendTankStatus();
 }
 
-CommonDataBufError tankMsgSendSensorMsg(void) {
+CommonError tankMsgSendTextLog(uint32_t level, void *msg, size_t size) {    
+    TankMsgTextLog *data = tankMsgReqInitByType(tankMsg, TankMsgTextLog);
+    uint32_t dataHeaderSize = tankMsgDataSizeOfType(TankMsgTextLog);
+
+    uint32_t sizeMax = tankMsgDataSizeMax(tankMsg) - dataHeaderSize;
+    size = (size <= sizeMax) ? size : sizeMax;
+
+    tankMsg->timestampMs = sysTimeCurrentMs();
+    tankMsg->dataLength = dataHeaderSize + size;
+    data->level = level;
+    data->msgSize = size;
+    memcpy(data->msg, msg, size);
+
+    return tankMsgSend();
+}
+
+CommonError tankMsgSendBinLog(uint32_t level, void *msg, size_t size) {
+    TankMsgBinLog *data = tankMsgReqInitByType(tankMsg, TankMsgBinLog);
+    uint32_t dataHeaderSize = tankMsgDataSizeOfType(TankMsgBinLog);
+
+    uint32_t sizeMax = tankMsgDataSizeMax(tankMsg) - dataHeaderSize;
+    size = (size <= sizeMax) ? size : sizeMax;
+
+    tankMsg->timestampMs = sysTimeCurrentMs();
+    tankMsg->dataLength = dataHeaderSize + size;
+    data->level = level;
+    data->msgSize = size;
+    memcpy(data->msg, msg, size);
+
+    return tankMsgSend();
+}
+
+CommonError tankMsgSendSensorMsg(void) {
     int8_t accuracy;
     inv_time_t timestampMs;
 
@@ -76,9 +108,9 @@ CommonDataBufError tankMsgSendSensorMsg(void) {
     return tankMsgSend();
 }
 
-CommonDataBufError tankMsgSendTankStatus(void) {
+CommonError tankMsgSendTankStatus(void) {
     if (!sysTimeLoopShouldEnter(&sendTankStatusLoop)) {
-        return COMMON_DATABUF_OK;
+        return COMMON_ERROR_OK;
     }
 
     TankMsgTankStatus *data = tankMsgReqInitByType(tankMsg, TankMsgTankStatus);
@@ -99,12 +131,12 @@ CommonDataBufError tankMsgSendTankStatus(void) {
     return tankMsgSend();
 }
 
-CommonDataBufError tankMsgSend(void) {
+CommonError tankMsgSend(void) {
     tankMsg->crcHeader = devStdCrc32ByteArray(tankMsgHeaderAddr(tankMsg), tankMsgHeaderCrcSize(tankMsg));
     tankMsg->crcHeaderData = devStdCrc32UpdateByteArray(tankMsgDataAddr(tankMsg), tankMsgDataCrcSize(tankMsg));
 
     CommonDataBufError bufStatus = dataBufAppendByteArray(&tankMsgSendBuf, tankMsgPacketAddr(&tankMsgPacket), tankMsgPacketSize(&tankMsgPacket));
-    if (bufStatus == COMMON_DATABUF_OK) {
+    if (bufStatus == COMMON_ERROR_OK) {
         tankMsgSendSuccessMsgCount++;
 
         irqLock();
@@ -119,6 +151,6 @@ CommonDataBufError tankMsgSend(void) {
     return bufStatus;
 }
 
-CommonDataBufError tankMsgSendBufReadByte(uint8_t *data) {
+CommonError tankMsgSendBufReadByte(uint8_t *data) {
     return dataBufReadByte(&tankMsgSendBuf, data);
 }

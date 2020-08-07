@@ -1,11 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <termios.h>
 #include <math.h>
+
+#include <string>
+#include <sstream>
+#include <set>
 
 #include <thread>
 
@@ -38,6 +41,7 @@ bool odomMsgPublishEnabled = true;
 bool odomTfBroadcastEnabled = true;
 
 uint8_t logTankMsgRecvConfig;
+std::set<uint32_t> logTankMsgRecvTypes;
 
 int serialFd = -1;
 struct termios orgTty;
@@ -84,6 +88,8 @@ void broadcastOdomTf(TankMsg *tankMsg);
 
 
 uint8_t logTankMsgSendConfig;
+std::set<uint32_t> logTankMsgSendTypes;
+
 uint32_t tankMsgSendCount = 0;
 
 error_t writeTankMsgPacket(TankMsgPacket *tankMsgPacket);
@@ -215,8 +221,15 @@ error_t readTankMsg(TankMsg *tankMsg) {
     return 0;
 }
 
+bool logTankMsgTypeCheck(TankMsg *tankMsg, std::set<uint32_t> types) {
+    if (types.empty()) {
+        return true;
+    }
+    return types.find(tankMsg->dataType) != types.end();
+}
+
 void logTankMsgHex(TankMsg *tankMsg, const char *prefix, uint32_t count) {
-    printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] hex[", prefix, count, tankMsg->seq, tankMsg->timestampMs, tankMsg->dataType);
+    printf("%s[%06u] seq[%06u] ts[%010u] dt[%2u] hex[", prefix, count, tankMsg->seq, tankMsg->timestampMs, tankMsg->dataType);
     uint8_t *buf = (uint8_t *) tankMsg;
     for (size_t i = 0; i < tankMsgSize(tankMsg); i++) {
         printf("%02X", (int) buf[i]);
@@ -225,9 +238,35 @@ void logTankMsgHex(TankMsg *tankMsg, const char *prefix, uint32_t count) {
 }
 
 void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
-    if (tankMsgDataIsType(tankMsg, TankMsgSensorData)) {
+    if (tankMsgDataIsType(tankMsg, TankMsgTextLog)) {
+        TankMsgTextLog *data = tankMsgDataPtrOfType(tankMsg, TankMsgTextLog);
+        size_t msgSizeMax = tankMsgDataSizeMax(tankMsg) - tankMsgDataSizeOfType(TankMsgTextLog);
+        size_t msgSize = (data->msgSize <= msgSizeMax) ? data->msgSize : msgSizeMax;
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%2u] msg[%s]\n",
+                prefix,
+                count,
+                tankMsg->seq,
+                tankMsg->timestampMs,
+                tankMsg->dataType,
+                std::string((const char *) data->msg, msgSize).c_str());
+    } else if (tankMsgDataIsType(tankMsg, TankMsgBinLog)) {
+        TankMsgBinLog *data = tankMsgDataPtrOfType(tankMsg, TankMsgBinLog);
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%2u] msg[",
+                prefix,
+                count,
+                tankMsg->seq,
+                tankMsg->timestampMs,
+                tankMsg->dataType);
+        uint8_t *msg = (uint8_t *) data->msg;
+        size_t msgSizeMax = tankMsgDataSizeMax(tankMsg) - tankMsgDataSizeOfType(TankMsgBinLog);
+        size_t msgSize = (data->msgSize <= msgSizeMax) ? data->msgSize : msgSizeMax;
+        for (size_t i = 0; i < msgSize; i++) {
+            printf("%02X", (int) msg[i]);
+        }
+        printf("]\n");
+    } else if (tankMsgDataIsType(tankMsg, TankMsgSensorData)) {
         TankMsgSensorData *data = tankMsgDataPtrOfType(tankMsg, TankMsgSensorData);
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%2u] gyro[%6.2f %6.2f %6.2f] accel[%6.2f %6.2f %6.2f] compass[%11.8f %11.8f %11.8f] quat[%6.2f %6.2f %6.2f %6.2f] encoder[%05u %05u]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -240,7 +279,7 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
                 data->motorEncoderLeft, data->motorEncoderRight);
     } else if (tankMsgDataIsType(tankMsg, TankMsgCtrlTank)) {
         TankMsgCtrlTank *data = tankMsgDataPtrOfType(tankMsg, TankMsgCtrlTank);
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] x[%11.2f] yaw[%11.2f] encoderTickPerMeterX[%11.2f] encoderTickDiffFullTurnYaw[%11.2f]\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%2u] x[%11.2f] yaw[%11.2f] encoderTickPerMeterX[%11.2f] encoderTickDiffFullTurnYaw[%11.2f]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -252,7 +291,7 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
                 data->encoderTickDiffFullTurnYaw);
     } else if (tankMsgDataIsType(tankMsg, TankMsgRosStatus)) {
         TankMsgRosStatus *data = tankMsgDataPtrOfType(tankMsg, TankMsgRosStatus);
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u]\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%2u]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -260,7 +299,7 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
                 tankMsg->dataType);
     } else if (tankMsgDataIsType(tankMsg, TankMsgTankStatus)) {
         TankMsgTankStatus *data = tankMsgDataPtrOfType(tankMsg, TankMsgTankStatus);
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] shutdown[%u] stop[%u] batLow[%u] batVeryLow[%u] batVtg[%5.2f] sendSucc[%u] sendOverflow[%u] recvValid[%u] recvIlegl[%u] recvUnsupt[%u] recvIntlErr[%u]\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%2u] shutdown[%u] stop[%u] batLow[%u] batVeryLow[%u] batVtg[%5.2f] sendSucc[%u] sendOverflow[%u] recvValid[%u] recvIlegl[%u] recvUnsupt[%u] recvIntlErr[%u]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -278,7 +317,7 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
                 data->tankMsgRecvUnsupportedMsgCount,
                 data->tankMsgRecvInternalErrorCount);
     } else {
-        printf("%s[%06u] seq[%06u] ts[%010u] dt[%u] Unsupported dataType[%u]\n",
+        printf("%s[%06u] seq[%06u] ts[%010u] dt[%2u] Unsupported dataType[%u]\n",
                 prefix,
                 count,
                 tankMsg->seq,
@@ -289,10 +328,13 @@ void logTankMsgData(TankMsg *tankMsg, const char *prefix, uint32_t count) {
 }
 
 void logTankMsgRecv(TankMsg *tankMsg) {
+    if (!logTankMsgRecvConfig || !logTankMsgTypeCheck(tankMsg, logTankMsgRecvTypes)) {
+        return;
+    }
+
     if (logTankMsgRecvConfig & 0b00000001) {
         logTankMsgHex(tankMsg, "Recv", tankMsgRecvCount);
     }
-
     if (logTankMsgRecvConfig & 0b00000010) {
         logTankMsgData(tankMsg, "Recv", tankMsgRecvCount);
     }
@@ -623,6 +665,10 @@ error_t writeSize(void *buf, size_t size) {
 }
 
 void logTankMsgSend(TankMsg *tankMsg) {
+    if (!logTankMsgSendConfig || !logTankMsgTypeCheck(tankMsg, logTankMsgSendTypes)) {
+        return;
+    }
+
     if (logTankMsgSendConfig & 0b00000001) {
         logTankMsgHex(tankMsg, "Send", tankMsgSendCount);
     }
@@ -799,9 +845,23 @@ void loadParams(void) {
     ros::param::param<std::string>("~logTankMsgRecv", logTankMsgRecvStr, "0");
     logTankMsgRecvConfig = strtoul(logTankMsgRecvStr.c_str(), NULL, 2);
 
+    std::string logTankMsgRecvTypesStr;
+    ros::param::param<std::string>("~logTankMsgRecvTypes", logTankMsgRecvTypesStr, "");
+    std::stringstream logTankMsgRecvTypesStream(logTankMsgRecvTypesStr);
+    for (std::string type; std::getline(logTankMsgRecvTypesStream, type, ','); ) {
+        logTankMsgRecvTypes.insert(static_cast<uint32_t>(std::stoul(type)));
+    }
+
     std::string logTankMsgSendStr;
     ros::param::param<std::string>("~logTankMsgSend", logTankMsgSendStr, "0");
     logTankMsgSendConfig = strtoul(logTankMsgSendStr.c_str(), NULL, 2);
+
+    std::string logTankMsgSendTypesStr;
+    ros::param::param<std::string>("~logTankMsgSendTypes", logTankMsgSendTypesStr, "");
+    std::stringstream logTankMsgSendTypesStream(logTankMsgSendTypesStr);
+    for (std::string type; std::getline(logTankMsgSendTypesStream, type, ','); ) {
+        logTankMsgSendTypes.insert(static_cast<uint32_t>(std::stoul(type)));
+    }
 }
 
 void openSerialPort() {

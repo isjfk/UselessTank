@@ -62,12 +62,26 @@ typedef struct {
 #define tankMsgPacketSize(packet)               (sizeof((packet)->startTag) + tankMsgSize(&((packet)->tankMsg)))
 
 typedef struct {
+    uint32_t level;
+    uint32_t msgSize;
+    uint8_t msg[];
+} TankMsgTextLog;
+#define TankMsg_dataType_TankMsgTextLog         1
+
+typedef struct {
+    uint32_t level;
+    uint32_t msgSize;
+    uint8_t msg[];
+} TankMsgBinLog;
+#define TankMsg_dataType_TankMsgBinLog          2
+
+typedef struct {
     float x;
     float yaw;
     float encoderTickPerMeterX;
     float encoderTickDiffFullTurnYaw;
 } TankMsgCtrlTank;
-#define TankMsg_dataType_TankMsgCtrlTank        1
+#define TankMsg_dataType_TankMsgCtrlTank        11
 
 typedef struct {
     float gyro[3];
@@ -77,12 +91,12 @@ typedef struct {
     uint32_t motorEncoderLeft;
     uint32_t motorEncoderRight;
 } TankMsgSensorData;
-#define TankMsg_dataType_TankMsgSensorData      2
+#define TankMsg_dataType_TankMsgSensorData      12
 
 typedef struct {
     uint32_t unused;
 } TankMsgRosStatus;
-#define TankMsg_dataType_TankMsgRosStatus       3
+#define TankMsg_dataType_TankMsgRosStatus       13
 
 typedef struct {
     uint8_t isShutdown;
@@ -97,7 +111,7 @@ typedef struct {
     uint32_t tankMsgRecvUnsupportedMsgCount;
     uint32_t tankMsgRecvInternalErrorCount;
 } TankMsgTankStatus;
-#define TankMsg_dataType_TankMsgTankStatus      4
+#define TankMsg_dataType_TankMsgTankStatus      14
 
 TankMsg* tankMsgPacketInit(TankMsgPacket *packet);
 

@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "common/CommonMisc.h"
 #include "common/CommonDataBuf.h"
 
 #ifndef __TANK_MSG_SEND_H
@@ -16,7 +17,10 @@ extern uint32_t tankMsgSendOverflowMsgCount;
 void tankMsgSendInit(void);
 void tankMsgSendLoop(void);
 
-CommonDataBufError tankMsgSendBufReadByte(uint8_t *data);
+CommonError tankMsgSendTextLog(uint32_t level, void *msg, size_t size);
+CommonError tankMsgSendBinLog(uint32_t level, void *msg, size_t size);
+
+CommonError tankMsgSendBufReadByte(uint8_t *data);
 
 #ifdef __cplusplus
 }

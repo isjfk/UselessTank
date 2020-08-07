@@ -14,7 +14,9 @@
         <param name="odomTfBroadcastEnabled" type="bool" value="false" />
 <!--
         <param name="logTankMsgRecv" type="string" value="00000010" />
+        <param name="logTankMsgRecvTypes" type="string" value="" />
         <param name="logTankMsgSend" type="string" value="00000010" />
+        <param name="logTankMsgSendTypes" type="string" value="" />
 -->
     </node>
 

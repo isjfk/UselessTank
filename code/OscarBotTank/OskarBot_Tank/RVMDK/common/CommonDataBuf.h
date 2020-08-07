@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "CommonMisc.h"
+
 #ifndef __COMMON_DATABUF_H
 #define __COMMON_DATABUF_H
 
@@ -10,8 +12,6 @@
 
 typedef int32_t CommonDataBufError;
 
-#define COMMON_DATABUF_OK                       (0)
-#define COMMON_DATABUF_ERRNO_UNKNOWN            (-1)
 #define COMMON_DATABUF_ERRNO_DATA_INSUFFICIENT  (-1001)
 #define COMMON_DATABUF_ERRNO_SPACE_INSUFFICIENT (-2001)
 

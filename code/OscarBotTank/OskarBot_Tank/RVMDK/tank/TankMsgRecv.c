@@ -21,7 +21,7 @@ uint32_t tankMsgRecvIllegalMsgCount = 0;
 uint32_t tankMsgRecvUnsupportedMsgCount = 0;
 uint32_t tankMsgRecvInternalErrorCount = 0;
 
-static uint8_t tankMsgRecvData[sizeof(TankMsg) * 4];
+static uint8_t tankMsgRecvData[sizeof(TankMsg) * 5];
 static CommonDataBuf tankMsgRecvBuf;
 
 static TankMsgPacket tankMsgPacket;
@@ -46,7 +46,7 @@ void tankMsgRecvInit(void) {
 
 void tankMsgRecvLoop(void) {
     uint8_t data;
-    while (dataBufReadByte(&tankMsgRecvBuf, &data) == COMMON_DATABUF_OK) {
+    while (dataBufReadByte(&tankMsgRecvBuf, &data) == COMMON_ERROR_OK) {
         switch (state) {
         case STATE_START_TAG:
             if ((data == 0xFF) && (readSize > startTagSizeMin)) {
