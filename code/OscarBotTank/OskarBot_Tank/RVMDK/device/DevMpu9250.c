@@ -188,26 +188,20 @@ inv_error_t devMpu9250Loop(void) {
     if ((currSysTickMs - prevGyroSysTickMs) >= (1000 / MPU_FREQ_HZ_DEFAULT)) {
         prevGyroSysTickMs = currSysTickMs;
 
-        status = mpu_get_gyro_reg(reg, &timestamp);
-        if (status) {
-            return status;
+        inv_error_t statusGyro = mpu_get_gyro_reg(reg, &timestamp);
+        if (statusGyro == INV_SUCCESS) {
+            inv_build_gyro(reg, timestamp);
         }
-        status = inv_build_gyro(reg, timestamp);
-        if (status) {
-            return status;
-        }
+        status |= statusGyro;
 
-        status = mpu_get_accel_reg(reg, &timestamp);
-        if (status) {
-            return status;
+        inv_error_t statusAccel = mpu_get_accel_reg(reg, &timestamp);
+        if (statusAccel == INV_SUCCESS) {
+            data[0] = reg[0];
+            data[1] = reg[1];
+            data[2] = reg[2];
+            inv_build_accel(data, 0, timestamp);
         }
-        data[0] = reg[0];
-        data[1] = reg[1];
-        data[2] = reg[2];
-        status = inv_build_accel(data, 0, timestamp);
-        if (status) {
-            return status;
-        }
+        status |= statusAccel;
 
         devMpu9250GyroUpdated = 1;
         mpl_updated = 1;
@@ -216,17 +210,14 @@ inv_error_t devMpu9250Loop(void) {
     if ((currSysTickMs - prevCompassSysTickMs) >= (1000 / COMPASS_FREQ_HZ_DEFAULT)) {
         prevCompassSysTickMs = currSysTickMs;
 
-        status = mpu_get_compass_reg(reg, &timestamp);
-        if (status) {
-            return status;
+        inv_error_t statusCompass = mpu_get_compass_reg(reg, &timestamp);
+        if (statusCompass == INV_SUCCESS) {
+            data[0] = reg[0];
+            data[1] = reg[1];
+            data[2] = reg[2];
+            inv_build_compass(data, 0, timestamp);
         }
-        data[0] = reg[0];
-        data[1] = reg[1];
-        data[2] = reg[2];
-        status = inv_build_compass(data, 0, timestamp);
-        if (status) {
-            return status;
-        }
+        status |= statusCompass;
 
         devMpu9250CompassUpdated = 1;
         mpl_updated = 1;
@@ -303,7 +294,7 @@ int devMpu9250GetEulerFloat(float *data, int8_t *accuracy, inv_time_t *timestamp
     int8_t tmp_ac;
     inv_time_t tmp_ts;
 
-    // API inv_get_sensor_type_quat() did not handle the case accuracy & timestmap is NULL.
+    // API inv_get_sensor_type_euler() did not handle the case accuracy & timestmap is NULL.
     if (accuracy == NULL) {
         accuracy = &tmp_ac;
     }
@@ -325,7 +316,7 @@ int devMpu9250GetRotMatFloat(float *data, int8_t *accuracy, inv_time_t *timestam
     int8_t tmp_ac;
     inv_time_t tmp_ts;
 
-    // API inv_get_sensor_type_quat() did not handle the case accuracy & timestmap is NULL.
+    // API inv_get_sensor_type_rot_mat() did not handle the case accuracy & timestmap is NULL.
     if (accuracy == NULL) {
         accuracy = &tmp_ac;
     }
@@ -353,7 +344,7 @@ int devMpu9250GetHeadingFloat(float *data, int8_t *accuracy, inv_time_t *timesta
     int8_t tmp_ac;
     inv_time_t tmp_ts;
 
-    // API inv_get_sensor_type_quat() did not handle the case accuracy & timestmap is NULL.
+    // API inv_get_sensor_type_heading() did not handle the case accuracy & timestmap is NULL.
     if (accuracy == NULL) {
         accuracy = &tmp_ac;
     }
