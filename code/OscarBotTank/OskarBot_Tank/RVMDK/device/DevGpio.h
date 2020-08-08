@@ -118,7 +118,10 @@ typedef struct DevGpioPinPatternType {
 } DevGpioPinPattern;
 
 int32_t devGpioPinPatternInit(DevGpioPinPattern *pinPattern);
+bool devGpioPinPatternIsStarted(DevGpioPinPattern *pinPattern);
 int32_t devGpioPinPatternStartOnce(DevGpioPinPattern *pinPattern);
+int32_t devGpioPinPatternStartLoop(DevGpioPinPattern *pinPattern);
+int32_t devGpioPinPatternStop(DevGpioPinPattern *pinPattern);
 
 #define devGpioPinPatternIsPinEqual(pattern1, pattern2) (((pattern1)->gpioPin.port == (pattern2)->gpioPin.port) && ((pattern1)->gpioPin.pin == (pattern2)->gpioPin.pin))
 

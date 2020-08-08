@@ -113,9 +113,7 @@ static void tankMsgRecvUpdateStatus(TankMsg *tankMsg) {
     tankMsgRecvSeqPrev = tankMsgRecvSeqCurr;
     tankMsgRecvSeqCurr = tankMsg->seq;
 
-    if (tankMsgRecvSeqCurr < tankMsgRecvSeqPrev) {
-        alarmRosOk();
-    }
+    onRosHeartBeat(tankMsg, tankMsgRecvSeqCurr < tankMsgRecvSeqPrev);
 }
 
 static void tankMsgRecvOnReceived(TankMsg *tankMsg) {

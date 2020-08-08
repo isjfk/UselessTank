@@ -6,6 +6,7 @@
 
 #include "device/DevButton.h"
 #include "device/DevGpio.h"
+#include "tank/TankMsg.h"
 
 #ifndef __BOARD_H
 #define __BOARD_H
@@ -54,7 +55,7 @@ void alarmSystemError(void);
 void alarmGyroInitError(void);
 void alarmGyroLoopError(void);
 
-void alarmRosOk(void);
+void onRosHeartBeat(TankMsg *tankMsg, bool isNewOnline);
 
 void boardMeasureBatteryVoltage(void);
 float boardGetBatteryVoltage(void);

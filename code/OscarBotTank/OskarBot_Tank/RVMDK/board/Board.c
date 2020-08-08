@@ -62,12 +62,35 @@ static DevGpioPinPattern ledPatternRosOk = {
     .patternData = patternDataRosOk,
     .patternDataSize = arrayLen(patternDataRosOk),
 };
+static DevGpioPinPattern powerLedPatternRosOk = {
+    .gpioPin = {
+        .port = GPIOC,
+        .pin = GPIO_Pin_12,
+    },
+    .startLevel = 0,
+    .endLevel = 0,
+    .patternData = patternDataRosOk,
+    .patternDataSize = arrayLen(patternDataRosOk),
+};
+
+static uint32_t patternDataRosOffline[] = { 500, 500 };
+static DevGpioPinPattern powerLedPatternRosOffline = {
+    .gpioPin = {
+        .port = GPIOC,
+        .pin = GPIO_Pin_12,
+    },
+    .startLevel = 1,
+    .endLevel = 0,
+    .patternData = patternDataRosOffline,
+    .patternDataSize = arrayLen(patternDataRosOffline),
+};
 
 DevButton powerButton;
 DevButton stopButton;
 bool shutdown = false;
 bool powerOff = false;
 
+static uint32_t prevHeartBeatTimeMs = 0;
 static uint32_t shutdownTimeMs = 0;
 static uint32_t rosPowerOffTimeMs = 0;
 static uint32_t prevTimeMs = 0;
@@ -76,6 +99,9 @@ static const uint32_t powerOffTimeoutMs =               120 * 1000; // 120 secon
 
 void boardGpioInit(void);
 void boardButtonInit(void);
+
+void showStatusRosOffline(void);
+void showStatusRosOnline(void);
 
 void powerControlLoop(void);
 void emergencyStopLoop(void);
@@ -93,6 +119,8 @@ void boardGpioInit(void) {
     devGpioPinPatternInit(&ledPatternSystemOk);
     devGpioPinPatternInit(&beepPatternRosOk);
     devGpioPinPatternInit(&ledPatternRosOk);
+    devGpioPinPatternInit(&powerLedPatternRosOk);
+    devGpioPinPatternInit(&powerLedPatternRosOffline);
 }
 
 void boardButtonInit(void) {
@@ -121,6 +149,11 @@ void powerControlLoop(void) {
     if (!shutdown) {
         if (pdbIsPowerButtonUp()) {
             // Power button up, enter shutdown process
+            devGpioPinPatternStop(&beepPatternRosOk);
+            devGpioPinPatternStop(&ledPatternRosOk);
+            devGpioPinPatternStop(&powerLedPatternRosOk);
+            devGpioPinPatternStop(&powerLedPatternRosOffline);
+
             sysTimeLoopStart(&pwrLedLoop, 500);
             pdbPowerLedOn();
             boardLedOn();
@@ -173,6 +206,12 @@ void powerControlLoop(void) {
 
         prevTimeMs = currTimeMs;
     }
+
+    if (!shutdown) {
+        if (!prevHeartBeatTimeMs || ((currTimeMs - prevHeartBeatTimeMs) > 3000)) {
+            showStatusRosOffline();
+        }
+    }
 }
 
 void emergencyStopLoop(void) {
@@ -190,6 +229,20 @@ void emergencyStopLoop(void) {
     }
 }
 
+void showStatusRosOffline(void) {
+    if (devGpioPinPatternIsStarted(&powerLedPatternRosOffline)) {
+        return;
+    }
+    devGpioPinPatternStartLoop(&powerLedPatternRosOffline);
+}
+
+void showStatusRosOnline(void) {
+    if (!devGpioPinPatternIsStarted(&powerLedPatternRosOffline)) {
+        return;
+    }
+    devGpioPinPatternStop(&powerLedPatternRosOffline);
+}
+
 void boardWdgReload(void) {
     IWDG_ReloadCounter();
 }
@@ -205,7 +258,6 @@ void alarm(uint16_t onTime, uint16_t offTime) {
 }
 
 void alarmSystemOk(void) {
-    //alarm(100, 100);
     devGpioPinPatternStartOnce(&beepPatternSystemOk);
     devGpioPinPatternStartOnce(&ledPatternSystemOk);
 }
@@ -229,11 +281,18 @@ void alarmGyroLoopError(void) {
 }
 
 void alarmRosOk(void) {
-    //alarm(100, 100);
-    //alarm(100, 100);
-    //alarm(100, 100);
+    showStatusRosOnline();
     devGpioPinPatternStartOnce(&beepPatternRosOk);
     devGpioPinPatternStartOnce(&ledPatternRosOk);
+    devGpioPinPatternStartOnce(&powerLedPatternRosOk);
+}
+
+void onRosHeartBeat(TankMsg *tankMsg, bool isNewOnline) {
+    if (isNewOnline) {
+        alarmRosOk();
+    }
+
+    prevHeartBeatTimeMs = tankMsg->timestampMs;
 }
 
 float boardGetBatteryVoltage(void) {

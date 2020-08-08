@@ -35,6 +35,10 @@ int32_t devGpioPinPatternInit(DevGpioPinPattern *pinPattern) {
     return 0;
 }
 
+bool devGpioPinPatternIsStarted(DevGpioPinPattern *pinPattern) {
+    return pinPattern->cycleSize != 0;
+}
+
 int32_t devGpioPinPatternStartOnce(DevGpioPinPattern *pinPattern) {
     if (pinPattern->cycleSize) {
         // Pattern already started
@@ -75,6 +79,36 @@ int32_t devGpioPinPatternStartOnce(DevGpioPinPattern *pinPattern) {
     prev->next = pinPattern;
     pinPattern->next = NULL;
 
+    return 0;
+}
+
+int32_t devGpioPinPatternStartLoop(DevGpioPinPattern *pinPattern) {
+    int32_t status = devGpioPinPatternStartOnce(pinPattern);
+    pinPattern->cycleSize = UINT32_MAX;
+    return status;
+}
+
+int32_t devGpioPinPatternStop(DevGpioPinPattern *pinPattern) {
+    DevGpioPinPattern *prev = NULL;
+    for (DevGpioPinPattern *curr = pinPatternHead; curr != NULL; curr = curr->next) {
+        if (curr == pinPattern) {
+            if (prev != NULL) {
+                prev->next = curr->next;
+                curr->next = NULL;
+            } else {
+                pinPatternHead = curr->next;
+                curr->next = NULL;
+            }
+
+            curr->cycleSize = 0;
+            curr->dataIndex = -1;
+            curr->dataDurationMs = 0;
+
+            devGpioBitSetLevel(curr->gpioPin.port, curr->gpioPin.pin, curr->endLevel);
+            return 0;
+        }
+        prev = curr;
+    }
     return 0;
 }
 
@@ -137,6 +171,7 @@ void devGpioPinPatternLoop(uint32_t currTimeMs, uint32_t timeDiffMs) {
         }
 
         // Pattern end
+        curr->cycleSize = 0;
         curr->dataIndex = -1;
         curr->dataDurationMs = 0;
 
