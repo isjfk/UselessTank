@@ -62,7 +62,9 @@ inv_error_t devMpu9250Init(void) {
 
     /* Compute 6-axis and 9-axis quaternions. */
     inv_enable_quaternion();
-    inv_enable_9x_sensor_fusion();
+    // Disable 9x fusion because compass is not stable.
+    //inv_enable_9x_sensor_fusion();
+
     /* The MPL expects compass data at a constant rate (matching the rate
      * passed to inv_set_compass_sample_rate). If this is an issue for your
      * application, call this function, and the MPL will depend on the
