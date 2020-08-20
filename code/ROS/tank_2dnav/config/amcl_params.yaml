@@ -5,7 +5,7 @@ odom_alpha2: 0.005
 odom_alpha3: 0.010
 odom_alpha4: 0.005
 odom_alpha5: 0.003
-min_particles: 500
+min_particles: 200
 max_particles: 5000
 kld_err: 0.05
 kld_z: 0.99
@@ -20,8 +20,8 @@ laser_lambda_short: 0.1
 laser_model_type: likelihood_field
 #laser_model_type: beam
 laser_likelihood_max_dist: 2.0
-update_min_d: 0.2
-update_min_a: 0.5
+update_min_d: 0.1
+update_min_a: 0.1
 resample_interval: 1
 recovery_alpha_slow: 0.001
 recovery_alpha_fast: 0.1
