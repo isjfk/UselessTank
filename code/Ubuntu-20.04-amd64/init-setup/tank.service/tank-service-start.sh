@@ -19,5 +19,4 @@ fi
 
 echo "[tank] ROS_IP: $ROS_IP"
 echo "[tank] Starting ROS nodes..."
-
 roslaunch tank_2dnav tank.launch
