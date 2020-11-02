@@ -32,14 +32,10 @@ rosdep update
 apt-get install -y ros-noetic-ddynamic-reconfigure
 
 # Navigation packages
-#apt-get install -y ros-noetic-navigation ros-noetic-slam-gmapping ros-noetic-tf ros-noetic-laser-filters ros-noetic-robot-localization
+apt-get install -y ros-noetic-navigation ros-noetic-slam-gmapping ros-noetic-tf ros-noetic-laser-filters ros-noetic-robot-localization
 
 # Joystick packages
-#apt-get install -y ros-noetic-joy ros-noetic-teleop-twist-joy ros-noetic-teleop-twist-keyboard joystick
-
-# Install dependencies for build some missing packages from source
-apt-get install -y ros-noetic-navigation ros-noetic-openslam-gmapping ros-noetic-tf ros-noetic-laser-filters ros-noetic-robot-localization
-apt-get install -y ros-noetic-teleop-twist-keyboard joystick libusb-dev libspnav-dev libbluetooth-dev libcwiid-dev
+apt-get install -y ros-noetic-joy ros-noetic-teleop-twist-joy ros-noetic-teleop-twist-keyboard joystick
 
 # Deepth camera packages
 apt-get install -y ros-noetic-pointcloud-to-laserscan
@@ -66,6 +62,8 @@ mkdir -p ~/package
 
 # Copy tank home files
 cp -R ${SCRIPT_DIR}/tank/. ~/
+# Copy startup service scripts
+mv -R ~/tank.service ~/..
 
 # Fix file permissions caused by sudo
 chown -R tank:tank ~
