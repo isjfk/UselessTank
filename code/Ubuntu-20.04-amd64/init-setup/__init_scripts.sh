@@ -37,7 +37,7 @@ apt-get install -y ros-noetic-navigation ros-noetic-slam-gmapping ros-noetic-tf 
 # Joystick packages
 apt-get install -y ros-noetic-joy ros-noetic-teleop-twist-joy ros-noetic-teleop-twist-keyboard joystick
 
-# Deepth camera packages
+# Deepth camera related packages
 apt-get install -y ros-noetic-pointcloud-to-laserscan
 
 # Create ROS workspace

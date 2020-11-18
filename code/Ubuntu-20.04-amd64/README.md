@@ -56,7 +56,9 @@ Boot computer with the USB driver and install Ubuntu, change following options w
 ## Copy ssh private key
   Copy ssh private key files into ~/.ssh to enable ssh login by certification.
 
-# Setup ROS automatically by script
+# Install ROS
+
+## Install ROS automatically by script
   Transfer directory ./init-setup to Ubuntu ~/ directory by SFTP.  
   Login into Ubuntu bash shell.
   ```bash
@@ -67,15 +69,38 @@ Boot computer with the USB driver and install Ubuntu, change following options w
   After script finshed in success, it will reboot automatically.  
   If you got any errors occur during execute init-setup.sh, please execute rest of the steps manually. Otherwise there may redundance lines writen into some configuration files.
 
-# Setup ROS manually
+## Install ROS manually
   If you execute init-setup.sh already then you should omit this section.
 
   In case you prefer the manual way, executes scripts in "__init_scripts.sh" one by one. Keep in mind most of the commands you need to execute by sudo.
 
-# Setup tank model
+## Setup tank model
   Edit file ~/tank_model.env, uncomment lines that match the tank setup.
 
 # Device Configuration
+
+## Setup depth camera
+
+### Install librealsense for depth camera
+  ```bash
+  sudo apt-get install libglfw3-dev
+  cd ~/packages
+  git clone https://github.com/IntelRealSense/librealsense.git
+  cd librealsense
+  ./scripts/setup_udev_rules.sh
+  mkdir build && cd build
+  cmake ../ -DCMAKE_BUILD_TYPE=Release
+  sudo make uninstall
+  make clean && make
+  sudo make install
+  ```
+
+### Upgrade firmware for depth camera
+  ```bash
+  cd ~/packages/librealsense/build/common/fw
+  rs-fw-update -l
+  rs-fw-update -s <sn> -f ~/D4XX_FW_Image-<version>.bin
+  ```
 
 ## Pairing XBox One joystick to Ubuntu
   In Ubuntu open "Settings -> Bluetooth".  
