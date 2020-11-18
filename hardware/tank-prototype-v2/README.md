@@ -97,7 +97,7 @@ P2 / PC9 -> 拉力AD PD_SCK
 
 电压显示器电源(电压显示器 -> 分电板VBAT-OUT):
 规格: 22AWG
-长度: 18cm
+长度: 20cm
 备注: 分电板VBAT-OUT端焊接XT30-Male插头
 
 电源开关数据线(分电板POWER_BTN -> 电源开关):
@@ -142,27 +142,22 @@ P2 / PC9 -> 拉力AD PD_SCK
 
 工控机电源检测线(工控机 -> 坦克控制板):
 规格: 26AWG
-长度: 26cm
+长度: 28cm
 颜色:
     工控机COM1_RI  -> 坦克控制板P5_DATA:  红(26cm)
 
-坦克控制板电源线(坦克控制板 -> 分电板VBAT-OUT):
-规格: 22AWG
-长度: 15cm
-备注: 分电板VBAT-OUT端焊接XT30-Male插头
-
 坦克控制板串口线(坦克控制板 -> RS232模块):
 规格: 26AWG
-长度: 12cm
+长度: 13cm
 颜色:
-    坦克控制板COM1_TX  -> RS232模块TTL_TX1:  蓝(12cm)
-    坦克控制板COM1_RX  -> RS232模块TTL_RX1:  绿(12cm)
-    坦克控制板COM1_VCC -> RS232模块TTL_VCC1: 红(12cm)
-    坦克控制板COM1_GND -> RS232模块TTL_GND1: 黑(12cm)
-    坦克控制板COM2_TX  -> RS232模块TTL_TX2:  白(12cm)
-    坦克控制板COM2_RX  -> RS232模块TTL_RX2:  黄(12cm)
-    坦克控制板COM2_VCC -> RS232模块TTL_VCC2: 红(12cm)
-    坦克控制板COM2_GND -> RS232模块TTL_GND2: 黑(12cm)
+    坦克控制板COM1_TX  -> RS232模块TTL_TX1:  蓝(13cm)
+    坦克控制板COM1_RX  -> RS232模块TTL_RX1:  绿(13cm)
+    坦克控制板COM1_VCC -> RS232模块TTL_VCC1: 红(13cm)
+    坦克控制板COM1_GND -> RS232模块TTL_GND1: 黑(13cm)
+    坦克控制板COM2_TX  -> RS232模块TTL_TX2:  白(13cm)
+    坦克控制板COM2_RX  -> RS232模块TTL_RX2:  黄(13cm)
+    坦克控制板COM2_VCC -> RS232模块TTL_VCC2: 红(13cm)
+    坦克控制板COM2_GND -> RS232模块TTL_GND2: 黑(13cm)
 备注：串口TX/RX直连接
 
 坦克控制板数据线(分电板CTRL -> 坦克控制板):
@@ -178,8 +173,8 @@ P2 / PC9 -> 拉力AD PD_SCK
     7(STOP_BTN_DET) -> PB11: 橙
     8(STOP_BTN_G_CTRL) -> PD2: 黄
     9: NC
-    10(VCC_BAT) -> PWR+: 红(15cm)
-    11(GND_BAT) -> PWR-: 黑(15cm)
+    10(VCC_BAT) -> PWR+: 红(16cm)
+    11(GND_BAT) -> PWR-: 黑(16cm)
 
 电机控制板电源线(电机控制板 -> 分电板VBAT-OUT):
 规格: 16AWG+18AWG
